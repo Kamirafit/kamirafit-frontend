@@ -10,10 +10,10 @@ export default function Home() {
         WebkitBackdropFilter: "blur(24px) saturate(180%)",
       }}
     >
-      <h1 className="text-5xl font-extrabold text-gray-200 mb-4">
+      <h1 className="text-5xl font-extrabold text-black mb-4">
         Coming Soon...
       </h1>
-      <p className="text-lg text-gray-300 text-center max-w-xl">
+      <p className="text-lg text-neutral-800 text-center max-w-xl">
         We are working hard to bring you something amazing. Stay tuned.
       </p>
     </div>
