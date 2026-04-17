@@ -53,16 +53,16 @@ export default function Navbar() {
           >
             <SearchIcon />
           </button>
-          <button
-            type="button"
-            aria-label="Cart"
+          <Link
+            href="/cart"
+            aria-label={`Cart${cartCount > 0 ? `, ${cartCount} items` : ""}`}
             className="relative rounded-full p-2 text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
           >
             <CartIcon />
             <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-neutral-900 px-1 text-[10px] font-semibold text-white">
               {cartCount}
             </span>
-          </button>
+          </Link>
           <button
             type="button"
             className="hidden rounded-full border border-neutral-900 px-4 py-1.5 text-sm font-medium text-neutral-900 transition-colors hover:bg-neutral-900 hover:text-white md:inline-flex"
