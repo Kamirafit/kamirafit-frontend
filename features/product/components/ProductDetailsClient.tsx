@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { buttonClasses } from "@/components/ui/Button";
+import { formatPrice } from "@/lib/format";
 import { useAppDispatch, useAppSelector } from "../hooks/redux";
 import { addToCart } from "../store/cartSlice";
 import { toggleWishlist } from "../store/wishlistSlice";
@@ -14,14 +16,6 @@ import StarRating from "./StarRating";
 type Props = {
   product: Product;
 };
-
-function formatPrice(value: number): string {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(value);
-}
 
 export default function ProductDetailsClient({ product }: Props) {
   const dispatch = useAppDispatch();
@@ -104,7 +98,7 @@ export default function ProductDetailsClient({ product }: Props) {
           <button
             type="button"
             onClick={handleAddToCart}
-            className="inline-flex flex-1 items-center justify-center rounded-full bg-neutral-900 px-6 py-3.5 text-sm font-medium text-white transition-colors hover:bg-neutral-700"
+            className={`${buttonClasses("primary", "lg")} flex-1`}
           >
             {added ? "Added to cart" : "Add to Cart"}
           </button>
@@ -112,11 +106,13 @@ export default function ProductDetailsClient({ product }: Props) {
             type="button"
             aria-pressed={isSaved}
             onClick={() => dispatch(toggleWishlist(product.id))}
-            className={`inline-flex items-center justify-center gap-2 rounded-full border px-6 py-3.5 text-sm font-medium transition-colors ${
+            className={buttonClasses(
+              "secondary",
+              "lg",
               isSaved
-                ? "border-red-500 bg-white text-red-500 hover:bg-red-50"
-                : "border-neutral-300 bg-white text-neutral-900 hover:border-neutral-900"
-            }`}
+                ? "!border-red-500 !text-red-500 hover:!border-red-500 hover:bg-red-50"
+                : "",
+            )}
           >
             <HeartIcon filled={isSaved} width={16} height={16} />
             {isSaved ? "Saved" : "Wishlist"}

@@ -1,3 +1,5 @@
+import Section from "@/components/ui/Section";
+import SectionHeader from "@/components/ui/SectionHeader";
 import CategoryCard, { type Category } from "./CategoryCard";
 
 const CATEGORIES: Category[] = [
@@ -26,26 +28,17 @@ const CATEGORIES: Category[] = [
 
 export default function Categories() {
   return (
-    <section
-      id="categories"
-      className="border-y border-neutral-200 bg-neutral-50"
-    >
-      <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-        <div className="max-w-2xl">
-          <p className="text-xs font-semibold uppercase tracking-widest text-neutral-500">
-            Shop by Category
-          </p>
-          <h2 className="mt-2 text-3xl font-semibold tracking-tight text-neutral-900 sm:text-4xl">
-            Built for the way you wear it.
-          </h2>
-        </div>
+    <Section id="categories" tone="muted">
+      <SectionHeader
+        eyebrow="Shop by Category"
+        title="Built for the way you wear it."
+      />
 
-        <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {CATEGORIES.map((category) => (
-            <CategoryCard key={category.id} category={category} />
-          ))}
-        </div>
+      <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:mt-12 lg:grid-cols-3">
+        {CATEGORIES.map((category) => (
+          <CategoryCard key={category.id} category={category} />
+        ))}
       </div>
-    </section>
+    </Section>
   );
 }

@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import Container from "@/components/ui/Container";
+import SectionHeader from "@/components/ui/SectionHeader";
 import { useAppSelector } from "@/features/product/hooks/redux";
 import { calculateTotals, resolveCartItems } from "../utils";
 import CartLineItem from "./CartLineItem";
@@ -14,18 +16,14 @@ export default function CartPageClient() {
   const { subtotal, delivery, total } = calculateTotals(resolved);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
-      <header className="mb-10 flex flex-col gap-2">
-        <p className="text-xs font-semibold uppercase tracking-widest text-neutral-500">
-          Your bag
-        </p>
-        <h1 className="text-3xl font-semibold tracking-tight text-neutral-900 sm:text-4xl">
-          Shopping cart
-        </h1>
-        <p className="text-sm text-neutral-600">
-          Review your items before proceeding to checkout.
-        </p>
-      </header>
+    <Container className="py-10 lg:py-14">
+      <SectionHeader
+        size="lg"
+        eyebrow="Your bag"
+        title="Shopping cart"
+        description="Review your items before proceeding to checkout."
+        className="mb-10"
+      />
 
       {resolved.length === 0 ? (
         <EmptyCart />
@@ -60,6 +58,6 @@ export default function CartPageClient() {
           </div>
         </div>
       )}
-    </div>
+    </Container>
   );
 }

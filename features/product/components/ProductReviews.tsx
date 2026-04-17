@@ -21,7 +21,7 @@ function formatDate(value: string): string {
 export default function ProductReviews({ reviews, averageRating }: Props) {
   return (
     <section aria-labelledby="reviews-heading" className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2">
+      <header className="flex flex-col gap-2">
         <h2
           id="reviews-heading"
           className="text-xl font-semibold tracking-tight text-neutral-900 sm:text-2xl"
@@ -35,7 +35,7 @@ export default function ProductReviews({ reviews, averageRating }: Props) {
             {reviews.length === 1 ? "" : "s"}
           </p>
         </div>
-      </div>
+      </header>
 
       <ul className="flex flex-col divide-y divide-neutral-200 border-t border-neutral-200">
         {reviews.map((r) => (

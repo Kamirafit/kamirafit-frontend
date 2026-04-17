@@ -1,4 +1,6 @@
 import type { ComponentType, SVGProps } from "react";
+import Section from "@/components/ui/Section";
+import SectionHeader from "@/components/ui/SectionHeader";
 import { DeliveryIcon, QualityIcon, ReturnsIcon } from "./icons";
 
 type Feature = {
@@ -30,17 +32,13 @@ const FEATURES: Feature[] = [
 
 export default function WhyChooseUs() {
   return (
-    <section id="about" className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-      <div className="max-w-2xl">
-        <p className="text-xs font-semibold uppercase tracking-widest text-neutral-500">
-          Why KamiraFit
-        </p>
-        <h2 className="mt-2 text-3xl font-semibold tracking-tight text-neutral-900 sm:text-4xl">
-          Details that make the difference.
-        </h2>
-      </div>
+    <Section id="about">
+      <SectionHeader
+        eyebrow="Why KamiraFit"
+        title="Details that make the difference."
+      />
 
-      <div className="mt-14 grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-3 lg:gap-12">
+      <div className="mt-12 grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-3 lg:gap-12">
         {FEATURES.map(({ title, description, Icon }) => (
           <div key={title} className="flex flex-col">
             <span className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-neutral-200 bg-neutral-50 text-neutral-900">
@@ -55,6 +53,6 @@ export default function WhyChooseUs() {
           </div>
         ))}
       </div>
-    </section>
+    </Section>
   );
 }

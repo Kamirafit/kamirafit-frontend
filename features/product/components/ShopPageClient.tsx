@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Container from "@/components/ui/Container";
+import SectionHeader from "@/components/ui/SectionHeader";
 import { PRODUCTS } from "../data/products";
 import { useFilteredSortedProducts } from "../hooks/useFilteredSortedProducts";
 import { PRICE_MAX, PRICE_MIN, type Filters, type SortKey } from "../types";
@@ -25,19 +27,14 @@ export default function ShopPageClient() {
   const products = useFilteredSortedProducts(PRODUCTS, filters, sort);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
-      <header className="mb-10 flex flex-col gap-2">
-        <p className="text-xs font-semibold uppercase tracking-widest text-neutral-500">
-          Shop
-        </p>
-        <h1 className="text-3xl font-semibold tracking-tight text-neutral-900 sm:text-4xl">
-          New arrivals &amp; essentials
-        </h1>
-        <p className="max-w-xl text-sm text-neutral-600">
-          Browse the full KamiraFit collection. Filter by category, size, color
-          and price to find your next favorite piece.
-        </p>
-      </header>
+    <Container className="py-10 lg:py-14">
+      <SectionHeader
+        size="lg"
+        eyebrow="Shop"
+        title="New arrivals & essentials"
+        description="Browse the full KamiraFit collection. Filter by category, size, color and price to find your next favorite piece."
+        className="mb-10"
+      />
 
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-[240px_1fr] lg:gap-12">
         <aside className="hidden lg:block">
@@ -70,6 +67,6 @@ export default function ShopPageClient() {
         onChange={setFilters}
         onReset={() => setFilters(INITIAL_FILTERS)}
       />
-    </div>
+    </Container>
   );
 }

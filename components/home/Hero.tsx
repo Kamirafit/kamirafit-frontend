@@ -1,10 +1,12 @@
 import Image from "next/image";
+import { buttonClasses } from "@/components/ui/Button";
+import Container from "@/components/ui/Container";
 import { ArrowRightIcon } from "./icons";
 
 export default function Hero() {
   return (
     <section className="relative w-full border-b border-neutral-200 bg-neutral-50">
-      <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:gap-16 lg:px-8 lg:py-24">
+      <Container className="grid grid-cols-1 items-center gap-10 py-16 lg:grid-cols-2 lg:gap-16 lg:py-24">
         <div className="order-2 lg:order-1">
           <span className="inline-block rounded-full border border-neutral-300 px-3 py-1 text-xs font-medium uppercase tracking-widest text-neutral-600">
             New Collection · 2026
@@ -19,17 +21,11 @@ export default function Hero() {
             designed to move with you, day after day.
           </p>
           <div className="mt-10 flex flex-wrap items-center gap-4">
-            <a
-              href="#shop"
-              className="group inline-flex items-center gap-2 rounded-full bg-neutral-900 px-7 py-3.5 text-sm font-medium text-white transition-colors hover:bg-neutral-700"
-            >
+            <a href="/shop" className={`${buttonClasses("primary", "lg")} group`}>
               Shop Now
               <ArrowRightIcon className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </a>
-            <a
-              href="#categories"
-              className="inline-flex items-center gap-2 rounded-full border border-neutral-300 bg-white px-7 py-3.5 text-sm font-medium text-neutral-900 transition-colors hover:border-neutral-900"
-            >
+            <a href="#categories" className={buttonClasses("secondary", "lg")}>
               Explore Categories
             </a>
           </div>
@@ -80,7 +76,7 @@ export default function Hero() {
             </div>
           </div>
         </div>
-      </div>
+      </Container>
     </section>
   );
 }

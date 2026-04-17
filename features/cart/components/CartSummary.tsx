@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { buttonClasses } from "@/components/ui/Button";
 import { formatPrice } from "../utils";
 
 type Props = {
@@ -22,7 +23,9 @@ export default function CartSummary({
 
       <dl className="flex flex-col gap-3 text-sm text-neutral-700">
         <div className="flex items-center justify-between">
-          <dt>Subtotal ({itemCount} {itemCount === 1 ? "item" : "items"})</dt>
+          <dt>
+            Subtotal ({itemCount} {itemCount === 1 ? "item" : "items"})
+          </dt>
           <dd className="font-medium text-neutral-900">
             {formatPrice(subtotal)}
           </dd>
@@ -48,11 +51,11 @@ export default function CartSummary({
         onClick={(e) => {
           if (disabled) e.preventDefault();
         }}
-        className={`inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-medium transition-colors ${
-          disabled
-            ? "cursor-not-allowed bg-neutral-300 text-white"
-            : "bg-neutral-900 text-white hover:bg-neutral-700"
-        }`}
+        className={buttonClasses(
+          "primary",
+          "md",
+          disabled ? "cursor-not-allowed !bg-neutral-300 hover:!bg-neutral-300" : "",
+        )}
       >
         Proceed to Checkout
       </Link>
