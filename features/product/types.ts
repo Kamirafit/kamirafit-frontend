@@ -4,6 +4,14 @@ export type Color = "Black" | "White" | "Blue" | "Red";
 
 export type Category = "Oversized" | "Regular" | "Hoodies";
 
+export type Review = {
+  id: string;
+  author: string;
+  rating: number;
+  comment: string;
+  date: string;
+};
+
 export type Product = {
   id: string;
   name: string;
@@ -13,6 +21,9 @@ export type Product = {
   color: Color[];
   rating: number;
   image: string;
+  images: string[];
+  description: string;
+  reviews: Review[];
   createdAt: string;
   popularity: number;
 };
