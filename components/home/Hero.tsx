@@ -5,7 +5,7 @@ import { ArrowRightIcon } from "./icons";
 
 export default function Hero() {
   return (
-    <section className="relative isolate w-full overflow-hidden border-b border-line bg-ink text-paper">
+    <section className="relative isolate flex min-h-[60vh] w-full items-center overflow-hidden border-b border-line bg-ink text-paper">
       <div
         aria-hidden
         className="pointer-events-none absolute -left-40 top-1/2 h-[420px] w-[420px] -translate-y-1/2 rounded-full bg-gold/10 blur-3xl"

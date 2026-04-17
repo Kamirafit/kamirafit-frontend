@@ -109,7 +109,7 @@ export default function Navbar() {
               aria-label="Categories"
               className="invisible absolute left-1/2 top-full z-50 w-[min(880px,90vw)] -translate-x-1/2 translate-y-1 pt-4 opacity-0 transition-all duration-200 ease-out group-hover/cats:visible group-hover/cats:translate-y-0 group-hover/cats:opacity-100"
             >
-              <div className="relative overflow-hidden rounded-2xl border border-line bg-white text-ink shadow-[0_30px_60px_-20px_rgba(74,14,26,0.25)]">
+              <div className="relative overflow-hidden rounded-2xl border border-line bg-white text-paper shadow-[0_30px_60px_-20px_rgba(74,14,26,0.25)]">
                 <div
                   aria-hidden
                   className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-gold/50 to-transparent"
@@ -128,7 +128,7 @@ export default function Navbar() {
                           <li key={item.label}>
                             <Link
                               href={item.href}
-                              className="group/it inline-flex items-center gap-2 text-[14px] font-medium text-ink transition-colors hover:text-gold"
+                              className="group/it inline-flex items-center gap-2 text-[14px] font-medium text-paper transition-colors hover:text-gold"
                             >
                               <span className="h-px w-3 bg-neutral-300 transition-all duration-200 group-hover/it:w-5 group-hover/it:bg-gold" />
                               {item.label}
@@ -174,7 +174,7 @@ export default function Navbar() {
             className="relative rounded-full p-2 text-paper-muted transition-colors hover:bg-ink-3 hover:text-gold"
           >
             <CartIcon />
-            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 text-[10px] font-semibold text-white shadow-[0_0_0_2px_var(--color-ink)]">
+            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-gold px-1.5 text-xs font-bold text-white shadow-[0_0_0_2px_var(--color-ink)]">
               {cartCount}
             </span>
           </Link>

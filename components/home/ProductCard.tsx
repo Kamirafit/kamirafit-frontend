@@ -41,10 +41,16 @@ export default function ProductCard({ product }: Props) {
           </span>
         ) : null}
 
-        {/* Add-to-Cart: always visible, invert colors on hover */}
+        {/* Bottom gradient to improve outline-button legibility */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/55 via-black/20 to-transparent"
+        />
+
+        {/* Add-to-Cart: outline at rest, filled primary on hover */}
         <button
           type="button"
-          className="absolute inset-x-3 bottom-3 inline-flex items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-[12px] font-semibold uppercase tracking-[0.14em] text-ink shadow-lg shadow-black/20 transition-colors duration-200 ease-out hover:bg-gold hover:text-white"
+          className="absolute inset-x-3 bottom-3 inline-flex items-center justify-center gap-2 rounded-full border-2 border-white bg-white/10 px-4 py-2.5 text-[12px] font-semibold uppercase tracking-[0.18em] text-white backdrop-blur-md transition-colors duration-200 ease-out hover:border-gold hover:bg-gold hover:text-white"
         >
           Add to cart
         </button>
