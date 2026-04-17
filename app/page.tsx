@@ -1,19 +1,25 @@
+import Categories from "@/components/home/Categories";
+import FeaturedProducts from "@/components/home/FeaturedProducts";
+import Footer from "@/components/home/Footer";
+import Hero from "@/components/home/Hero";
+import Navbar from "@/components/home/Navbar";
+import Newsletter from "@/components/home/Newsletter";
+import Testimonials from "@/components/home/Testimonials";
+import WhyChooseUs from "@/components/home/WhyChooseUs";
+
 export default function Home() {
   return (
-    <div
-      className="min-h-screen flex flex-col items-center justify-center"
-      style={{
-        background: "rgba(230, 223, 193, 0.8)",
-        backdropFilter: "blur(24px) saturate(180%)",
-        WebkitBackdropFilter: "blur(24px) saturate(180%)",
-      }}
-    >
-      <h1 className="text-5xl font-extrabold text-black mb-4">
-        Coming Soon...
-      </h1>
-      <p className="text-lg text-neutral-800 text-center max-w-xl">
-        We are working hard to bring you something amazing. Stay tuned.
-      </p>
+    <div className="flex min-h-screen flex-col bg-white text-neutral-900">
+      <Navbar />
+      <main className="flex-1">
+        <Hero />
+        <FeaturedProducts />
+        <Categories />
+        <WhyChooseUs />
+        <Testimonials />
+        <Newsletter />
+      </main>
+      <Footer />
     </div>
   );
 }
