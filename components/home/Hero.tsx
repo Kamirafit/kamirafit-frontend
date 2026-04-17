@@ -20,7 +20,7 @@ export default function Hero() {
           <span className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-ink-2/60 px-3.5 py-1.5 text-[10px] font-medium uppercase tracking-[0.28em] text-gold backdrop-blur">
             <span
               aria-hidden
-              className="h-1.5 w-1.5 rounded-full bg-gold shadow-[0_0_0_3px_rgba(212,175,55,0.2)]"
+              className="h-1.5 w-1.5 rounded-full bg-gold shadow-[0_0_0_3px_rgba(139,30,45,0.2)]"
             />
             New Collection · 2026
           </span>
@@ -75,7 +75,7 @@ export default function Hero() {
         </div>
 
         <div className="order-1 lg:order-2">
-          <div className="group relative aspect-[4/5] w-full overflow-hidden rounded-2xl border border-line bg-ink-2 shadow-[0_40px_80px_-40px_rgba(0,0,0,0.9)] transition-transform duration-700 hover:-translate-y-1">
+          <div className="group relative aspect-[4/5] w-full overflow-hidden rounded-2xl border border-line bg-ink-2 shadow-[0_40px_80px_-40px_rgba(74,14,26,0.15)] transition-transform duration-700 hover:-translate-y-1">
             <Image
               src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1200&q=80"
               alt="Model wearing KamiraFit essentials"

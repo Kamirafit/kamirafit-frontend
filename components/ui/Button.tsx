@@ -8,7 +8,7 @@ const BASE =
 
 const VARIANT: Record<ButtonVariant, string> = {
   primary:
-    "bg-gold text-ink shadow-[0_10px_30px_-12px_rgba(212,175,55,0.55)] hover:bg-gold-bright hover:-translate-y-px hover:shadow-[0_14px_40px_-12px_rgba(212,175,55,0.7)] active:translate-y-0 active:bg-gold disabled:bg-gold-dim disabled:text-paper/70 disabled:shadow-none disabled:hover:translate-y-0",
+    "bg-gold text-ink shadow-[0_10px_30px_-12px_rgba(139,30,45,0.55)] hover:bg-gold-bright hover:-translate-y-px hover:shadow-[0_14px_40px_-12px_rgba(139,30,45,0.7)] active:translate-y-0 active:bg-gold disabled:bg-gold-dim disabled:text-paper/70 disabled:shadow-none disabled:hover:translate-y-0",
   secondary:
     "border border-gold/70 bg-transparent text-gold hover:border-gold hover:bg-gold hover:text-ink disabled:border-line disabled:text-paper-muted disabled:hover:bg-transparent disabled:hover:text-paper-muted",
   ghost:

@@ -15,7 +15,7 @@ export default function CategoryCard({ category }: Props) {
   return (
     <a
       href={`#${category.id}`}
-      className="group relative block aspect-[4/5] overflow-hidden rounded-2xl border border-line bg-ink-2 shadow-[0_30px_60px_-30px_rgba(0,0,0,0.8)] transition-all duration-300 hover:-translate-y-1 hover:border-gold/60 hover:shadow-[0_40px_80px_-30px_rgba(212,175,55,0.22)]"
+      className="group relative block aspect-[4/5] overflow-hidden rounded-2xl border border-line bg-ink-2 shadow-[0_30px_60px_-30px_rgba(74,14,26,0.12)] transition-all duration-300 hover:-translate-y-1 hover:border-gold/60 hover:shadow-[0_40px_80px_-30px_rgba(139,30,45,0.22)]"
     >
       <Image
         src={category.image}

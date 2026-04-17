@@ -69,7 +69,7 @@ export default function Navbar() {
           </Link>
           <button
             type="button"
-            className="hidden rounded-full border border-gold/70 px-5 py-1.5 text-[11px] font-medium uppercase tracking-[0.2em] text-gold transition-all duration-200 hover:bg-gold hover:text-ink hover:shadow-[0_10px_25px_-12px_rgba(212,175,55,0.55)] md:inline-flex"
+            className="hidden rounded-full border border-gold/70 px-5 py-1.5 text-[11px] font-medium uppercase tracking-[0.2em] text-gold transition-all duration-200 hover:bg-gold hover:text-ink hover:shadow-[0_10px_25px_-12px_rgba(139,30,45,0.55)] md:inline-flex"
           >
             Login
           </button>

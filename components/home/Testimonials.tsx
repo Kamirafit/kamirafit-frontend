@@ -44,7 +44,7 @@ export default function Testimonials() {
         {TESTIMONIALS.map((t) => (
           <figure
             key={t.id}
-            className="relative flex h-full flex-col justify-between rounded-2xl border border-line bg-ink p-8 transition-all duration-300 hover:-translate-y-1 hover:border-gold/50 hover:shadow-[0_30px_60px_-30px_rgba(212,175,55,0.2)]"
+            className="relative flex h-full flex-col justify-between rounded-2xl border border-line bg-ink p-8 transition-all duration-300 hover:-translate-y-1 hover:border-gold/50 hover:shadow-[0_30px_60px_-30px_rgba(139,30,45,0.2)]"
           >
             <span
               aria-hidden

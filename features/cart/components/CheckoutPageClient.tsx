@@ -75,7 +75,7 @@ export default function CheckoutPageClient() {
       <Container width="narrow" className="py-20 text-center lg:py-28">
         <div
           aria-hidden
-          className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-gold/50 bg-ink-2 text-3xl text-gold shadow-[0_20px_50px_-20px_rgba(212,175,55,0.5)]"
+          className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-gold/50 bg-ink-2 text-3xl text-gold shadow-[0_20px_50px_-20px_rgba(139,30,45,0.5)]"
         >
           ✓
         </div>

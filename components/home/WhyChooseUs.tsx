@@ -42,9 +42,9 @@ export default function WhyChooseUs() {
         {FEATURES.map(({ title, description, Icon }) => (
           <div
             key={title}
-            className="group relative flex flex-col rounded-2xl border border-line bg-ink-2/60 p-8 transition-all duration-300 hover:-translate-y-1 hover:border-gold/50 hover:bg-ink-2 hover:shadow-[0_30px_60px_-30px_rgba(212,175,55,0.2)]"
+            className="group relative flex flex-col rounded-2xl border border-line bg-ink-2/60 p-8 transition-all duration-300 hover:-translate-y-1 hover:border-gold/50 hover:bg-ink-2 hover:shadow-[0_30px_60px_-30px_rgba(139,30,45,0.2)]"
           >
-            <span className="inline-flex h-14 w-14 items-center justify-center rounded-full border border-gold/50 bg-ink text-gold shadow-[inset_0_0_0_1px_rgba(212,175,55,0.08)] transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:border-gold">
+            <span className="inline-flex h-14 w-14 items-center justify-center rounded-full border border-gold/50 bg-ink text-gold shadow-[inset_0_0_0_1px_rgba(139,30,45,0.08)] transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:border-gold">
               <Icon width={22} height={22} />
             </span>
             <h3 className="mt-6 font-display text-xl font-semibold text-paper">
