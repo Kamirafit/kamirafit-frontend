@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useAppSelector } from "@/features/product/hooks/redux";
+import { useSpotlight } from "@/components/search/SpotlightProvider";
 import {
   CartIcon,
   CloseIcon,
@@ -58,6 +59,7 @@ export default function Navbar() {
   const cartCount = useAppSelector((s) =>
     s.cart.items.reduce((sum, it) => sum + it.quantity, 0),
   );
+  const { setOpen: setSpotlightOpen } = useSpotlight();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-line bg-ink/85 backdrop-blur-md supports-[backdrop-filter]:bg-ink/70">
@@ -163,7 +165,8 @@ export default function Navbar() {
         <div className="flex items-center gap-1 sm:gap-2">
           <button
             type="button"
-            aria-label="Search"
+            aria-label="Search (press ⌘K or Ctrl+K)"
+            onClick={() => setSpotlightOpen(true)}
             className="rounded-full p-2 text-paper-muted transition-colors hover:bg-ink-3 hover:text-gold"
           >
             <SearchIcon />

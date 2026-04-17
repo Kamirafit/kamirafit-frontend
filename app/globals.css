@@ -48,3 +48,24 @@ body {
   background: #4a0e1a;
   color: #f8f5f2;
 }
+
+/* Spotlight search — rotating placeholder word animation.
+   Enter from below, hold, exit up. Replayed per-key change. */
+@keyframes spotlight-word {
+  0% {
+    transform: translateY(110%);
+    opacity: 0;
+  }
+  18% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  82% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-110%);
+    opacity: 0;
+  }
+}
