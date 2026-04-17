@@ -6,7 +6,7 @@ const PRODUCTS: Product[] = [
   {
     id: "ivory-oversized-tee",
     name: "Ivory Oversized Tee",
-    price: 42,
+    price: 1299,
     image:
       "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=900&q=80",
     tag: "New",
@@ -14,14 +14,14 @@ const PRODUCTS: Product[] = [
   {
     id: "midnight-hoodie",
     name: "Midnight Relaxed Hoodie",
-    price: 89,
+    price: 2499,
     image:
       "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=900&q=80",
   },
   {
     id: "stone-crewneck",
     name: "Stone Everyday Crewneck",
-    price: 68,
+    price: 1799,
     image:
       "https://images.unsplash.com/photo-1618354691373-d851c5c3a990?auto=format&fit=crop&w=900&q=80",
     tag: "Bestseller",
@@ -29,7 +29,7 @@ const PRODUCTS: Product[] = [
   {
     id: "sand-regular-tee",
     name: "Sand Regular Fit Tee",
-    price: 36,
+    price: 999,
     image:
       "https://images.unsplash.com/photo-1503341504253-dff4815485f1?auto=format&fit=crop&w=900&q=80",
   },
