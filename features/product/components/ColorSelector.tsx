@@ -13,9 +13,15 @@ export default function ColorSelector({ options, value, onChange }: Props) {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-medium text-neutral-900">Color</p>
-        <p className="text-xs text-neutral-500">
-          {value ? `Selected: ${value}` : "Choose a color"}
+        <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-paper-muted">
+          Color
+        </p>
+        <p className="text-xs text-paper-muted">
+          {value ? (
+            <span className="text-gold">Selected: {value}</span>
+          ) : (
+            "Choose a color"
+          )}
         </p>
       </div>
       <div role="radiogroup" aria-label="Color" className="flex flex-wrap gap-3">
@@ -30,14 +36,14 @@ export default function ColorSelector({ options, value, onChange }: Props) {
               aria-label={c}
               title={c}
               onClick={() => onChange(c)}
-              className={`relative inline-flex h-10 w-10 items-center justify-center rounded-full border transition-colors ${
+              className={`relative inline-flex h-11 w-11 items-center justify-center rounded-full border transition-all duration-200 ${
                 selected
-                  ? "border-neutral-900 ring-2 ring-neutral-900 ring-offset-2"
-                  : "border-neutral-200 hover:border-neutral-400"
+                  ? "border-gold ring-2 ring-gold/70 ring-offset-2 ring-offset-ink"
+                  : "border-line hover:-translate-y-0.5 hover:border-gold/60"
               }`}
             >
               <span
-                className="block h-7 w-7 rounded-full border border-neutral-200"
+                className="block h-7 w-7 rounded-full border border-line"
                 style={{ backgroundColor: COLOR_SWATCH[c] }}
               />
             </button>

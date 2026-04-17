@@ -44,14 +44,20 @@ export default function FeaturedProducts() {
         action={
           <a
             href="/shop"
-            className="text-sm font-medium text-neutral-600 underline-offset-4 transition-colors hover:text-neutral-900 hover:underline"
+            className="group inline-flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.22em] text-gold transition-colors hover:text-gold-bright"
           >
-            View all products →
+            View all
+            <span
+              aria-hidden
+              className="inline-block transition-transform duration-300 group-hover:translate-x-1"
+            >
+              →
+            </span>
           </a>
         }
       />
 
-      <div className="mt-10 grid grid-cols-2 gap-x-6 gap-y-10 sm:gap-x-8 lg:mt-12 lg:grid-cols-4">
+      <div className="mt-12 grid grid-cols-2 gap-x-6 gap-y-12 sm:gap-x-8 lg:mt-16 lg:grid-cols-4">
         {PRODUCTS.map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}

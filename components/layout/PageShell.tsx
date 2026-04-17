@@ -14,7 +14,7 @@ type Props = {
  */
 export default function PageShell({ children, mainClassName = "" }: Props) {
   return (
-    <div className="flex min-h-screen flex-col bg-white text-neutral-900">
+    <div className="relative flex min-h-screen flex-col bg-ink text-paper">
       <Navbar />
       <main className={`flex-1 ${mainClassName}`.trim()}>{children}</main>
       <Footer />

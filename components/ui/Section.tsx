@@ -4,9 +4,9 @@ import Container from "./Container";
 type Tone = "default" | "muted" | "inverted";
 
 const TONE_CLASS: Record<Tone, string> = {
-  default: "bg-white",
-  muted: "border-y border-neutral-200 bg-neutral-50",
-  inverted: "bg-neutral-900 text-white",
+  default: "bg-ink text-paper",
+  muted: "bg-ink-2 border-y border-line text-paper",
+  inverted: "bg-paper text-ink",
 };
 
 type Props = {
@@ -22,9 +22,9 @@ type Props = {
 } & Omit<ComponentPropsWithoutRef<"section">, "className" | "children" | "id">;
 
 const PADDING_CLASS: Record<NonNullable<Props["padding"]>, string> = {
-  sm: "py-12 sm:py-14",
-  md: "py-16 sm:py-20",
-  lg: "py-20 sm:py-24",
+  sm: "py-14 sm:py-16",
+  md: "py-20 sm:py-24",
+  lg: "py-24 sm:py-32",
 };
 
 /**
@@ -49,7 +49,7 @@ export default function Section({
   return (
     <section
       id={id}
-      className={`${TONE_CLASS[tone]} ${className}`.trim()}
+      className={`relative ${TONE_CLASS[tone]} ${className}`.trim()}
       {...rest}
     >
       {bleed ? (

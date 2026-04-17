@@ -57,22 +57,23 @@ export default function ProductDetailsClient({ product }: Props) {
 
       <div className="flex flex-col gap-8">
         <header className="flex flex-col gap-3">
-          <p className="text-xs font-semibold uppercase tracking-widest text-neutral-500">
+          <p className="inline-flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.32em] text-gold">
+            <span aria-hidden className="h-px w-8 bg-gold/60" />
             {product.category}
           </p>
-          <h1 className="text-3xl font-semibold tracking-tight text-neutral-900 sm:text-4xl">
+          <h1 className="font-display text-4xl font-semibold leading-[1.05] tracking-tight text-paper sm:text-5xl">
             {product.name}
           </h1>
           <div className="flex items-center gap-3">
             <StarRating rating={product.rating} size={16} />
-            <span className="text-sm text-neutral-500">
+            <span className="text-sm text-paper-muted">
               ({product.reviews.length} reviews)
             </span>
           </div>
-          <p className="text-2xl font-semibold text-neutral-900">
+          <p className="font-display text-3xl font-semibold tracking-wide text-gold">
             {formatPrice(product.price)}
           </p>
-          <p className="max-w-prose text-sm leading-relaxed text-neutral-600">
+          <p className="max-w-prose text-sm leading-relaxed text-paper-muted">
             {product.description}
           </p>
         </header>
@@ -110,7 +111,7 @@ export default function ProductDetailsClient({ product }: Props) {
               "secondary",
               "lg",
               isSaved
-                ? "!border-red-500 !text-red-500 hover:!border-red-500 hover:bg-red-50"
+                ? "!border-gold !text-gold hover:!bg-gold/10 hover:!text-gold"
                 : "",
             )}
           >
@@ -119,21 +120,21 @@ export default function ProductDetailsClient({ product }: Props) {
           </button>
         </div>
 
-        <dl className="mt-2 grid grid-cols-1 gap-3 border-t border-neutral-200 pt-6 text-sm text-neutral-600 sm:grid-cols-2">
+        <dl className="mt-2 grid grid-cols-1 gap-3 border-t border-line pt-6 text-sm text-paper-muted sm:grid-cols-2">
           <div className="flex gap-2">
-            <dt className="font-medium text-neutral-900">SKU</dt>
+            <dt className="font-medium text-paper">SKU</dt>
             <dd>{product.id.toUpperCase()}</dd>
           </div>
           <div className="flex gap-2">
-            <dt className="font-medium text-neutral-900">Category</dt>
+            <dt className="font-medium text-paper">Category</dt>
             <dd>{product.category}</dd>
           </div>
           <div className="flex gap-2">
-            <dt className="font-medium text-neutral-900">Sizes</dt>
+            <dt className="font-medium text-paper">Sizes</dt>
             <dd>{product.size.join(", ")}</dd>
           </div>
           <div className="flex gap-2">
-            <dt className="font-medium text-neutral-900">Colors</dt>
+            <dt className="font-medium text-paper">Colors</dt>
             <dd>{product.color.join(", ")}</dd>
           </div>
         </dl>

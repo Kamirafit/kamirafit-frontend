@@ -32,9 +32,10 @@ export default function Categories() {
       <SectionHeader
         eyebrow="Shop by Category"
         title="Built for the way you wear it."
+        description="Thoughtfully designed silhouettes cut in premium fabrics — curated into three wardrobe-defining collections."
       />
 
-      <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:mt-12 lg:grid-cols-3">
+      <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:mt-16 lg:grid-cols-3 lg:gap-8">
         {CATEGORIES.map((category) => (
           <CategoryCard key={category.id} category={category} />
         ))}

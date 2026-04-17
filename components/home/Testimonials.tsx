@@ -40,18 +40,28 @@ export default function Testimonials() {
         title="What our customers are saying."
       />
 
-      <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3 lg:mt-12">
+      <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3 lg:mt-16 lg:gap-8">
         {TESTIMONIALS.map((t) => (
           <figure
             key={t.id}
-            className="flex h-full flex-col justify-between rounded-2xl border border-neutral-200 bg-white p-8 transition-shadow hover:shadow-sm"
+            className="relative flex h-full flex-col justify-between rounded-2xl border border-line bg-ink p-8 transition-all duration-300 hover:-translate-y-1 hover:border-gold/50 hover:shadow-[0_30px_60px_-30px_rgba(212,175,55,0.2)]"
           >
-            <blockquote className="text-base leading-relaxed text-neutral-800">
-              &ldquo;{t.quote}&rdquo;
+            <span
+              aria-hidden
+              className="absolute left-6 top-5 font-display text-5xl leading-none text-gold/40"
+            >
+              “
+            </span>
+            <blockquote className="relative z-10 pt-8 text-base leading-relaxed text-paper">
+              {t.quote}
             </blockquote>
-            <figcaption className="mt-8">
-              <p className="text-sm font-semibold text-neutral-900">{t.name}</p>
-              <p className="text-xs text-neutral-500">{t.location}</p>
+            <figcaption className="mt-8 border-t border-line pt-5">
+              <p className="font-display text-sm font-semibold text-paper">
+                {t.name}
+              </p>
+              <p className="mt-1 text-[11px] uppercase tracking-[0.2em] text-paper-muted">
+                {t.location}
+              </p>
             </figcaption>
           </figure>
         ))}
