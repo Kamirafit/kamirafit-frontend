@@ -2,6 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { buttonClasses } from "@/components/ui/Button";
+import { formatPrice } from "@/lib/format";
 import { useAppDispatch } from "../hooks/redux";
 import { addToCart } from "../store/cartSlice";
 import type { Product } from "../types";
@@ -12,14 +14,6 @@ import WishlistButton from "./WishlistButton";
 type Props = {
   product: Product;
 };
-
-function formatPrice(value: number) {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(value);
-}
 
 export default function ProductCard({ product }: Props) {
   const dispatch = useAppDispatch();
@@ -81,7 +75,7 @@ export default function ProductCard({ product }: Props) {
         <button
           type="button"
           onClick={() => dispatch(addToCart({ id: product.id }))}
-          className="mt-2 w-full rounded-full border border-neutral-900 bg-white px-4 py-2.5 text-xs font-medium text-neutral-900 transition-colors hover:bg-neutral-900 hover:text-white"
+          className={`${buttonClasses("secondary", "sm")} mt-2 w-full border-neutral-900 hover:bg-neutral-900 hover:text-white`}
         >
           Add to Cart
         </button>

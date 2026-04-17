@@ -2,6 +2,9 @@
 
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
+import { buttonClasses } from "@/components/ui/Button";
+import Container from "@/components/ui/Container";
+import SectionHeader from "@/components/ui/SectionHeader";
 import { useAppDispatch, useAppSelector } from "@/features/product/hooks/redux";
 import { clearCart } from "@/features/product/store/cartSlice";
 import { calculateTotals, formatPrice, resolveCartItems } from "../utils";
@@ -69,7 +72,7 @@ export default function CheckoutPageClient() {
 
   if (placedOrderTotal !== null) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-16 text-center sm:px-6 lg:px-8 lg:py-24">
+      <Container width="narrow" className="py-16 text-center lg:py-24">
         <div
           aria-hidden
           className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-neutral-900 text-2xl text-white"
@@ -84,26 +87,20 @@ export default function CheckoutPageClient() {
           confirmation will reach {values.phone || "you"} shortly.
         </p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <Link
-            href="/shop"
-            className="inline-flex items-center justify-center rounded-full bg-neutral-900 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-neutral-700"
-          >
+          <Link href="/shop" className={buttonClasses("primary", "md")}>
             Continue shopping
           </Link>
-          <Link
-            href="/"
-            className="inline-flex items-center justify-center rounded-full border border-neutral-300 bg-white px-6 py-3 text-sm font-medium text-neutral-900 transition-colors hover:border-neutral-900"
-          >
+          <Link href="/" className={buttonClasses("secondary", "md")}>
             Back to home
           </Link>
         </div>
-      </div>
+      </Container>
     );
   }
 
   if (resolved.length === 0) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-16 text-center sm:px-6 lg:px-8 lg:py-24">
+      <Container width="narrow" className="py-16 text-center lg:py-24">
         <h1 className="text-3xl font-semibold tracking-tight text-neutral-900 sm:text-4xl">
           Nothing to check out
         </h1>
@@ -112,27 +109,23 @@ export default function CheckoutPageClient() {
         </p>
         <Link
           href="/shop"
-          className="mt-8 inline-flex items-center justify-center rounded-full bg-neutral-900 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-neutral-700"
+          className={`${buttonClasses("primary", "md")} mt-8`}
         >
           Browse shop
         </Link>
-      </div>
+      </Container>
     );
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
-      <header className="mb-10 flex flex-col gap-2">
-        <p className="text-xs font-semibold uppercase tracking-widest text-neutral-500">
-          Checkout
-        </p>
-        <h1 className="text-3xl font-semibold tracking-tight text-neutral-900 sm:text-4xl">
-          Complete your order
-        </h1>
-        <p className="text-sm text-neutral-600">
-          Enter your shipping details to place the order.
-        </p>
-      </header>
+    <Container className="py-10 lg:py-14">
+      <SectionHeader
+        size="lg"
+        eyebrow="Checkout"
+        title="Complete your order"
+        description="Enter your shipping details to place the order."
+        className="mb-10"
+      />
 
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_380px] lg:gap-12">
         <section aria-label="Shipping address" className="min-w-0">
@@ -160,7 +153,7 @@ export default function CheckoutPageClient() {
             type="submit"
             form="checkout-form"
             disabled={submitting}
-            className="inline-flex items-center justify-center rounded-full bg-neutral-900 px-6 py-3.5 text-sm font-medium text-white transition-colors hover:bg-neutral-700 disabled:cursor-not-allowed disabled:bg-neutral-400"
+            className={buttonClasses("primary", "lg")}
           >
             {submitting ? "Placing order…" : `Pay Now · ${formatPrice(total)}`}
           </button>
@@ -169,6 +162,6 @@ export default function CheckoutPageClient() {
           </p>
         </div>
       </div>
-    </div>
+    </Container>
   );
 }

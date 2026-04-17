@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { buttonClasses } from "@/components/ui/Button";
 import type { Filters } from "../types";
 import FiltersSidebar from "./FiltersSidebar";
 import { CloseIcon } from "./icons";
@@ -69,7 +70,7 @@ export default function MobileFiltersDrawer({
           <button
             type="button"
             onClick={onClose}
-            className="w-full rounded-full bg-neutral-900 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-neutral-700"
+            className={`${buttonClasses("primary", "md")} w-full`}
           >
             View results
           </button>

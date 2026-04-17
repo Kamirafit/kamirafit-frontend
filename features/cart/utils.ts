@@ -31,10 +31,6 @@ export function calculateTotals(resolved: ResolvedCartItem[]) {
   return { subtotal, delivery, total };
 }
 
-export function formatPrice(value: number): string {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(value);
-}
+// Re-export the single source of truth for price formatting so existing cart
+// components can keep importing { formatPrice } from "../utils".
+export { formatPrice } from "@/lib/format";

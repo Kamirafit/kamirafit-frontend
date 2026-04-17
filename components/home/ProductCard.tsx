@@ -1,4 +1,6 @@
 import Image from "next/image";
+import { buttonClasses } from "@/components/ui/Button";
+import { formatPrice } from "@/lib/format";
 
 export type Product = {
   id: string;
@@ -11,14 +13,6 @@ export type Product = {
 type Props = {
   product: Product;
 };
-
-function formatPrice(value: number) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 0,
-  }).format(value);
-}
 
 export default function ProductCard({ product }: Props) {
   return (
@@ -43,12 +37,12 @@ export default function ProductCard({ product }: Props) {
             {product.name}
           </h3>
           <p className="mt-1 text-sm text-neutral-500">
-            {formatPrice(product.price)}
+            {formatPrice(product.price, { currency: "USD", locale: "en-US" })}
           </p>
         </div>
         <button
           type="button"
-          className="shrink-0 rounded-full border border-neutral-300 bg-white px-4 py-2 text-xs font-medium text-neutral-900 transition-colors hover:border-neutral-900 hover:bg-neutral-900 hover:text-white"
+          className={`${buttonClasses("secondary", "sm")} shrink-0 hover:bg-neutral-900 hover:text-white`}
         >
           Add to cart
         </button>

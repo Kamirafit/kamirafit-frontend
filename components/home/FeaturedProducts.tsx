@@ -1,3 +1,5 @@
+import Section from "@/components/ui/Section";
+import SectionHeader from "@/components/ui/SectionHeader";
 import ProductCard, { type Product } from "./ProductCard";
 
 const PRODUCTS: Product[] = [
@@ -35,32 +37,25 @@ const PRODUCTS: Product[] = [
 
 export default function FeaturedProducts() {
   return (
-    <section
-      id="shop"
-      className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8"
-    >
-      <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-neutral-500">
-            Featured
-          </p>
-          <h2 className="mt-2 text-3xl font-semibold tracking-tight text-neutral-900 sm:text-4xl">
-            This Week&apos;s Edit
-          </h2>
-        </div>
-        <a
-          href="#shop"
-          className="text-sm font-medium text-neutral-600 underline-offset-4 transition-colors hover:text-neutral-900 hover:underline"
-        >
-          View all products →
-        </a>
-      </div>
+    <Section id="shop">
+      <SectionHeader
+        eyebrow="Featured"
+        title="This Week's Edit"
+        action={
+          <a
+            href="/shop"
+            className="text-sm font-medium text-neutral-600 underline-offset-4 transition-colors hover:text-neutral-900 hover:underline"
+          >
+            View all products →
+          </a>
+        }
+      />
 
-      <div className="mt-12 grid grid-cols-2 gap-x-6 gap-y-10 sm:gap-x-8 lg:grid-cols-4">
+      <div className="mt-10 grid grid-cols-2 gap-x-6 gap-y-10 sm:gap-x-8 lg:mt-12 lg:grid-cols-4">
         {PRODUCTS.map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}
       </div>
-    </section>
+    </Section>
   );
 }

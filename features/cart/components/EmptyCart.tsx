@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { buttonClasses } from "@/components/ui/Button";
 
 export default function EmptyCart() {
   return (
@@ -18,10 +19,7 @@ export default function EmptyCart() {
           to find your next favorite piece.
         </p>
       </div>
-      <Link
-        href="/shop"
-        className="inline-flex items-center justify-center rounded-full bg-neutral-900 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-neutral-700"
-      >
+      <Link href="/shop" className={buttonClasses("primary", "md")}>
         Continue shopping
       </Link>
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, type FormEvent } from "react";
+import { buttonClasses } from "@/components/ui/Button";
 
 export type ShippingDetails = {
   name: string;
@@ -182,7 +183,7 @@ export default function ShippingForm({
         <button
           type="submit"
           disabled={submitting}
-          className="mt-2 inline-flex items-center justify-center rounded-full bg-neutral-900 px-6 py-3.5 text-sm font-medium text-white transition-colors hover:bg-neutral-700 disabled:cursor-not-allowed disabled:bg-neutral-400"
+          className={`${buttonClasses("primary", "lg")} mt-2`}
         >
           {submitLabel}
         </button>

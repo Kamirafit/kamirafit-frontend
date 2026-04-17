@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import Footer from "@/components/home/Footer";
-import Navbar from "@/components/home/Navbar";
+import PageShell from "@/components/layout/PageShell";
 import CartPageClient from "@/features/cart/components/CartPageClient";
 
 export const metadata: Metadata = {
@@ -10,12 +9,8 @@ export const metadata: Metadata = {
 
 export default function CartPage() {
   return (
-    <div className="flex min-h-screen flex-col bg-white text-neutral-900">
-      <Navbar />
-      <main className="flex-1">
-        <CartPageClient />
-      </main>
-      <Footer />
-    </div>
+    <PageShell>
+      <CartPageClient />
+    </PageShell>
   );
 }

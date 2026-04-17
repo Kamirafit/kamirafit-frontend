@@ -1,5 +1,6 @@
 "use client";
 
+import { buttonClasses } from "@/components/ui/Button";
 import type { SortKey } from "../types";
 import { ChevronDownIcon, FilterIcon } from "./icons";
 
@@ -34,7 +35,7 @@ export default function SortBar({
         <button
           type="button"
           onClick={onOpenMobileFilters}
-          className="inline-flex items-center gap-2 rounded-full border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-800 transition-colors hover:border-neutral-900 lg:hidden"
+          className={`${buttonClasses("secondary", "sm")} lg:hidden`}
         >
           <FilterIcon width={16} height={16} />
           Filters
