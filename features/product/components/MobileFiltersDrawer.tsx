@@ -45,7 +45,7 @@ export default function MobileFiltersDrawer({
         onClick={onClose}
         className="flex-1 bg-ink/70 backdrop-blur-sm"
       />
-      <div className="flex h-full w-[88%] max-w-sm flex-col border-l border-line bg-ink shadow-[0_0_80px_-20px_rgba(0,0,0,0.8)]">
+      <div className="flex h-full w-[88%] max-w-sm flex-col border-l border-line bg-ink shadow-[0_0_80px_-20px_rgba(74,14,26,0.12)]">
         <div className="flex items-center justify-between border-b border-line px-5 py-4">
           <h2 className="text-[11px] font-semibold uppercase tracking-[0.32em] text-gold">
             Filters

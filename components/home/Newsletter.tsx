@@ -20,7 +20,7 @@ export default function Newsletter() {
         <div className="relative isolate overflow-hidden rounded-3xl border border-gold/30 bg-ink-2 px-6 py-16 text-center sm:px-12 sm:py-20">
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(212,175,55,0.18),transparent_60%)]"
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(139,30,45,0.18),transparent_60%)]"
           />
           <div
             aria-hidden
@@ -57,7 +57,7 @@ export default function Newsletter() {
             />
             <button
               type="submit"
-              className="inline-flex items-center justify-center rounded-full bg-gold px-7 py-3 text-[12px] font-medium uppercase tracking-[0.2em] text-ink shadow-[0_10px_30px_-12px_rgba(212,175,55,0.6)] transition-all duration-200 hover:-translate-y-px hover:bg-gold-bright hover:shadow-[0_14px_40px_-12px_rgba(212,175,55,0.75)]"
+              className="inline-flex items-center justify-center rounded-full bg-gold px-7 py-3 text-[12px] font-medium uppercase tracking-[0.2em] text-ink shadow-[0_10px_30px_-12px_rgba(139,30,45,0.6)] transition-all duration-200 hover:-translate-y-px hover:bg-gold-bright hover:shadow-[0_14px_40px_-12px_rgba(139,30,45,0.75)]"
             >
               Subscribe
             </button>

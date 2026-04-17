@@ -17,7 +17,7 @@ type Props = {
 export default function ProductCard({ product }: Props) {
   return (
     <article className="group flex flex-col">
-      <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl border border-line bg-ink-2 transition-all duration-300 group-hover:-translate-y-1 group-hover:border-gold/50 group-hover:shadow-[0_30px_60px_-30px_rgba(212,175,55,0.25)]">
+      <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl border border-line bg-ink-2 transition-all duration-300 group-hover:-translate-y-1 group-hover:border-gold/50 group-hover:shadow-[0_30px_60px_-30px_rgba(139,30,45,0.25)]">
         <Image
           src={product.image}
           alt={product.name}

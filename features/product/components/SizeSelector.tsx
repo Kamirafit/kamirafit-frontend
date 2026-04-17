@@ -42,7 +42,7 @@ export default function SizeSelector({ options, value, onChange, error }: Props)
               onClick={() => onChange(s)}
               className={`inline-flex h-11 min-w-11 items-center justify-center rounded-full border px-4 text-sm font-medium transition-all duration-200 ${
                 selected
-                  ? "border-gold bg-gold text-ink shadow-[0_10px_25px_-12px_rgba(212,175,55,0.55)]"
+                  ? "border-gold bg-gold text-ink shadow-[0_10px_25px_-12px_rgba(139,30,45,0.55)]"
                   : "border-line bg-ink-2 text-paper hover:-translate-y-0.5 hover:border-gold hover:text-gold"
               }`}
             >

@@ -14,7 +14,7 @@ export default function ImageGallery({ images, alt }: Props) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl border border-line bg-ink-2 shadow-[0_40px_80px_-40px_rgba(0,0,0,0.9)]">
+      <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl border border-line bg-ink-2 shadow-[0_40px_80px_-40px_rgba(74,14,26,0.15)]">
         <Image
           key={activeSrc}
           src={activeSrc}
@@ -48,7 +48,7 @@ export default function ImageGallery({ images, alt }: Props) {
                 onClick={() => setActive(i)}
                 className={`relative aspect-square w-20 shrink-0 overflow-hidden rounded-lg border transition-all duration-200 ${
                   selected
-                    ? "border-gold shadow-[0_0_0_1px_rgba(212,175,55,0.5)]"
+                    ? "border-gold shadow-[0_0_0_1px_rgba(139,30,45,0.5)]"
                     : "border-line hover:border-gold/60"
                 }`}
               >
