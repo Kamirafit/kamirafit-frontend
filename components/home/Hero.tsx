@@ -15,7 +15,7 @@ export default function Hero() {
         className="pointer-events-none absolute -right-32 -top-20 h-[340px] w-[340px] rounded-full bg-gold/5 blur-3xl"
       />
 
-      <Container className="relative grid min-h-[70vh] grid-cols-1 items-center gap-10 py-10 sm:py-12 lg:grid-cols-2 lg:gap-16 lg:py-14">
+      <Container className="relative grid grid-cols-1 items-center gap-8 py-8 sm:py-10 lg:grid-cols-2 lg:gap-14 lg:py-12">
         <div className="order-2 lg:order-1">
           <span className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-ink-2/60 px-3.5 py-1.5 text-[10px] font-medium uppercase tracking-[0.28em] text-gold backdrop-blur">
             <span
@@ -24,16 +24,16 @@ export default function Hero() {
             />
             New Collection · 2026
           </span>
-          <h1 className="mt-6 font-display text-5xl font-semibold leading-[1.02] tracking-tight text-paper sm:text-6xl lg:text-[72px]">
+          <h1 className="mt-5 font-display text-4xl font-semibold leading-[1.05] tracking-tight text-paper sm:text-5xl lg:text-[56px]">
             Elevate Your
             <br />
             <span className="italic text-gold">Everyday</span> Style.
           </h1>
-          <p className="mt-6 max-w-xl text-base leading-relaxed text-paper-muted sm:text-lg">
+          <p className="mt-4 max-w-xl text-base leading-relaxed text-paper-muted">
             Premium comfort. Effortless fashion. Thoughtfully crafted essentials
             designed to move with you, day after day.
           </p>
-          <div className="mt-8 flex flex-wrap items-center gap-4">
+          <div className="mt-6 flex flex-wrap items-center gap-4">
             <a
               href="/shop"
               className={`${buttonClasses("primary", "lg")} group`}
@@ -46,7 +46,7 @@ export default function Hero() {
             </a>
           </div>
 
-          <dl className="mt-10 grid grid-cols-3 gap-6 border-t border-line pt-6">
+          <dl className="mt-8 grid grid-cols-3 gap-6 border-t border-line pt-5">
             <div>
               <dt className="text-[10px] uppercase tracking-[0.28em] text-gold">
                 Crafted in
