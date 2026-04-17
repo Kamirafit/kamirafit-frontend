@@ -41,10 +41,10 @@ export default function ProductCard({ product }: Props) {
           </span>
         ) : null}
 
-        {/* Add-to-Cart: hover-only on desktop, always visible on mobile */}
+        {/* Add-to-Cart: always visible, invert colors on hover */}
         <button
           type="button"
-          className="absolute inset-x-3 bottom-3 inline-flex items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-[12px] font-semibold uppercase tracking-[0.14em] text-ink shadow-lg shadow-black/20 transition-all duration-300 ease-out hover:bg-gold hover:text-white md:translate-y-3 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100"
+          className="absolute inset-x-3 bottom-3 inline-flex items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-[12px] font-semibold uppercase tracking-[0.14em] text-ink shadow-lg shadow-black/20 transition-colors duration-200 ease-out hover:bg-gold hover:text-white"
         >
           Add to cart
         </button>

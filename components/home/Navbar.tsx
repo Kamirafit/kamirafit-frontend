@@ -79,7 +79,7 @@ export default function Navbar() {
             <button
               type="button"
               aria-haspopup="true"
-              className="relative inline-flex items-center gap-1.5 text-[12px] font-medium uppercase tracking-[0.22em] text-paper-muted transition-colors hover:text-gold group-hover/cats:text-gold"
+              className="relative inline-flex items-center gap-1.5 text-[12px] font-medium uppercase tracking-[0.22em] text-paper transition-colors hover:text-gold group-hover/cats:text-gold"
             >
               Categories
               <svg
@@ -174,7 +174,7 @@ export default function Navbar() {
             className="relative rounded-full p-2 text-paper-muted transition-colors hover:bg-ink-3 hover:text-gold"
           >
             <CartIcon />
-            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 text-[10px] font-semibold text-paper shadow-[0_0_0_2px_var(--color-ink)]">
+            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 text-[10px] font-semibold text-white shadow-[0_0_0_2px_var(--color-ink)]">
               {cartCount}
             </span>
           </Link>
@@ -209,7 +209,7 @@ export default function Navbar() {
                 key={link.label}
                 href={link.href}
                 onClick={() => setOpen(false)}
-                className="rounded-md px-3 py-2.5 text-sm font-medium uppercase tracking-[0.2em] text-paper-muted transition-colors hover:bg-ink-3 hover:text-gold"
+                className="rounded-md px-3 py-2.5 text-sm font-medium uppercase tracking-[0.2em] text-paper transition-colors hover:bg-ink-3 hover:text-gold"
               >
                 {link.label}
               </Link>
@@ -219,7 +219,7 @@ export default function Navbar() {
               type="button"
               aria-expanded={mobileCatOpen}
               onClick={() => setMobileCatOpen((v) => !v)}
-              className="flex items-center justify-between rounded-md px-3 py-2.5 text-sm font-medium uppercase tracking-[0.2em] text-paper-muted transition-colors hover:bg-ink-3 hover:text-gold"
+              className="flex items-center justify-between rounded-md px-3 py-2.5 text-sm font-medium uppercase tracking-[0.2em] text-paper transition-colors hover:bg-ink-3 hover:text-gold"
             >
               Categories
               <svg
@@ -271,7 +271,7 @@ export default function Navbar() {
                 key={link.label}
                 href={link.href}
                 onClick={() => setOpen(false)}
-                className="rounded-md px-3 py-2.5 text-sm font-medium uppercase tracking-[0.2em] text-paper-muted transition-colors hover:bg-ink-3 hover:text-gold"
+                className="rounded-md px-3 py-2.5 text-sm font-medium uppercase tracking-[0.2em] text-paper transition-colors hover:bg-ink-3 hover:text-gold"
               >
                 {link.label}
               </Link>
@@ -293,7 +293,7 @@ function NavLink({ label, href }: { label: string; href: string }) {
   return (
     <Link
       href={href}
-      className="group relative text-[12px] font-medium uppercase tracking-[0.22em] text-paper-muted transition-colors hover:text-gold"
+      className="group relative text-[12px] font-medium uppercase tracking-[0.22em] text-paper transition-colors hover:text-gold"
     >
       {label}
       <span

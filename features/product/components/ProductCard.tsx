@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { buttonClasses } from "@/components/ui/Button";
 import { formatPrice } from "@/lib/format";
 import { useAppDispatch } from "../hooks/redux";
 import { addToCart } from "../store/cartSlice";
@@ -20,7 +19,7 @@ export default function ProductCard({ product }: Props) {
 
   return (
     <article className="group flex flex-col">
-      <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl border border-line bg-ink-2 transition-all duration-300 group-hover:-translate-y-1 group-hover:border-gold/50 group-hover:shadow-[0_30px_60px_-30px_rgba(139,30,45,0.25)]">
+      <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl border border-line bg-ink-2 transition-all duration-300 group-hover:-translate-y-1 group-hover:scale-[1.02] group-hover:border-gold/50 group-hover:shadow-lg group-hover:shadow-[0_30px_60px_-30px_rgba(139,30,45,0.35)]">
         <Link
           href={`/product/${product.id}`}
           aria-label={`View ${product.name}`}
@@ -41,6 +40,18 @@ export default function ProductCard({ product }: Props) {
         <span className="absolute left-3 top-3 z-10 rounded-full border border-gold/50 bg-ink/85 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-gold backdrop-blur">
           {product.category}
         </span>
+
+        {/* Add-to-Cart: always visible, invert colors on hover */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            dispatch(addToCart({ id: product.id }));
+          }}
+          className="absolute inset-x-3 bottom-3 z-10 inline-flex items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-[12px] font-semibold uppercase tracking-[0.14em] text-ink shadow-lg shadow-black/20 transition-colors duration-200 ease-out hover:bg-gold hover:text-white"
+        >
+          Add to Cart
+        </button>
       </div>
 
       <div className="mt-5 flex flex-col gap-2.5">
@@ -71,14 +82,6 @@ export default function ProductCard({ product }: Props) {
             />
           ))}
         </div>
-
-        <button
-          type="button"
-          onClick={() => dispatch(addToCart({ id: product.id }))}
-          className={`${buttonClasses("secondary", "sm")} mt-2 w-full`}
-        >
-          Add to Cart
-        </button>
       </div>
     </article>
   );
