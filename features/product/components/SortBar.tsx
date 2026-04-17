@@ -1,0 +1,65 @@
+"use client";
+
+import type { SortKey } from "../types";
+import { ChevronDownIcon, FilterIcon } from "./icons";
+
+type Props = {
+  sort: SortKey;
+  onSortChange: (next: SortKey) => void;
+  totalCount: number;
+  onOpenMobileFilters: () => void;
+};
+
+const SORT_OPTIONS: { value: SortKey; label: string }[] = [
+  { value: "price-asc", label: "Price: Low to High" },
+  { value: "price-desc", label: "Price: High to Low" },
+  { value: "newest", label: "Newest" },
+  { value: "popular", label: "Popular" },
+];
+
+export default function SortBar({
+  sort,
+  onSortChange,
+  totalCount,
+  onOpenMobileFilters,
+}: Props) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-200 pb-4">
+      <p className="text-sm text-neutral-600">
+        <span className="font-semibold text-neutral-900">{totalCount}</span>{" "}
+        {totalCount === 1 ? "product" : "products"}
+      </p>
+
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={onOpenMobileFilters}
+          className="inline-flex items-center gap-2 rounded-full border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-800 transition-colors hover:border-neutral-900 lg:hidden"
+        >
+          <FilterIcon width={16} height={16} />
+          Filters
+        </button>
+
+        <label className="relative inline-flex items-center">
+          <span className="sr-only">Sort products by</span>
+          <select
+            value={sort}
+            onChange={(e) => onSortChange(e.target.value as SortKey)}
+            className="appearance-none rounded-full border border-neutral-300 bg-white py-2 pl-4 pr-9 text-sm font-medium text-neutral-900 transition-colors hover:border-neutral-900 focus:border-neutral-900 focus:outline-none"
+          >
+            {SORT_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          <ChevronDownIcon
+            width={14}
+            height={14}
+            className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500"
+          />
+        </label>
+      </div>
+    </div>
+  );
+}
