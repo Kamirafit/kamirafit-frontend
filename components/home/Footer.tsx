@@ -55,7 +55,7 @@ export default function Footer() {
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/50 to-transparent"
       />
-      <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+      <div className="w-full px-4 py-14 sm:px-6 sm:py-16 lg:px-10">
         <div className="grid grid-cols-2 gap-10 sm:grid-cols-3 lg:grid-cols-4">
           <div className="col-span-2 sm:col-span-3 lg:col-span-1">
             <Link

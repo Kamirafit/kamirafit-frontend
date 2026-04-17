@@ -2,10 +2,12 @@ import type { ComponentPropsWithoutRef, ElementType, ReactNode } from "react";
 
 type Width = "default" | "narrow" | "wide";
 
+// Full-width by default. `narrow` still caps for long-form text blocks
+// (e.g. testimonials, newsletter lead-in) where edge-to-edge would hurt readability.
 const WIDTH_CLASS: Record<Width, string> = {
-  default: "max-w-7xl",
+  default: "",
   narrow: "max-w-3xl",
-  wide: "max-w-screen-2xl",
+  wide: "",
 };
 
 type ContainerProps<T extends ElementType> = {
@@ -29,7 +31,7 @@ export default function Container<T extends ElementType = "div">({
   const Tag = (as ?? "div") as ElementType;
   return (
     <Tag
-      className={`mx-auto w-full ${WIDTH_CLASS[width]} px-4 sm:px-6 lg:px-8 ${className}`.trim()}
+      className={`mx-auto w-full ${WIDTH_CLASS[width]} px-4 sm:px-6 lg:px-10 ${className}`.trim()}
       {...rest}
     >
       {children}
