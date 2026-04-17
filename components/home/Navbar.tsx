@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useAppSelector } from "@/features/product/hooks/redux";
 import {
   CartIcon,
   CloseIcon,
@@ -11,13 +12,16 @@ import {
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
-  { label: "Shop", href: "#shop" },
-  { label: "About", href: "#about" },
-  { label: "Contact", href: "#contact" },
+  { label: "Shop", href: "/shop" },
+  { label: "About", href: "/#about" },
+  { label: "Contact", href: "/#contact" },
 ];
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const cartCount = useAppSelector((s) =>
+    s.cart.items.reduce((sum, it) => sum + it.quantity, 0),
+  );
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-neutral-200/70 bg-white/80 backdrop-blur-md">
@@ -56,7 +60,7 @@ export default function Navbar() {
           >
             <CartIcon />
             <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-neutral-900 px-1 text-[10px] font-semibold text-white">
-              0
+              {cartCount}
             </span>
           </button>
           <button
