@@ -47,52 +47,53 @@ export default async function ProductPage({
 
   return (
     <PageShell>
-      <Container className="py-8 lg:py-12">
-        <nav aria-label="Breadcrumb" className="mb-6 text-xs text-neutral-500">
-          <ol className="flex flex-wrap items-center gap-1.5">
+      <Container className="py-10 lg:py-14">
+        <nav
+          aria-label="Breadcrumb"
+          className="mb-8 text-[11px] uppercase tracking-[0.22em] text-paper-muted"
+        >
+          <ol className="flex flex-wrap items-center gap-2">
             <li>
-              <Link
-                href="/"
-                className="transition-colors hover:text-neutral-900"
-              >
+              <Link href="/" className="transition-colors hover:text-gold">
                 Home
               </Link>
             </li>
-            <li aria-hidden="true">/</li>
+            <li aria-hidden="true" className="text-line-strong">
+              /
+            </li>
             <li>
-              <Link
-                href="/shop"
-                className="transition-colors hover:text-neutral-900"
-              >
+              <Link href="/shop" className="transition-colors hover:text-gold">
                 Shop
               </Link>
             </li>
-            <li aria-hidden="true">/</li>
-            <li className="text-neutral-900">{product.name}</li>
+            <li aria-hidden="true" className="text-line-strong">
+              /
+            </li>
+            <li className="text-gold">{product.name}</li>
           </ol>
         </nav>
 
         <ProductDetailsClient product={product} />
 
-        <div className="mt-16 grid grid-cols-1 gap-16">
+        <div className="mt-20 grid grid-cols-1 gap-20">
           <section
             aria-labelledby="description-heading"
             className="flex flex-col gap-4"
           >
             <h2
               id="description-heading"
-              className="text-xl font-semibold tracking-tight text-neutral-900 sm:text-2xl"
+              className="font-display text-2xl font-semibold tracking-tight text-paper sm:text-3xl"
             >
               Product description
             </h2>
-            <p className="max-w-3xl text-sm leading-relaxed text-neutral-700">
+            <p className="max-w-3xl text-sm leading-relaxed text-paper-muted">
               {product.description}
             </p>
-            <ul className="mt-2 grid max-w-xl grid-cols-1 gap-2 text-sm text-neutral-700 sm:grid-cols-2">
-              <li>· Premium combed cotton blend</li>
-              <li>· Reinforced shoulder seams</li>
-              <li>· Pre-washed for minimal shrinkage</li>
-              <li>· Machine washable</li>
+            <ul className="mt-2 grid max-w-xl grid-cols-1 gap-2 text-sm text-paper-muted sm:grid-cols-2">
+              <li><span className="text-gold">·</span> Premium combed cotton blend</li>
+              <li><span className="text-gold">·</span> Reinforced shoulder seams</li>
+              <li><span className="text-gold">·</span> Pre-washed for minimal shrinkage</li>
+              <li><span className="text-gold">·</span> Machine washable</li>
             </ul>
           </section>
 

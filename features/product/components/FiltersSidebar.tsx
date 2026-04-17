@@ -28,11 +28,13 @@ export default function FiltersSidebar({ filters, onChange, onReset }: Props) {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold text-neutral-900">Filters</h2>
+        <h2 className="text-[11px] font-semibold uppercase tracking-[0.32em] text-gold">
+          Filters
+        </h2>
         <button
           type="button"
           onClick={onReset}
-          className="text-xs font-medium text-neutral-500 underline-offset-4 transition-colors hover:text-neutral-900 hover:underline"
+          className="text-xs font-medium text-paper-muted underline-offset-4 transition-colors hover:text-gold hover:underline"
         >
           Reset all
         </button>

@@ -28,22 +28,24 @@ export default function CheckboxGroup<T extends string>({
 
   return (
     <fieldset>
-      <legend className="text-xs font-semibold uppercase tracking-widest text-neutral-500">
+      <legend className="text-[10px] font-semibold uppercase tracking-[0.28em] text-paper-muted">
         {legend}
       </legend>
-      <div className="mt-3 flex flex-col gap-2">
+      <div className="mt-3 flex flex-col gap-2.5">
         {options.map((opt) => {
           const checked = selected.includes(opt.value);
           return (
             <label
               key={opt.value}
-              className="flex cursor-pointer items-center gap-2.5 text-sm text-neutral-800"
+              className={`flex cursor-pointer items-center gap-2.5 text-sm transition-colors ${
+                checked ? "text-gold" : "text-paper hover:text-gold"
+              }`}
             >
               <input
                 type="checkbox"
                 checked={checked}
                 onChange={() => toggle(opt.value)}
-                className="h-4 w-4 rounded border-neutral-300 text-neutral-900 accent-neutral-900 focus:ring-neutral-900"
+                className="h-4 w-4 rounded border-line bg-ink-2 text-gold accent-gold focus:ring-gold/50"
               />
               <span>{opt.label}</span>
             </label>

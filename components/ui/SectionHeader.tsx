@@ -30,28 +30,29 @@ export default function SectionHeader({
   const Heading = size === "lg" ? "h1" : "h2";
   const headingClass =
     size === "lg"
-      ? "text-3xl font-semibold tracking-tight text-neutral-900 sm:text-4xl"
-      : "text-3xl font-semibold tracking-tight text-neutral-900 sm:text-4xl";
+      ? "font-display text-4xl font-semibold leading-[1.05] tracking-tight text-paper sm:text-5xl lg:text-[56px]"
+      : "font-display text-3xl font-semibold leading-[1.1] tracking-tight text-paper sm:text-4xl lg:text-[42px]";
 
   return (
     <div
-      className={`flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between ${
+      className={`flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between ${
         action ? "" : "sm:flex-col sm:items-start"
       } ${className}`.trim()}
     >
       <div
-        className={`flex flex-col gap-2 ${
-          center ? "mx-auto max-w-2xl text-center" : "max-w-2xl"
+        className={`flex flex-col gap-3 ${
+          center ? "mx-auto max-w-2xl items-center text-center" : "max-w-2xl"
         }`.trim()}
       >
         {eyebrow ? (
-          <p className="text-xs font-semibold uppercase tracking-widest text-neutral-500">
+          <p className="inline-flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.32em] text-gold">
+            <span aria-hidden className="h-px w-8 bg-gold/60" />
             {eyebrow}
           </p>
         ) : null}
         <Heading className={headingClass}>{title}</Heading>
         {description ? (
-          <p className="text-sm leading-relaxed text-neutral-600 sm:text-base">
+          <p className="max-w-xl text-sm leading-relaxed text-paper-muted sm:text-base">
             {description}
           </p>
         ) : null}

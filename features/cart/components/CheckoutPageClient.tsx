@@ -72,21 +72,25 @@ export default function CheckoutPageClient() {
 
   if (placedOrderTotal !== null) {
     return (
-      <Container width="narrow" className="py-16 text-center lg:py-24">
+      <Container width="narrow" className="py-20 text-center lg:py-28">
         <div
           aria-hidden
-          className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-neutral-900 text-2xl text-white"
+          className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-gold/50 bg-ink-2 text-3xl text-gold shadow-[0_20px_50px_-20px_rgba(212,175,55,0.5)]"
         >
           ✓
         </div>
-        <h1 className="text-3xl font-semibold tracking-tight text-neutral-900 sm:text-4xl">
-          Thank you, {values.name.split(" ")[0] || "friend"}!
+        <h1 className="font-display text-4xl font-semibold tracking-tight text-paper sm:text-5xl">
+          Thank you, {values.name.split(" ")[0] || "friend"}.
         </h1>
-        <p className="mx-auto mt-3 max-w-md text-sm text-neutral-600">
-          Your order of {formatPrice(placedOrderTotal)} has been placed. A
-          confirmation will reach {values.phone || "you"} shortly.
+        <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-paper-muted">
+          Your order of{" "}
+          <span className="font-semibold text-gold">
+            {formatPrice(placedOrderTotal)}
+          </span>{" "}
+          has been placed. A confirmation will reach {values.phone || "you"}{" "}
+          shortly.
         </p>
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
           <Link href="/shop" className={buttonClasses("primary", "md")}>
             Continue shopping
           </Link>
@@ -100,11 +104,11 @@ export default function CheckoutPageClient() {
 
   if (resolved.length === 0) {
     return (
-      <Container width="narrow" className="py-16 text-center lg:py-24">
-        <h1 className="text-3xl font-semibold tracking-tight text-neutral-900 sm:text-4xl">
+      <Container width="narrow" className="py-20 text-center lg:py-28">
+        <h1 className="font-display text-4xl font-semibold tracking-tight text-paper sm:text-5xl">
           Nothing to check out
         </h1>
-        <p className="mx-auto mt-3 max-w-md text-sm text-neutral-600">
+        <p className="mx-auto mt-4 max-w-md text-sm text-paper-muted">
           Your cart is empty. Add something you love before heading to checkout.
         </p>
         <Link
@@ -118,18 +122,18 @@ export default function CheckoutPageClient() {
   }
 
   return (
-    <Container className="py-10 lg:py-14">
+    <Container className="py-14 lg:py-20">
       <SectionHeader
         size="lg"
         eyebrow="Checkout"
         title="Complete your order"
         description="Enter your shipping details to place the order."
-        className="mb-10"
+        className="mb-12"
       />
 
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_380px] lg:gap-12">
         <section aria-label="Shipping address" className="min-w-0">
-          <h2 className="mb-5 text-lg font-semibold text-neutral-900">
+          <h2 className="mb-5 font-display text-lg font-semibold text-paper">
             Shipping address
           </h2>
           <ShippingForm
@@ -157,7 +161,7 @@ export default function CheckoutPageClient() {
           >
             {submitting ? "Placing order…" : `Pay Now · ${formatPrice(total)}`}
           </button>
-          <p className="text-xs text-neutral-500">
+          <p className="text-xs text-paper-muted/80">
             Payment gateway not connected — this is a UI-only flow.
           </p>
         </div>

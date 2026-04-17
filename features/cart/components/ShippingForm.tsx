@@ -33,7 +33,7 @@ function FieldLabel({
   return (
     <label
       htmlFor={htmlFor}
-      className="text-xs font-medium uppercase tracking-wider text-neutral-600"
+      className="text-[10px] font-semibold uppercase tracking-[0.28em] text-paper-muted"
     >
       {children}
     </label>
@@ -60,10 +60,10 @@ export default function ShippingForm({
   };
 
   const inputClass = (hasError?: boolean) =>
-    `w-full rounded-xl border px-4 py-3 text-sm text-neutral-900 outline-none transition-colors placeholder:text-neutral-400 focus:ring-2 focus:ring-neutral-900/10 ${
+    `w-full rounded-xl border bg-ink-2 px-4 py-3 text-sm text-paper outline-none transition-colors placeholder:text-paper-muted/60 focus:ring-2 focus:ring-gold/30 ${
       hasError
-        ? "border-red-500 focus:border-red-500"
-        : "border-neutral-300 focus:border-neutral-900"
+        ? "border-red-500/70 focus:border-red-500"
+        : "border-line focus:border-gold"
     }`;
 
   return (
@@ -82,7 +82,7 @@ export default function ShippingForm({
           aria-describedby={errors.name ? `${fieldId("name")}-err` : undefined}
         />
         {errors.name ? (
-          <p id={`${fieldId("name")}-err`} className="text-xs text-red-600">
+          <p id={`${fieldId("name")}-err`} className="text-xs text-red-400">
             {errors.name}
           </p>
         ) : null}
@@ -103,7 +103,7 @@ export default function ShippingForm({
           aria-describedby={errors.phone ? `${fieldId("phone")}-err` : undefined}
         />
         {errors.phone ? (
-          <p id={`${fieldId("phone")}-err`} className="text-xs text-red-600">
+          <p id={`${fieldId("phone")}-err`} className="text-xs text-red-400">
             {errors.phone}
           </p>
         ) : null}
@@ -125,7 +125,7 @@ export default function ShippingForm({
           }
         />
         {errors.address ? (
-          <p id={`${fieldId("address")}-err`} className="text-xs text-red-600">
+          <p id={`${fieldId("address")}-err`} className="text-xs text-red-400">
             {errors.address}
           </p>
         ) : null}
@@ -146,7 +146,7 @@ export default function ShippingForm({
             aria-describedby={errors.city ? `${fieldId("city")}-err` : undefined}
           />
           {errors.city ? (
-            <p id={`${fieldId("city")}-err`} className="text-xs text-red-600">
+            <p id={`${fieldId("city")}-err`} className="text-xs text-red-400">
               {errors.city}
             </p>
           ) : null}
@@ -171,7 +171,7 @@ export default function ShippingForm({
           {errors.pincode ? (
             <p
               id={`${fieldId("pincode")}-err`}
-              className="text-xs text-red-600"
+              className="text-xs text-red-400"
             >
               {errors.pincode}
             </p>

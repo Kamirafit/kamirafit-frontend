@@ -23,8 +23,10 @@ export default function WishlistButton({ productId, className = "" }: Props) {
         e.stopPropagation();
         dispatch(toggleWishlist(productId));
       }}
-      className={`inline-flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 bg-white/90 text-neutral-700 backdrop-blur transition-colors hover:border-neutral-400 hover:text-neutral-900 ${
-        isSaved ? "text-red-500 hover:text-red-500" : ""
+      className={`inline-flex h-9 w-9 items-center justify-center rounded-full border backdrop-blur transition-all duration-200 hover:-translate-y-0.5 ${
+        isSaved
+          ? "border-gold bg-gold/15 text-gold shadow-[0_8px_20px_-10px_rgba(212,175,55,0.6)]"
+          : "border-line bg-ink/75 text-paper-muted hover:border-gold hover:text-gold"
       } ${className}`}
     >
       <HeartIcon filled={isSaved} width={16} height={16} />

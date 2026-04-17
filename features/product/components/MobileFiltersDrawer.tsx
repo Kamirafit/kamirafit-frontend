@@ -43,16 +43,18 @@ export default function MobileFiltersDrawer({
         type="button"
         aria-label="Close filters"
         onClick={onClose}
-        className="flex-1 bg-neutral-900/40"
+        className="flex-1 bg-ink/70 backdrop-blur-sm"
       />
-      <div className="flex h-full w-[88%] max-w-sm flex-col bg-white shadow-xl">
-        <div className="flex items-center justify-between border-b border-neutral-200 px-5 py-4">
-          <h2 className="text-base font-semibold text-neutral-900">Filters</h2>
+      <div className="flex h-full w-[88%] max-w-sm flex-col border-l border-line bg-ink shadow-[0_0_80px_-20px_rgba(0,0,0,0.8)]">
+        <div className="flex items-center justify-between border-b border-line px-5 py-4">
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.32em] text-gold">
+            Filters
+          </h2>
           <button
             type="button"
             aria-label="Close filters"
             onClick={onClose}
-            className="rounded-full p-1.5 text-neutral-700 transition-colors hover:bg-neutral-100"
+            className="rounded-full p-1.5 text-paper-muted transition-colors hover:bg-ink-3 hover:text-gold"
           >
             <CloseIcon />
           </button>
@@ -66,7 +68,7 @@ export default function MobileFiltersDrawer({
           />
         </div>
 
-        <div className="border-t border-neutral-200 px-5 py-4">
+        <div className="border-t border-line px-5 py-4">
           <button
             type="button"
             onClick={onClose}

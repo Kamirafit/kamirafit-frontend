@@ -14,7 +14,7 @@ export default function ImageGallery({ images, alt }: Props) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl bg-neutral-100">
+      <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl border border-line bg-ink-2 shadow-[0_40px_80px_-40px_rgba(0,0,0,0.9)]">
         <Image
           key={activeSrc}
           src={activeSrc}
@@ -23,6 +23,10 @@ export default function ImageGallery({ images, alt }: Props) {
           sizes="(min-width: 1024px) 560px, 100vw"
           priority
           className="object-cover"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-gold/10"
         />
       </div>
 
@@ -42,10 +46,10 @@ export default function ImageGallery({ images, alt }: Props) {
                 aria-selected={selected}
                 aria-label={`Show image ${i + 1}`}
                 onClick={() => setActive(i)}
-                className={`relative aspect-square w-20 shrink-0 overflow-hidden rounded-lg border transition-colors ${
+                className={`relative aspect-square w-20 shrink-0 overflow-hidden rounded-lg border transition-all duration-200 ${
                   selected
-                    ? "border-neutral-900"
-                    : "border-neutral-200 hover:border-neutral-400"
+                    ? "border-gold shadow-[0_0_0_1px_rgba(212,175,55,0.5)]"
+                    : "border-line hover:border-gold/60"
                 }`}
               >
                 <Image

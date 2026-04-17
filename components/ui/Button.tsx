@@ -1,24 +1,25 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
-export type ButtonVariant = "primary" | "secondary" | "ghost";
+export type ButtonVariant = "primary" | "secondary" | "ghost" | "dark";
 export type ButtonSize = "sm" | "md" | "lg";
 
 const BASE =
-  "inline-flex items-center justify-center gap-2 rounded-full font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900/20 disabled:cursor-not-allowed";
+  "inline-flex items-center justify-center gap-2 rounded-full font-medium transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/60 focus-visible:ring-offset-2 focus-visible:ring-offset-ink disabled:cursor-not-allowed";
 
 const VARIANT: Record<ButtonVariant, string> = {
   primary:
-    "bg-neutral-900 text-white hover:bg-neutral-700 disabled:bg-neutral-400",
+    "bg-gold text-ink shadow-[0_10px_30px_-12px_rgba(212,175,55,0.55)] hover:bg-gold-bright hover:-translate-y-px hover:shadow-[0_14px_40px_-12px_rgba(212,175,55,0.7)] active:translate-y-0 active:bg-gold disabled:bg-gold-dim disabled:text-paper/70 disabled:shadow-none disabled:hover:translate-y-0",
   secondary:
-    "border border-neutral-300 bg-white text-neutral-900 hover:border-neutral-900 disabled:border-neutral-200 disabled:text-neutral-400",
+    "border border-gold/70 bg-transparent text-gold hover:border-gold hover:bg-gold hover:text-ink disabled:border-line disabled:text-paper-muted disabled:hover:bg-transparent disabled:hover:text-paper-muted",
   ghost:
-    "bg-transparent text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 disabled:text-neutral-300",
+    "bg-transparent text-paper-muted hover:bg-ink-3 hover:text-gold disabled:text-paper-muted/40",
+  dark: "bg-ink-2 text-paper border border-line hover:border-gold hover:text-gold disabled:text-paper-muted/40",
 };
 
 const SIZE: Record<ButtonSize, string> = {
-  sm: "px-4 py-2 text-xs",
-  md: "px-6 py-3 text-sm",
-  lg: "px-7 py-3.5 text-sm",
+  sm: "px-4 py-2 text-[11px] uppercase tracking-[0.14em]",
+  md: "px-6 py-3 text-[12px] uppercase tracking-[0.16em]",
+  lg: "px-8 py-4 text-[12px] uppercase tracking-[0.2em]",
 };
 
 /**

@@ -47,17 +47,24 @@ export default function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer id="contact" className="border-t border-neutral-200 bg-white">
-      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+    <footer
+      id="contact"
+      className="relative border-t border-line bg-ink text-paper"
+    >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/50 to-transparent"
+      />
+      <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 gap-10 sm:grid-cols-3 lg:grid-cols-4">
           <div className="col-span-2 sm:col-span-3 lg:col-span-1">
             <Link
               href="/"
-              className="text-xl font-semibold tracking-tight text-neutral-900"
+              className="font-display text-xl font-semibold tracking-[0.08em] text-paper transition-colors hover:text-gold"
             >
-              Kamira<span className="text-neutral-500">Fit</span>
+              Kamira<span className="text-gold">Fit</span>
             </Link>
-            <p className="mt-4 max-w-xs text-sm leading-relaxed text-neutral-600">
+            <p className="mt-4 max-w-xs text-sm leading-relaxed text-paper-muted">
               Premium comfort. Effortless fashion. Crafted for the way you live.
             </p>
             <div className="mt-6 flex items-center gap-2">
@@ -66,7 +73,7 @@ export default function Footer() {
                   key={label}
                   href={href}
                   aria-label={label}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 text-neutral-700 transition-colors hover:border-neutral-900 hover:text-neutral-900"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-line text-paper-muted transition-all duration-200 hover:-translate-y-0.5 hover:border-gold hover:text-gold"
                 >
                   <Icon width={16} height={16} />
                 </a>
@@ -76,15 +83,15 @@ export default function Footer() {
 
           {LINK_COLUMNS.map((col) => (
             <div key={col.title}>
-              <h3 className="text-xs font-semibold uppercase tracking-widest text-neutral-900">
+              <h3 className="text-[11px] font-semibold uppercase tracking-[0.32em] text-gold">
                 {col.title}
               </h3>
-              <ul className="mt-4 space-y-3">
+              <ul className="mt-5 space-y-3">
                 {col.links.map((link) => (
                   <li key={link.label}>
                     <a
                       href={link.href}
-                      className="text-sm text-neutral-600 transition-colors hover:text-neutral-900"
+                      className="text-sm text-paper-muted transition-colors hover:text-gold"
                     >
                       {link.label}
                     </a>
@@ -95,16 +102,16 @@ export default function Footer() {
           ))}
         </div>
 
-        <div className="mt-14 flex flex-col items-start justify-between gap-4 border-t border-neutral-200 pt-8 text-xs text-neutral-500 sm:flex-row sm:items-center">
+        <div className="mt-16 flex flex-col items-start justify-between gap-4 border-t border-line pt-8 text-xs text-paper-muted/80 sm:flex-row sm:items-center">
           <p>© {year} KamiraFit. All rights reserved.</p>
           <div className="flex items-center gap-5">
-            <a href="#" className="transition-colors hover:text-neutral-900">
+            <a href="#" className="transition-colors hover:text-gold">
               Privacy
             </a>
-            <a href="#" className="transition-colors hover:text-neutral-900">
+            <a href="#" className="transition-colors hover:text-gold">
               Terms
             </a>
-            <a href="#" className="transition-colors hover:text-neutral-900">
+            <a href="#" className="transition-colors hover:text-gold">
               Cookies
             </a>
           </div>

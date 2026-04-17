@@ -18,27 +18,31 @@ export default function CartSummary({
   const disabled = itemCount === 0;
 
   return (
-    <aside className="flex flex-col gap-6 rounded-2xl border border-neutral-200 bg-neutral-50 p-6">
-      <h2 className="text-lg font-semibold text-neutral-900">Order summary</h2>
+    <aside className="relative flex flex-col gap-6 overflow-hidden rounded-2xl border border-line bg-ink-2 p-6 shadow-[0_40px_80px_-40px_rgba(0,0,0,0.9)]">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-gold/50 to-transparent"
+      />
+      <h2 className="font-display text-lg font-semibold tracking-wide text-paper">
+        Order summary
+      </h2>
 
-      <dl className="flex flex-col gap-3 text-sm text-neutral-700">
+      <dl className="flex flex-col gap-3 text-sm text-paper-muted">
         <div className="flex items-center justify-between">
           <dt>
             Subtotal ({itemCount} {itemCount === 1 ? "item" : "items"})
           </dt>
-          <dd className="font-medium text-neutral-900">
-            {formatPrice(subtotal)}
-          </dd>
+          <dd className="font-medium text-paper">{formatPrice(subtotal)}</dd>
         </div>
         <div className="flex items-center justify-between">
           <dt>Delivery fee</dt>
-          <dd className="font-medium text-neutral-900">
+          <dd className="font-medium text-paper">
             {disabled ? "—" : formatPrice(delivery)}
           </dd>
         </div>
-        <div className="mt-2 flex items-center justify-between border-t border-neutral-200 pt-4 text-base">
-          <dt className="font-semibold text-neutral-900">Total</dt>
-          <dd className="font-semibold text-neutral-900">
+        <div className="mt-2 flex items-center justify-between border-t border-line pt-4 text-base">
+          <dt className="font-display font-semibold text-paper">Total</dt>
+          <dd className="font-display text-lg font-semibold tracking-wide text-gold">
             {formatPrice(total)}
           </dd>
         </div>
@@ -54,13 +58,15 @@ export default function CartSummary({
         className={buttonClasses(
           "primary",
           "md",
-          disabled ? "cursor-not-allowed !bg-neutral-300 hover:!bg-neutral-300" : "",
+          disabled
+            ? "cursor-not-allowed !bg-gold-dim !text-paper/60 hover:!bg-gold-dim hover:!translate-y-0 hover:!shadow-none"
+            : "",
         )}
       >
         Proceed to Checkout
       </Link>
 
-      <p className="text-xs text-neutral-500">
+      <p className="text-xs text-paper-muted/80">
         Taxes calculated at checkout. Free exchanges within 7 days.
       </p>
     </aside>

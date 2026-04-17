@@ -13,12 +13,14 @@ export default function SizeSelector({ options, value, onChange, error }: Props)
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-medium text-neutral-900">Size</p>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-paper-muted">
+          Size
+        </p>
         {value ? (
-          <p className="text-xs text-neutral-500">Selected: {value}</p>
+          <p className="text-xs text-gold">Selected: {value}</p>
         ) : (
           <p
-            className={`text-xs ${error ? "text-red-600" : "text-neutral-500"}`}
+            className={`text-xs ${error ? "text-red-400" : "text-paper-muted"}`}
           >
             {error ? "Please select a size" : "Choose a size"}
           </p>
@@ -38,10 +40,10 @@ export default function SizeSelector({ options, value, onChange, error }: Props)
               role="radio"
               aria-checked={selected}
               onClick={() => onChange(s)}
-              className={`inline-flex h-10 min-w-10 items-center justify-center rounded-full border px-4 text-sm font-medium transition-colors ${
+              className={`inline-flex h-11 min-w-11 items-center justify-center rounded-full border px-4 text-sm font-medium transition-all duration-200 ${
                 selected
-                  ? "border-neutral-900 bg-neutral-900 text-white"
-                  : "border-neutral-300 bg-white text-neutral-900 hover:border-neutral-900"
+                  ? "border-gold bg-gold text-ink shadow-[0_10px_25px_-12px_rgba(212,175,55,0.55)]"
+                  : "border-line bg-ink-2 text-paper hover:-translate-y-0.5 hover:border-gold hover:text-gold"
               }`}
             >
               {s}

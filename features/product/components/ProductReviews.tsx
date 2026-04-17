@@ -24,30 +24,32 @@ export default function ProductReviews({ reviews, averageRating }: Props) {
       <header className="flex flex-col gap-2">
         <h2
           id="reviews-heading"
-          className="text-xl font-semibold tracking-tight text-neutral-900 sm:text-2xl"
+          className="font-display text-2xl font-semibold tracking-tight text-paper sm:text-3xl"
         >
           Customer Reviews
         </h2>
         <div className="flex items-center gap-3">
           <StarRating rating={averageRating} size={16} />
-          <p className="text-sm text-neutral-600">
+          <p className="text-sm text-paper-muted">
             {averageRating.toFixed(1)} · {reviews.length} review
             {reviews.length === 1 ? "" : "s"}
           </p>
         </div>
       </header>
 
-      <ul className="flex flex-col divide-y divide-neutral-200 border-t border-neutral-200">
+      <ul className="flex flex-col divide-y divide-line border-y border-line">
         {reviews.map((r) => (
           <li key={r.id} className="flex flex-col gap-2 py-5">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-sm font-semibold text-neutral-900">
+              <p className="font-display text-sm font-semibold text-paper">
                 {r.author}
               </p>
-              <p className="text-xs text-neutral-500">{formatDate(r.date)}</p>
+              <p className="text-[11px] uppercase tracking-[0.18em] text-paper-muted">
+                {formatDate(r.date)}
+              </p>
             </div>
             <StarRating rating={r.rating} size={13} />
-            <p className="text-sm leading-relaxed text-neutral-700">
+            <p className="text-sm leading-relaxed text-paper-muted">
               {r.comment}
             </p>
           </li>
