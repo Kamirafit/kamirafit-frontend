@@ -62,7 +62,13 @@ export function DesktopCategoriesMenu() {
         aria-label="Categories"
         className="invisible absolute left-1/2 top-full z-50 mt-2 w-[min(960px,92vw)] -translate-x-1/2 translate-y-2 pt-2 opacity-0 transition-all duration-300 ease-in-out group-hover/cats:visible group-hover/cats:translate-y-0 group-hover/cats:opacity-100"
       >
-        <div className="relative overflow-hidden rounded-2xl border border-white/20 bg-white/30 text-[#1A1A1A] shadow-lg shadow-black/10 backdrop-blur-lg supports-[backdrop-filter]:bg-white/30">
+        {/*
+          Surface matches the sticky header exactly so the dropdown reads as
+          an extension of the navbar: ink/60 at rest, ink/45 when
+          backdrop-filter is supported, white/10 border, same deep shadow,
+          backdrop-blur-xl.
+        */}
+        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-ink/60 text-paper shadow-[0_8px_32px_-12px_rgba(0,0,0,0.35)] backdrop-blur-xl supports-[backdrop-filter]:bg-ink/45">
           <div
             aria-hidden
             className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-gold/50 to-transparent"
@@ -70,7 +76,7 @@ export function DesktopCategoriesMenu() {
           <div className="grid grid-cols-1 gap-8 p-8 sm:grid-cols-2 lg:grid-cols-4">
             {CATEGORY_COLUMNS.map((col) => (
               <div key={col.title} className="flex flex-col">
-                <p className="font-display text-[15px] font-bold tracking-tight text-[#1A1A1A]">
+                <p className="font-display text-[15px] font-bold tracking-tight text-paper">
                   {col.title}
                 </p>
                 <span
@@ -82,11 +88,11 @@ export function DesktopCategoriesMenu() {
                     <li key={item.label}>
                       <Link
                         href={item.href}
-                        className="group/it inline-flex items-center gap-2 text-[13.5px] text-neutral-800 transition-all duration-300 ease-in-out hover:text-gold"
+                        className="group/it inline-flex items-center gap-2 text-[13.5px] text-paper-muted transition-all duration-300 ease-in-out hover:text-gold"
                       >
                         <span
                           aria-hidden
-                          className="h-px w-3 bg-neutral-400 transition-all duration-300 group-hover/it:w-5 group-hover/it:bg-gold"
+                          className="h-px w-3 bg-white/25 transition-all duration-300 group-hover/it:w-5 group-hover/it:bg-gold"
                         />
                         {item.label}
                       </Link>
@@ -96,8 +102,8 @@ export function DesktopCategoriesMenu() {
               </div>
             ))}
           </div>
-          <div className="flex items-center justify-between border-t border-white/30 bg-white/20 px-8 py-4 backdrop-blur-lg">
-            <p className="text-[12px] text-neutral-700">
+          <div className="flex items-center justify-between border-t border-white/10 bg-ink/40 px-8 py-4 backdrop-blur-xl">
+            <p className="text-[12px] text-paper-muted">
               Free shipping on orders over ₹2,000
             </p>
             <Link
