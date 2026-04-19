@@ -11,6 +11,7 @@ import {
   type ProductStatus,
   type Size,
 } from "@/features/product/types";
+import Button from "@/components/ui/Button";
 import FormField, { inputClass, textareaClass } from "./FormField";
 import Modal from "./Modal";
 import MultiSelectChips from "./MultiSelectChips";
@@ -191,7 +192,7 @@ export default function ProductFormModal({
                   type="button"
                   key={s}
                   onClick={() => set("status", s)}
-                  className={`flex-1 rounded-lg border px-3 py-2 text-[12.5px] font-semibold capitalize transition-all duration-200 ${
+                  className={`flex-1 rounded-full border px-4 py-2 text-[11.5px] font-semibold uppercase tracking-[0.14em] transition-all duration-200 ${
                     values.status === s
                       ? s === "active"
                         ? "border-[#16A34A] bg-[#16A34A]/10 text-[#16A34A]"
@@ -235,20 +236,13 @@ export default function ProductFormModal({
           />
         </FormField>
 
-        <div className="flex items-center justify-end gap-2 pt-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg border border-line bg-transparent px-4 py-2 text-[12.5px] font-medium text-paper transition-colors hover:bg-ink-2"
-          >
+        <div className="flex items-center justify-end gap-2 pt-3">
+          <Button variant="dark" size="sm" onClick={onClose}>
             Cancel
-          </button>
-          <button
-            type="submit"
-            className="rounded-lg bg-gold px-4 py-2 text-[12.5px] font-semibold uppercase tracking-[0.14em] text-white transition-all duration-300 ease-in-out hover:bg-gold-bright hover:shadow-[0_10px_24px_-10px_rgba(74,14,26,0.55)]"
-          >
+          </Button>
+          <Button variant="primary" size="sm" type="submit">
             {initial ? "Save changes" : "Create product"}
-          </button>
+          </Button>
         </div>
       </form>
     </Modal>

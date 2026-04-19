@@ -28,9 +28,9 @@ export default function MultiSelectChips<T extends string>({
             key={opt}
             type="button"
             onClick={() => toggle(opt)}
-            className={`inline-flex items-center rounded-full border px-3 py-1.5 text-[12px] font-medium transition-all duration-200 ${
+            className={`inline-flex items-center rounded-full border px-3.5 py-1.5 text-[11.5px] font-semibold uppercase tracking-[0.14em] transition-all duration-200 ${
               active
-                ? "border-gold bg-gold text-white"
+                ? "border-gold bg-gold text-ink shadow-[0_6px_18px_-8px_rgba(139,30,45,0.5)]"
                 : "border-line bg-transparent text-paper-muted hover:border-gold hover:text-gold"
             }`}
           >

@@ -18,8 +18,8 @@ export default function FormField({
   className = "",
 }: Props) {
   return (
-    <label className={`flex flex-col gap-1.5 ${className}`} htmlFor={htmlFor}>
-      <span className="text-[12px] font-semibold uppercase tracking-[0.14em] text-paper-muted">
+    <label className={`flex flex-col gap-2 ${className}`.trim()} htmlFor={htmlFor}>
+      <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-paper-muted">
         {label}
       </span>
       {children}
@@ -35,7 +35,16 @@ export default function FormField({
   );
 }
 
+/**
+ * Shared input/select style. Pill-shaped to echo the storefront's rounded-full
+ * CTAs and the header search / newsletter input.
+ */
 export const inputClass =
-  "w-full rounded-lg border border-line bg-ink-2 px-3 py-2.5 text-[13.5px] text-paper placeholder:text-paper-muted/70 focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold";
+  "w-full rounded-full border border-line bg-ink-2 px-4 py-2.5 text-[13.5px] text-paper placeholder:text-paper-muted/70 transition-colors focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold";
 
-export const textareaClass = `${inputClass} min-h-[90px] resize-y`;
+/**
+ * Textareas keep a rounded-2xl shape because they're multi-line — matches the
+ * `rounded-2xl` used on storefront product cards and admin card shells.
+ */
+export const textareaClass =
+  "w-full min-h-[96px] resize-y rounded-2xl border border-line bg-ink-2 px-4 py-3 text-[13.5px] leading-relaxed text-paper placeholder:text-paper-muted/70 transition-colors focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold";
