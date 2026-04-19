@@ -1,46 +1,17 @@
 import Link from "next/link";
-import {
-  FacebookIcon,
-  InstagramIcon,
-  TwitterIcon,
-  YoutubeIcon,
-} from "./icons";
+import { CATEGORY_COLUMNS } from "@/components/navbar/categories-data";
+import { FacebookIcon, InstagramIcon } from "./icons";
 
-const LINK_COLUMNS = [
-  {
-    title: "Shop",
-    links: [
-      { label: "Oversized Tees", href: "#oversized-tees" },
-      { label: "Regular Fit", href: "#regular-fit" },
-      { label: "Hoodies", href: "#hoodies" },
-      { label: "New Arrivals", href: "#shop" },
-    ],
-  },
-  {
-    title: "Company",
-    links: [
-      { label: "About", href: "#about" },
-      { label: "Sustainability", href: "#about" },
-      { label: "Careers", href: "#about" },
-      { label: "Press", href: "#about" },
-    ],
-  },
-  {
-    title: "Support",
-    links: [
-      { label: "Contact", href: "#contact" },
-      { label: "Shipping", href: "#contact" },
-      { label: "Returns", href: "#contact" },
-      { label: "Size Guide", href: "#contact" },
-    ],
-  },
+const SUPPORT_LINKS = [
+  { label: "Contact", href: "#contact" },
+  { label: "Shipping", href: "#contact" },
+  { label: "Returns", href: "#contact" },
+  { label: "Size Guide", href: "#contact" },
 ];
 
 const SOCIALS = [
   { label: "Instagram", href: "#", Icon: InstagramIcon },
-  { label: "Twitter", href: "#", Icon: TwitterIcon },
   { label: "Facebook", href: "#", Icon: FacebookIcon },
-  { label: "YouTube", href: "#", Icon: YoutubeIcon },
 ];
 
 export default function Footer() {
@@ -49,7 +20,7 @@ export default function Footer() {
   return (
     <footer
       id="contact"
-      className="relative border-t border-line bg-ink text-paper"
+      className="relative border-t border-white/10 bg-ink/80 text-paper backdrop-blur-md"
     >
       <div
         aria-hidden
@@ -73,7 +44,7 @@ export default function Footer() {
                   key={label}
                   href={href}
                   aria-label={label}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-line text-paper-muted transition-all duration-200 hover:-translate-y-0.5 hover:border-gold hover:text-gold"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/5 text-paper-muted backdrop-blur-md transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:border-gold hover:bg-gold/15 hover:text-gold"
                 >
                   <Icon width={16} height={16} />
                 </a>
@@ -81,28 +52,53 @@ export default function Footer() {
             </div>
           </div>
 
-          {LINK_COLUMNS.map((col) => (
-            <div key={col.title}>
-              <h3 className="text-[11px] font-semibold uppercase tracking-[0.32em] text-gold">
-                {col.title}
-              </h3>
-              <ul className="mt-5 space-y-3">
-                {col.links.map((link) => (
-                  <li key={link.label}>
-                    <a
-                      href={link.href}
-                      className="text-sm text-paper-muted transition-colors hover:text-gold"
-                    >
-                      {link.label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
+          <div className="col-span-2 sm:col-span-2 lg:col-span-2">
+            <h3 className="text-[11px] font-semibold uppercase tracking-[0.32em] text-gold">
+              Shop
+            </h3>
+            <div className="mt-5 grid grid-cols-2 gap-x-8 gap-y-6 sm:grid-cols-4">
+              {CATEGORY_COLUMNS.map((col) => (
+                <div key={col.title}>
+                  <p className="font-display text-[13px] font-semibold text-paper">
+                    {col.title}
+                  </p>
+                  <ul className="mt-3 space-y-2">
+                    {col.items.map((item) => (
+                      <li key={item.label}>
+                        <Link
+                          href={item.href}
+                          className="text-[13px] text-paper-muted transition-colors duration-300 hover:text-gold"
+                        >
+                          {item.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+
+          <div>
+            <h3 className="text-[11px] font-semibold uppercase tracking-[0.32em] text-gold">
+              Support
+            </h3>
+            <ul className="mt-5 space-y-3">
+              {SUPPORT_LINKS.map((link) => (
+                <li key={link.label}>
+                  <a
+                    href={link.href}
+                    className="text-sm text-paper-muted transition-colors duration-300 hover:text-gold"
+                  >
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
 
-        <div className="mt-16 flex flex-col items-start justify-between gap-4 border-t border-line pt-8 text-xs text-paper-muted/80 sm:flex-row sm:items-center">
+        <div className="mt-16 flex flex-col items-start justify-between gap-4 border-t border-white/10 pt-8 text-xs text-paper-muted/80 sm:flex-row sm:items-center">
           <p>© {year} KamiraFit. All rights reserved.</p>
           <div className="flex items-center gap-5">
             <a href="#" className="transition-colors hover:text-gold">

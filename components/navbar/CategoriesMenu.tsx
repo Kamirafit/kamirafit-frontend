@@ -2,38 +2,10 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { CATEGORY_COLUMNS } from "./categories-data";
 
-export type MegaMenuColumn = {
-  title: string;
-  items: { label: string; href: string }[];
-};
-
-/**
- * Categories mega menu data — structured exactly per brand spec.
- * Each subcategory routes to /shop?category=<slug>.
- */
-export const CATEGORY_COLUMNS: MegaMenuColumn[] = [
-  {
-    title: "Indian",
-    items: [{ label: "Kurti", href: "/shop?category=kurti" }],
-  },
-  {
-    title: "Indo-western",
-    items: [{ label: "Co-ords sets", href: "/shop?category=co-ords-sets" }],
-  },
-  {
-    title: "Western",
-    items: [{ label: "Dresses", href: "/shop?category=dresses" }],
-  },
-  {
-    title: "Unisex T-shirts",
-    items: [
-      { label: "T-shirts", href: "/shop?category=tshirts" },
-      { label: "Oversized T-shirts", href: "/shop?category=oversized-tshirts" },
-      { label: "Hoodies", href: "/shop?category=hoodies" },
-    ],
-  },
-];
+export { CATEGORY_COLUMNS } from "./categories-data";
+export type { MegaMenuColumn } from "./categories-data";
 
 function Chevron({ open }: { open: boolean }) {
   return (
@@ -88,7 +60,7 @@ export function DesktopCategoriesMenu() {
         aria-label="Categories"
         className="invisible absolute left-1/2 top-full z-50 w-[min(960px,92vw)] -translate-x-1/2 translate-y-2 pt-4 opacity-0 transition-all duration-300 ease-out group-hover/cats:visible group-hover/cats:translate-y-0 group-hover/cats:opacity-100"
       >
-        <div className="relative overflow-hidden rounded-2xl border border-line bg-white text-[#1A1A1A] shadow-[0_30px_60px_-20px_rgba(74,14,26,0.3)]">
+        <div className="relative overflow-hidden rounded-2xl border border-white/20 bg-white/85 text-[#1A1A1A] shadow-[0_30px_80px_-20px_rgba(74,14,26,0.35)] backdrop-blur-xl supports-[backdrop-filter]:bg-white/70">
           <div
             aria-hidden
             className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-gold/50 to-transparent"
@@ -122,13 +94,13 @@ export function DesktopCategoriesMenu() {
               </div>
             ))}
           </div>
-          <div className="flex items-center justify-between border-t border-neutral-200 bg-neutral-50 px-8 py-4">
+          <div className="flex items-center justify-between border-t border-white/30 bg-white/40 px-8 py-4 backdrop-blur-md">
             <p className="text-[12px] text-neutral-600">
               Free shipping on orders over ₹2,000
             </p>
             <Link
               href="/shop"
-              className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-gold transition-colors hover:text-gold-bright"
+              className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-gold transition-colors duration-300 hover:text-gold-bright"
             >
               Shop all
               <span aria-hidden>→</span>

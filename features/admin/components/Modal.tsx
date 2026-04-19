@@ -50,10 +50,10 @@ export default function Modal({
         type="button"
         aria-label="Close"
         onClick={onClose}
-        className="absolute inset-0 h-full w-full bg-black/45 backdrop-blur-sm"
+        className="absolute inset-0 h-full w-full bg-black/50 backdrop-blur-md"
       />
       <div
-        className={`relative z-10 w-full ${WIDTH[maxWidth]} max-h-[85vh] overflow-y-auto rounded-2xl border border-line bg-ink shadow-[0_40px_120px_-40px_rgba(0,0,0,0.55)]`}
+        className={`relative z-10 w-full ${WIDTH[maxWidth]} max-h-[85vh] overflow-y-auto rounded-2xl border border-white/15 bg-ink/85 shadow-[0_40px_120px_-40px_rgba(0,0,0,0.6)] backdrop-blur-xl supports-[backdrop-filter]:bg-ink/70`}
       >
         <div className="flex items-center justify-between gap-4 border-b border-line px-6 py-5">
           <div className="flex flex-col gap-1.5">
