@@ -52,15 +52,17 @@ export function DesktopCategoriesMenu() {
       </button>
 
       {/*
-        Hover bridge: pt-4 absorbs the cursor gap between trigger and panel so
-        the dropdown doesn't close when moving toward it.
+        Positioning: top-full places the panel flush with the header bottom,
+        mt-2 adds the required 8px gap so the panel never overlaps the
+        navbar. pt-2 inside the wrapper acts as an invisible hover bridge so
+        the dropdown doesn't close while the cursor crosses the gap.
       */}
       <div
         role="menu"
         aria-label="Categories"
-        className="invisible absolute left-1/2 top-full z-50 w-[min(960px,92vw)] -translate-x-1/2 translate-y-2 pt-4 opacity-0 transition-all duration-300 ease-out group-hover/cats:visible group-hover/cats:translate-y-0 group-hover/cats:opacity-100"
+        className="invisible absolute left-1/2 top-full z-50 mt-2 w-[min(960px,92vw)] -translate-x-1/2 translate-y-2 pt-2 opacity-0 transition-all duration-300 ease-in-out group-hover/cats:visible group-hover/cats:translate-y-0 group-hover/cats:opacity-100"
       >
-        <div className="relative overflow-hidden rounded-2xl border border-white/20 bg-white/85 text-[#1A1A1A] shadow-[0_30px_80px_-20px_rgba(74,14,26,0.35)] backdrop-blur-xl supports-[backdrop-filter]:bg-white/70">
+        <div className="relative overflow-hidden rounded-2xl border border-white/20 bg-white/30 text-[#1A1A1A] shadow-lg shadow-black/10 backdrop-blur-lg supports-[backdrop-filter]:bg-white/30">
           <div
             aria-hidden
             className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-gold/50 to-transparent"
@@ -80,11 +82,11 @@ export function DesktopCategoriesMenu() {
                     <li key={item.label}>
                       <Link
                         href={item.href}
-                        className="group/it inline-flex items-center gap-2 text-[13.5px] text-neutral-700 transition-all duration-300 ease-in-out hover:text-gold"
+                        className="group/it inline-flex items-center gap-2 text-[13.5px] text-neutral-800 transition-all duration-300 ease-in-out hover:text-gold"
                       >
                         <span
                           aria-hidden
-                          className="h-px w-3 bg-neutral-300 transition-all duration-300 group-hover/it:w-5 group-hover/it:bg-gold"
+                          className="h-px w-3 bg-neutral-400 transition-all duration-300 group-hover/it:w-5 group-hover/it:bg-gold"
                         />
                         {item.label}
                       </Link>
@@ -94,8 +96,8 @@ export function DesktopCategoriesMenu() {
               </div>
             ))}
           </div>
-          <div className="flex items-center justify-between border-t border-white/30 bg-white/40 px-8 py-4 backdrop-blur-md">
-            <p className="text-[12px] text-neutral-600">
+          <div className="flex items-center justify-between border-t border-white/30 bg-white/20 px-8 py-4 backdrop-blur-lg">
+            <p className="text-[12px] text-neutral-700">
               Free shipping on orders over ₹2,000
             </p>
             <Link
