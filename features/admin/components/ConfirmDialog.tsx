@@ -1,5 +1,6 @@
 "use client";
 
+import Button from "@/components/ui/Button";
 import Modal from "./Modal";
 
 type Props = {
@@ -28,28 +29,25 @@ export default function ConfirmDialog({
       <p className="text-[13.5px] leading-relaxed text-paper-muted">
         {description}
       </p>
-      <div className="mt-6 flex items-center justify-end gap-2">
-        <button
-          type="button"
-          onClick={onClose}
-          className="rounded-lg border border-line bg-transparent px-4 py-2 text-[12.5px] font-medium text-paper transition-colors hover:bg-ink-2"
-        >
+      <div className="mt-7 flex items-center justify-end gap-2">
+        <Button variant="dark" size="sm" onClick={onClose}>
           {cancelLabel}
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="primary"
+          size="sm"
           onClick={() => {
             onConfirm();
             onClose();
           }}
-          className={`rounded-lg px-4 py-2 text-[12.5px] font-semibold text-white transition-all duration-300 ease-in-out ${
+          className={
             danger
-              ? "bg-[#B3261E] hover:bg-[#92201A] hover:shadow-[0_10px_24px_-10px_rgba(179,38,30,0.55)]"
-              : "bg-gold hover:bg-gold-bright hover:shadow-[0_10px_24px_-10px_rgba(74,14,26,0.55)]"
-          }`}
+              ? "!bg-[#B3261E] !text-paper !shadow-[0_10px_30px_-12px_rgba(179,38,30,0.55)] hover:!bg-[#92201A] hover:!shadow-[0_14px_40px_-12px_rgba(179,38,30,0.7)]"
+              : ""
+          }
         >
           {confirmLabel}
-        </button>
+        </Button>
       </div>
     </Modal>
   );

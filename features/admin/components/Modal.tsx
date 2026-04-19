@@ -55,22 +55,28 @@ export default function Modal({
       <div
         className={`relative z-10 w-full ${WIDTH[maxWidth]} max-h-[85vh] overflow-y-auto rounded-2xl border border-line bg-ink shadow-[0_40px_120px_-40px_rgba(0,0,0,0.55)]`}
       >
-        <div className="flex items-center justify-between gap-4 border-b border-line px-6 py-4">
-          <h2 className="font-display text-[17px] font-semibold text-paper">
-            {title}
-          </h2>
+        <div className="flex items-center justify-between gap-4 border-b border-line px-6 py-5">
+          <div className="flex flex-col gap-1.5">
+            <span className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.28em] text-gold">
+              <span aria-hidden className="h-px w-6 bg-gold/60" />
+              KamiraFit admin
+            </span>
+            <h2 className="font-display text-[20px] font-semibold leading-tight text-paper">
+              {title}
+            </h2>
+          </div>
           <button
             type="button"
             aria-label="Close modal"
             onClick={onClose}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full text-paper-muted transition-colors hover:bg-ink-2 hover:text-paper"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line text-paper-muted transition-colors hover:border-gold hover:text-gold"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden>
               <path d="m6 6 12 12M6 18 18 6" />
             </svg>
           </button>
         </div>
-        <div className="px-6 py-5">{children}</div>
+        <div className="px-6 py-6">{children}</div>
       </div>
     </div>
   );

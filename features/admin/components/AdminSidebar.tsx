@@ -60,26 +60,29 @@ export default function AdminSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-60 shrink-0 border-r border-line bg-ink lg:block">
-      <div className="sticky top-0 flex h-screen flex-col gap-6 px-4 py-6">
+    <aside className="hidden w-64 shrink-0 border-r border-line bg-ink lg:block">
+      <div className="sticky top-0 flex h-screen flex-col gap-8 px-5 py-8">
         <Link
           href="/dedicated-admin"
-          className="flex items-center gap-2 px-2 py-1"
+          className="flex items-center gap-3 px-1"
         >
-          <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-gold text-[13px] font-semibold text-white">
+          <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-gold text-[13px] font-semibold text-ink shadow-[0_8px_20px_-10px_rgba(139,30,45,0.5)]">
             K
           </span>
           <span className="flex flex-col leading-tight">
-            <span className="font-display text-[15px] font-semibold text-paper">
+            <span className="font-display text-[16px] font-semibold tracking-tight text-paper">
               KamiraFit
             </span>
-            <span className="text-[10px] font-medium uppercase tracking-[0.22em] text-paper-muted">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.28em] text-gold">
               Admin
             </span>
           </span>
         </Link>
 
         <nav className="flex flex-col gap-1">
+          <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.24em] text-paper-muted">
+            Workspace
+          </p>
           {ITEMS.map((item) => {
             const active =
               item.href === "/dedicated-admin"
@@ -89,16 +92,14 @@ export default function AdminSidebar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors ${
+                className={`flex items-center gap-3 rounded-full px-3 py-2 text-[12.5px] font-semibold uppercase tracking-[0.12em] transition-colors ${
                   active
                     ? "bg-gold/10 text-gold"
                     : "text-paper-muted hover:bg-ink-2 hover:text-paper"
                 }`}
               >
                 <span
-                  className={
-                    active ? "text-gold" : "text-paper-muted"
-                  }
+                  className={active ? "text-gold" : "text-paper-muted"}
                 >
                   {item.icon}
                 </span>
@@ -108,8 +109,12 @@ export default function AdminSidebar() {
           })}
         </nav>
 
-        <div className="mt-auto rounded-xl border border-line bg-ink-2 p-3 text-[11.5px] leading-relaxed text-paper-muted">
-          <p className="font-medium text-paper">Dedicated admin</p>
+        <div className="mt-auto rounded-2xl border border-line bg-ink-2 p-4 text-[11.5px] leading-relaxed text-paper-muted">
+          <p className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.28em] text-gold">
+            <span aria-hidden className="h-px w-6 bg-gold/60" />
+            Heads up
+          </p>
+          <p className="mt-2 font-medium text-paper">Dedicated admin</p>
           <p className="mt-1">
             Not linked from the storefront. Bookmark this URL to return.
           </p>

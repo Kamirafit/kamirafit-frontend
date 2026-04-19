@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { AdminUser } from "@/data/users";
+import Button from "@/components/ui/Button";
 import FormField, { inputClass, textareaClass } from "./FormField";
 import Modal from "./Modal";
 
@@ -87,20 +88,13 @@ export default function UserFormModal({ open, onClose, onSubmit, initial }: Prop
           />
         </FormField>
 
-        <div className="flex items-center justify-end gap-2 pt-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg border border-line bg-transparent px-4 py-2 text-[12.5px] font-medium text-paper transition-colors hover:bg-ink-2"
-          >
+        <div className="flex items-center justify-end gap-2 pt-3">
+          <Button variant="dark" size="sm" onClick={onClose}>
             Cancel
-          </button>
-          <button
-            type="submit"
-            className="rounded-lg bg-gold px-4 py-2 text-[12.5px] font-semibold uppercase tracking-[0.14em] text-white transition-all duration-300 ease-in-out hover:bg-gold-bright hover:shadow-[0_10px_24px_-10px_rgba(74,14,26,0.55)]"
-          >
+          </Button>
+          <Button variant="primary" size="sm" type="submit">
             Save changes
-          </button>
+          </Button>
         </div>
       </form>
     </Modal>
