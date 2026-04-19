@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import Container from "@/components/ui/Container";
@@ -74,39 +73,9 @@ export default function ShopPageClient() {
         </ol>
       </nav>
 
-      <section
-        aria-label="Kamira collection"
-        className="mt-5 overflow-hidden rounded-2xl border border-line bg-ink"
-      >
-        <div className="grid grid-cols-1 sm:grid-cols-2">
-          <div className="relative h-48 w-full sm:h-full sm:min-h-[220px]">
-            <Image
-              src="https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=1200&q=80"
-              alt="Curated hanging clothing rack"
-              fill
-              sizes="(min-width: 640px) 50vw, 100vw"
-              className="object-cover"
-              priority
-            />
-          </div>
-          <div className="flex flex-col justify-center gap-3 p-6 sm:p-10">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-gold">
-              — Collection
-            </p>
-            <h1 className="font-display text-2xl font-semibold tracking-tight text-paper sm:text-[28px]">
-              Explore the latest collection of KamiraFit essentials
-            </h1>
-            <p className="max-w-md text-sm leading-relaxed text-paper-muted">
-              Don&rsquo;t miss out on this season&rsquo;s drops — from
-              oversized tees to hand-cut hoodies.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <div className="mt-8 grid grid-cols-1 gap-10 lg:grid-cols-[260px_1fr] lg:gap-10">
+      <div className="mt-6 grid grid-cols-1 gap-10 lg:grid-cols-[260px_1fr] lg:gap-10">
         <aside className="hidden lg:block">
-          <div className="sticky top-24">
+          <div className="sticky top-16 max-h-[calc(100vh-4rem)] overflow-y-auto py-6 pr-2 [scrollbar-width:thin]">
             <FiltersSidebar
               filters={filters}
               counts={counts}
