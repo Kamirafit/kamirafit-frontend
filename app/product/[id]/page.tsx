@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import PageShell from "@/components/layout/PageShell";
 import Container from "@/components/ui/Container";
-import ProductDetailsClient from "@/features/product/components/ProductDetailsClient";
+import ProductDetails from "@/features/product/components/ProductDetails";
 import ProductReviews from "@/features/product/components/ProductReviews";
 import RelatedProducts from "@/features/product/components/RelatedProducts";
 import {
@@ -47,10 +47,10 @@ export default async function ProductPage({
 
   return (
     <PageShell>
-      <Container className="py-10 lg:py-14">
+      <Container className="py-8 lg:py-10">
         <nav
           aria-label="Breadcrumb"
-          className="mb-8 text-[11px] uppercase tracking-[0.22em] text-paper-muted"
+          className="mb-6 text-[11px] uppercase tracking-[0.22em] text-paper-muted"
         >
           <ol className="flex flex-wrap items-center gap-2">
             <li>
@@ -73,30 +73,9 @@ export default async function ProductPage({
           </ol>
         </nav>
 
-        <ProductDetailsClient product={product} />
+        <ProductDetails product={product} />
 
-        <div className="mt-20 grid grid-cols-1 gap-20">
-          <section
-            aria-labelledby="description-heading"
-            className="flex flex-col gap-4"
-          >
-            <h2
-              id="description-heading"
-              className="font-display text-2xl font-semibold tracking-tight text-paper sm:text-3xl"
-            >
-              Product description
-            </h2>
-            <p className="max-w-3xl text-sm leading-relaxed text-paper-muted">
-              {product.description}
-            </p>
-            <ul className="mt-2 grid max-w-xl grid-cols-1 gap-2 text-sm text-paper-muted sm:grid-cols-2">
-              <li><span className="text-gold">·</span> Premium combed cotton blend</li>
-              <li><span className="text-gold">·</span> Reinforced shoulder seams</li>
-              <li><span className="text-gold">·</span> Pre-washed for minimal shrinkage</li>
-              <li><span className="text-gold">·</span> Machine washable</li>
-            </ul>
-          </section>
-
+        <div className="mt-16 grid grid-cols-1 gap-16 lg:mt-20 lg:gap-20">
           <ProductReviews
             reviews={product.reviews}
             averageRating={product.rating}

@@ -9,48 +9,58 @@ type Props = {
   error?: boolean;
 };
 
-export default function SizeSelector({ options, value, onChange, error }: Props) {
+export default function SizeSelector({
+  options,
+  value,
+  onChange,
+  error,
+}: Props) {
   return (
-    <div className="flex flex-col gap-2">
+    <fieldset>
       <div className="flex items-center justify-between">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-paper-muted">
-          Size
-        </p>
-        {value ? (
-          <p className="text-xs text-gold">Selected: {value}</p>
-        ) : (
-          <p
-            className={`text-xs ${error ? "text-red-400" : "text-paper-muted"}`}
-          >
-            {error ? "Please select a size" : "Choose a size"}
-          </p>
-        )}
+        <legend className="text-sm font-semibold text-paper">
+          Size{" "}
+          {value ? (
+            <span className="font-normal text-paper-muted">· {value}</span>
+          ) : null}
+        </legend>
+        <button
+          type="button"
+          className="text-[11px] font-medium uppercase tracking-[0.14em] text-paper-muted underline-offset-2 transition-colors hover:text-gold hover:underline"
+        >
+          Size guide
+        </button>
       </div>
       <div
         role="radiogroup"
         aria-label="Size"
-        className="flex flex-wrap gap-2"
+        className="mt-3 flex flex-wrap gap-2"
       >
-        {options.map((s) => {
-          const selected = s === value;
+        {options.map((opt) => {
+          const selected = value === opt;
           return (
             <button
-              key={s}
+              key={opt}
               type="button"
               role="radio"
               aria-checked={selected}
-              onClick={() => onChange(s)}
-              className={`inline-flex h-11 min-w-11 items-center justify-center rounded-full border px-4 text-sm font-medium transition-all duration-200 ${
+              onClick={() => onChange(opt)}
+              className={`inline-flex h-11 min-w-[64px] items-center justify-center rounded-full border px-4 text-[13px] font-medium transition-all ${
                 selected
-                  ? "border-gold bg-gold text-ink shadow-[0_10px_25px_-12px_rgba(139,30,45,0.55)]"
-                  : "border-line bg-ink-2 text-paper hover:-translate-y-0.5 hover:border-gold hover:text-gold"
+                  ? "border-paper bg-paper text-ink"
+                  : "border-line-strong bg-ink text-paper hover:border-paper"
               }`}
             >
-              {s}
+              {opt}
             </button>
           );
         })}
       </div>
-    </div>
+      {error ? (
+        <p className="mt-2 text-[12px] text-[#DC2626]" role="alert">
+          Please select a size to continue.
+        </p>
+      ) : null}
+    </fieldset>
   );
 }

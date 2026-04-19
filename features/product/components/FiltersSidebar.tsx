@@ -14,27 +14,39 @@ import {
 import CheckboxGroup from "./CheckboxGroup";
 import PriceSlider from "./PriceSlider";
 
+type Counts = {
+  categories: Record<Category, number>;
+  sizes: Record<Size, number>;
+  colors: Record<Color, number>;
+};
+
 type Props = {
   filters: Filters;
+  counts: Counts;
   onChange: (next: Filters) => void;
   onReset: () => void;
 };
 
-export default function FiltersSidebar({ filters, onChange, onReset }: Props) {
+export default function FiltersSidebar({
+  filters,
+  counts,
+  onChange,
+  onReset,
+}: Props) {
   const set = <K extends keyof Filters>(key: K, value: Filters[K]) => {
     onChange({ ...filters, [key]: value });
   };
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-7 rounded-2xl border border-line bg-ink p-5">
       <div className="flex items-center justify-between">
-        <h2 className="text-[11px] font-semibold uppercase tracking-[0.32em] text-gold">
+        <h2 className="font-display text-base font-semibold text-paper">
           Filters
         </h2>
         <button
           type="button"
           onClick={onReset}
-          className="text-xs font-medium text-paper-muted underline-offset-4 transition-colors hover:text-gold hover:underline"
+          className="text-[11px] font-medium text-paper-muted underline-offset-2 transition-colors hover:text-gold hover:underline"
         >
           Reset all
         </button>
@@ -42,24 +54,45 @@ export default function FiltersSidebar({ filters, onChange, onReset }: Props) {
 
       <CheckboxGroup<Category>
         legend="Category"
-        options={CATEGORY_OPTIONS.map((c) => ({ value: c, label: c }))}
+        options={CATEGORY_OPTIONS.map((c) => ({
+          value: c,
+          label: c,
+          count: counts.categories[c] ?? 0,
+        }))}
         selected={filters.categories}
         onChange={(v) => set("categories", v)}
+        onReset={() => set("categories", [])}
       />
+
+      <div className="h-px w-full bg-line" />
 
       <CheckboxGroup<Size>
         legend="Size"
-        options={SIZE_OPTIONS.map((s) => ({ value: s, label: s }))}
+        options={SIZE_OPTIONS.map((s) => ({
+          value: s,
+          label: s,
+          count: counts.sizes[s] ?? 0,
+        }))}
         selected={filters.sizes}
         onChange={(v) => set("sizes", v)}
+        onReset={() => set("sizes", [])}
       />
+
+      <div className="h-px w-full bg-line" />
 
       <CheckboxGroup<Color>
         legend="Color"
-        options={COLOR_OPTIONS.map((c) => ({ value: c, label: c }))}
+        options={COLOR_OPTIONS.map((c) => ({
+          value: c,
+          label: c,
+          count: counts.colors[c] ?? 0,
+        }))}
         selected={filters.colors}
         onChange={(v) => set("colors", v)}
+        onReset={() => set("colors", [])}
       />
+
+      <div className="h-px w-full bg-line" />
 
       <PriceSlider
         min={PRICE_MIN}

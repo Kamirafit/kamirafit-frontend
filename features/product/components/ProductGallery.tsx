@@ -8,25 +8,21 @@ type Props = {
   alt: string;
 };
 
-export default function ImageGallery({ images, alt }: Props) {
+export default function ProductGallery({ images, alt }: Props) {
   const [active, setActive] = useState(0);
   const activeSrc = images[active] ?? images[0];
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl border border-line bg-ink-2 shadow-[0_40px_80px_-40px_rgba(74,14,26,0.15)]">
+      <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl bg-ink-2">
         <Image
           key={activeSrc}
           src={activeSrc}
           alt={alt}
           fill
-          sizes="(min-width: 1024px) 560px, 100vw"
+          sizes="(min-width: 1024px) 600px, 100vw"
           priority
           className="object-cover"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-gold/10"
         />
       </div>
 
@@ -34,9 +30,9 @@ export default function ImageGallery({ images, alt }: Props) {
         <div
           role="tablist"
           aria-label="Product images"
-          className="flex gap-3 overflow-x-auto pb-1"
+          className="grid grid-cols-4 gap-3"
         >
-          {images.map((src, i) => {
+          {images.slice(0, 4).map((src, i) => {
             const selected = i === active;
             return (
               <button
@@ -46,17 +42,17 @@ export default function ImageGallery({ images, alt }: Props) {
                 aria-selected={selected}
                 aria-label={`Show image ${i + 1}`}
                 onClick={() => setActive(i)}
-                className={`relative aspect-square w-20 shrink-0 overflow-hidden rounded-lg border transition-all duration-200 ${
+                className={`relative aspect-square w-full overflow-hidden rounded-xl border transition-all duration-200 ${
                   selected
-                    ? "border-gold shadow-[0_0_0_1px_rgba(139,30,45,0.5)]"
-                    : "border-line hover:border-gold/60"
+                    ? "border-paper shadow-[0_0_0_1px_rgba(26,26,26,0.25)]"
+                    : "border-line hover:border-line-strong"
                 }`}
               >
                 <Image
                   src={src}
                   alt={`${alt} thumbnail ${i + 1}`}
                   fill
-                  sizes="80px"
+                  sizes="120px"
                   className="object-cover"
                 />
               </button>
