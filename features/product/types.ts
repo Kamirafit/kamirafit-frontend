@@ -12,6 +12,8 @@ export type Review = {
   date: string;
 };
 
+export type ProductStatus = "active" | "inactive";
+
 export type Product = {
   id: string;
   name: string;
@@ -26,6 +28,7 @@ export type Product = {
   reviews: Review[];
   createdAt: string;
   popularity: number;
+  status: ProductStatus;
 };
 
 export type SortKey =
