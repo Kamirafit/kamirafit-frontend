@@ -41,16 +41,16 @@ export default function ProductCard({ product }: Props) {
           </span>
         ) : null}
 
-        {/* Bottom gradient to improve outline-button legibility */}
+        {/* Soft bottom gradient so the outline button reads on any image */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/55 via-black/20 to-transparent"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/40 via-black/10 to-transparent"
         />
 
-        {/* Add-to-Cart: outline at rest, filled primary on hover */}
+        {/* Add-to-Cart: wine outline at rest → wine fill + glow on hover */}
         <button
           type="button"
-          className="absolute inset-x-3 bottom-3 inline-flex items-center justify-center gap-2 rounded-full border-2 border-white bg-white/10 px-4 py-2.5 text-[12px] font-semibold uppercase tracking-[0.18em] text-white backdrop-blur-md transition-colors duration-200 ease-out hover:border-gold hover:bg-gold hover:text-white"
+          className="absolute inset-x-3 bottom-3 inline-flex items-center justify-center gap-2 rounded-full border-2 border-gold bg-white/90 px-4 py-2.5 text-[12px] font-semibold uppercase tracking-[0.18em] text-gold backdrop-blur-md transition-all duration-300 ease-in-out hover:border-gold hover:bg-gold hover:text-white hover:shadow-[0_12px_30px_-10px_rgba(74,14,26,0.55)]"
         >
           Add to cart
         </button>
