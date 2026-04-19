@@ -2,14 +2,21 @@
 
 import { useEffect } from "react";
 import { buttonClasses } from "@/components/ui/Button";
-import type { Filters } from "../types";
+import type { Category, Color, Filters, Size } from "../types";
 import FiltersSidebar from "./FiltersSidebar";
 import { CloseIcon } from "./icons";
+
+type Counts = {
+  categories: Record<Category, number>;
+  sizes: Record<Size, number>;
+  colors: Record<Color, number>;
+};
 
 type Props = {
   open: boolean;
   onClose: () => void;
   filters: Filters;
+  counts: Counts;
   onChange: (next: Filters) => void;
   onReset: () => void;
 };
@@ -18,6 +25,7 @@ export default function MobileFiltersDrawer({
   open,
   onClose,
   filters,
+  counts,
   onChange,
   onReset,
 }: Props) {
@@ -63,6 +71,7 @@ export default function MobileFiltersDrawer({
         <div className="flex-1 overflow-y-auto px-5 py-6">
           <FiltersSidebar
             filters={filters}
+            counts={counts}
             onChange={onChange}
             onReset={onReset}
           />

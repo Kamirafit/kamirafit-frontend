@@ -3,90 +3,107 @@
 import Image from "next/image";
 import Link from "next/link";
 import { formatPrice } from "@/lib/format";
-import { useAppDispatch } from "../hooks/redux";
+import { useAppDispatch, useAppSelector } from "../hooks/redux";
 import { addToCart } from "../store/cartSlice";
+import { toggleWishlist } from "../store/wishlistSlice";
 import type { Product } from "../types";
-import { COLOR_SWATCH } from "../types";
-import StarRating from "./StarRating";
-import WishlistButton from "./WishlistButton";
+import { HeartIcon } from "./icons";
 
 type Props = {
   product: Product;
 };
 
+function BagIcon({ filled = false }: { filled?: boolean }) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill={filled ? "currentColor" : "none"}
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M6 7h12l-1.2 12.2a2 2 0 0 1-2 1.8H9.2a2 2 0 0 1-2-1.8L6 7Z" />
+      <path d="M9 7a3 3 0 0 1 6 0" />
+    </svg>
+  );
+}
+
 export default function ProductCard({ product }: Props) {
   const dispatch = useAppDispatch();
+  const isSaved = useAppSelector((s) => s.wishlist.ids.includes(product.id));
+  const inCart = useAppSelector((s) =>
+    s.cart.items.some((it) => it.id === product.id),
+  );
 
   return (
-    <article className="group flex flex-col">
-      <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl border border-line bg-ink-2 transition-all duration-300 group-hover:-translate-y-1 group-hover:scale-[1.02] group-hover:border-gold/50 group-hover:shadow-lg group-hover:shadow-[0_30px_60px_-30px_rgba(139,30,45,0.35)]">
+    <article className="group flex flex-col overflow-hidden rounded-2xl border border-line bg-ink transition-all duration-300 hover:-translate-y-0.5 hover:border-gold/40 hover:shadow-[0_30px_60px_-30px_rgba(74,14,26,0.25)]">
+      <Link
+        href={`/product/${product.id}`}
+        aria-label={`View ${product.name}`}
+        className="relative block aspect-[4/5] w-full overflow-hidden bg-ink-2"
+      >
+        <Image
+          src={product.image}
+          alt={product.name}
+          fill
+          sizes="(min-width: 1280px) 22vw, (min-width: 1024px) 30vw, (min-width: 640px) 45vw, 50vw"
+          className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+        />
+      </Link>
+
+      <div className="flex flex-1 flex-col gap-1.5 p-4 sm:p-5">
         <Link
           href={`/product/${product.id}`}
-          aria-label={`View ${product.name}`}
-          className="absolute inset-0 z-0"
+          className="font-display text-[17px] font-semibold leading-tight text-paper transition-colors hover:text-gold"
         >
-          <Image
-            src={product.image}
-            alt={product.name}
-            fill
-            sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
-            className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.05]"
-          />
+          {product.name}
         </Link>
-        <WishlistButton
-          productId={product.id}
-          className="absolute right-3 top-3 z-10"
-        />
-        <span className="absolute left-3 top-3 z-10 rounded-full border border-gold/50 bg-ink/85 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-gold backdrop-blur">
-          {product.category}
-        </span>
+        <p className="line-clamp-2 text-[13px] leading-snug text-paper-muted">
+          {product.description}
+        </p>
 
-        {/* Bottom gradient to improve outline-button legibility */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 bottom-0 z-[5] h-24 bg-gradient-to-t from-black/55 via-black/20 to-transparent"
-        />
-
-        {/* Add-to-Cart: outline at rest, filled primary on hover */}
-        <button
-          type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            dispatch(addToCart({ id: product.id }));
-          }}
-          className="absolute inset-x-3 bottom-3 z-10 inline-flex items-center justify-center gap-2 rounded-full border-2 border-white bg-white/10 px-4 py-2.5 text-[12px] font-semibold uppercase tracking-[0.18em] text-white backdrop-blur-md transition-colors duration-200 ease-out hover:border-gold hover:bg-gold hover:text-white"
-        >
-          Add to Cart
-        </button>
-      </div>
-
-      <div className="mt-5 flex flex-col gap-2.5">
-        <div className="flex items-start justify-between gap-3">
-          <h3 className="truncate font-display text-[15px] font-medium text-paper">
-            <Link
-              href={`/product/${product.id}`}
-              className="transition-colors hover:text-gold"
-            >
-              {product.name}
-            </Link>
-          </h3>
-          <p className="shrink-0 font-display text-[15px] font-semibold tracking-wide text-gold">
+        <div className="mt-auto flex items-center justify-between gap-3 pt-3">
+          <p className="font-display text-[17px] font-semibold tracking-wide text-paper">
             {formatPrice(product.price)}
           </p>
-        </div>
-
-        <StarRating rating={product.rating} />
-
-        <div className="flex items-center gap-1.5">
-          {product.color.map((c) => (
-            <span
-              key={c}
-              aria-label={c}
-              title={c}
-              className="inline-block h-3 w-3 rounded-full border border-line"
-              style={{ backgroundColor: COLOR_SWATCH[c] }}
-            />
-          ))}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              aria-label={isSaved ? "Remove from wishlist" : "Add to wishlist"}
+              aria-pressed={isSaved}
+              onClick={(e) => {
+                e.preventDefault();
+                dispatch(toggleWishlist(product.id));
+              }}
+              className={`inline-flex h-9 w-9 items-center justify-center rounded-full border transition-all ${
+                isSaved
+                  ? "border-transparent bg-[#DC2626]/10 text-[#DC2626]"
+                  : "border-line text-paper-muted hover:border-[#DC2626]/40 hover:text-[#DC2626]"
+              }`}
+            >
+              <HeartIcon filled={isSaved} width={15} height={15} />
+            </button>
+            <button
+              type="button"
+              aria-label={inCart ? "Added to cart" : "Add to cart"}
+              aria-pressed={inCart}
+              onClick={(e) => {
+                e.preventDefault();
+                dispatch(addToCart({ id: product.id }));
+              }}
+              className={`inline-flex h-9 w-9 items-center justify-center rounded-full border transition-all ${
+                inCart
+                  ? "border-transparent bg-paper text-ink"
+                  : "border-line text-paper-muted hover:border-paper hover:bg-paper hover:text-ink"
+              }`}
+            >
+              <BagIcon filled={inCart} />
+            </button>
+          </div>
         </div>
       </div>
     </article>
