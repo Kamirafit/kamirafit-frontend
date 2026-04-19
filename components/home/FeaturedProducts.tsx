@@ -1,39 +1,12 @@
 import Section from "@/components/ui/Section";
 import SectionHeader from "@/components/ui/SectionHeader";
-import ProductCard, { type Product } from "./ProductCard";
+import ProductCard from "@/features/product/components/ProductCard";
+import { PRODUCTS } from "@/features/product/data/products";
 
-const PRODUCTS: Product[] = [
-  {
-    id: "ivory-oversized-tee",
-    name: "Ivory Oversized Tee",
-    price: 1299,
-    image:
-      "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=900&q=80",
-    tag: "New",
-  },
-  {
-    id: "midnight-hoodie",
-    name: "Midnight Relaxed Hoodie",
-    price: 2499,
-    image:
-      "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=900&q=80",
-  },
-  {
-    id: "stone-crewneck",
-    name: "Stone Everyday Crewneck",
-    price: 1799,
-    image:
-      "https://images.unsplash.com/photo-1618354691373-d851c5c3a990?auto=format&fit=crop&w=900&q=80",
-    tag: "Bestseller",
-  },
-  {
-    id: "sand-regular-tee",
-    name: "Sand Regular Fit Tee",
-    price: 999,
-    image:
-      "https://images.unsplash.com/photo-1503341504253-dff4815485f1?auto=format&fit=crop&w=900&q=80",
-  },
-];
+// Featured = first 4 active products from the shop catalog, so the home cards
+// render with the exact same ProductCard component as /shop (identical layout,
+// hover, wishlist, add-to-cart behavior) and link to real PDPs.
+const FEATURED = PRODUCTS.filter((p) => p.status === "active").slice(0, 4);
 
 export default function FeaturedProducts() {
   return (
@@ -44,7 +17,7 @@ export default function FeaturedProducts() {
         action={
           <a
             href="/shop"
-            className="group inline-flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.22em] text-gold transition-colors hover:text-gold-bright"
+            className="group inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-gold transition-colors duration-300 hover:text-gold-bright"
           >
             View all
             <span
@@ -57,8 +30,8 @@ export default function FeaturedProducts() {
         }
       />
 
-      <div className="mt-12 grid grid-cols-2 gap-x-6 gap-y-12 sm:gap-x-8 lg:mt-16 lg:grid-cols-4">
-        {PRODUCTS.map((product) => (
+      <div className="mt-12 grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 lg:mt-16 lg:grid-cols-4 lg:gap-x-8">
+        {FEATURED.map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}
       </div>
