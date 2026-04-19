@@ -95,10 +95,10 @@ export default function ProductCard({ product }: Props) {
                 e.preventDefault();
                 dispatch(addToCart({ id: product.id }));
               }}
-              className={`inline-flex h-9 w-9 items-center justify-center rounded-full border transition-all ${
+              className={`inline-flex h-9 w-9 items-center justify-center rounded-full border-2 transition-all duration-300 ease-in-out ${
                 inCart
-                  ? "border-transparent bg-paper text-ink"
-                  : "border-line text-paper-muted hover:border-paper hover:bg-paper hover:text-ink"
+                  ? "border-gold bg-gold text-white shadow-[0_8px_20px_-8px_rgba(74,14,26,0.55)]"
+                  : "border-gold bg-transparent text-gold hover:bg-gold hover:text-white hover:shadow-[0_8px_20px_-8px_rgba(74,14,26,0.55)]"
               }`}
             >
               <BagIcon filled={inCart} />

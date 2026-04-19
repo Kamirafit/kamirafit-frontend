@@ -207,7 +207,7 @@ export default function ProductDetails({ product }: Props) {
           <button
             type="button"
             onClick={handleAddToCart}
-            className="flex-1 rounded-full bg-paper px-6 py-4 text-[13px] font-semibold uppercase tracking-[0.2em] text-ink transition-all hover:bg-gold hover:text-paper"
+            className="flex-1 rounded-full border-2 border-gold bg-gold px-6 py-4 text-[13px] font-semibold uppercase tracking-[0.2em] text-white shadow-[0_14px_30px_-14px_rgba(74,14,26,0.6)] transition-all duration-300 ease-in-out hover:bg-transparent hover:text-gold hover:shadow-[0_18px_40px_-18px_rgba(74,14,26,0.45)]"
           >
             {added ? "Added to cart" : "Add to Cart"}
           </button>
