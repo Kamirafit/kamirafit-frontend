@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
-import { PRODUCTS } from "@/features/product/data/products";
+import { useAppSelector } from "@/features/product/hooks/redux";
 import type { Product } from "@/features/product/types";
 import { useSpotlight } from "./SpotlightProvider";
 import SearchInput from "./SearchInput";
@@ -10,21 +10,19 @@ import SearchSuggestions from "./SearchSuggestions";
 
 const MAX_RESULTS = 8;
 
-function searchProducts(query: string): Product[] {
+function searchProducts(catalog: Product[], query: string): Product[] {
   const q = query.trim().toLowerCase();
   if (q === "") return [];
   const tokens = q.split(/\s+/).filter(Boolean);
-  return PRODUCTS.filter((p) => {
-    const haystack = [
-      p.name,
-      p.category,
-      ...p.color,
-      ...p.size,
-    ]
-      .join(" ")
-      .toLowerCase();
-    return tokens.every((t) => haystack.includes(t));
-  }).slice(0, MAX_RESULTS);
+  return catalog
+    .filter((p) => p.status === "active")
+    .filter((p) => {
+      const haystack = [p.name, p.category, ...p.color, ...p.size]
+        .join(" ")
+        .toLowerCase();
+      return tokens.every((t) => haystack.includes(t));
+    })
+    .slice(0, MAX_RESULTS);
 }
 
 export default function SpotlightSearch() {
@@ -39,7 +37,8 @@ export default function SpotlightSearch() {
   const [shouldRender, setShouldRender] = useState(false);
   const [isActive, setIsActive] = useState(false);
 
-  const results = useMemo(() => searchProducts(query), [query]);
+  const catalog = useAppSelector((s) => s.adminProducts.items);
+  const results = useMemo(() => searchProducts(catalog, query), [catalog, query]);
 
   useEffect(() => {
     if (open) {

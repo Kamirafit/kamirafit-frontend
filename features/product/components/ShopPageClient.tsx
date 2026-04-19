@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import Container from "@/components/ui/Container";
-import { PRODUCTS } from "../data/products";
+import { useAppSelector } from "../hooks/redux";
 import { useFilteredSortedProducts } from "../hooks/useFilteredSortedProducts";
 import {
   CATEGORY_OPTIONS,
@@ -35,10 +35,15 @@ export default function ShopPageClient() {
   const [sort, setSort] = useState<SortKey>("popular");
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const products = useFilteredSortedProducts(PRODUCTS, filters, sort);
+  const allProducts = useAppSelector((s) => s.adminProducts.items);
+  const activeProducts = useMemo(
+    () => allProducts.filter((p) => p.status === "active"),
+    [allProducts],
+  );
+  const products = useFilteredSortedProducts(activeProducts, filters, sort);
 
-  // Counts are computed from the full product set so users can see how many
-  // items each option would add — not the already-filtered subset.
+  // Counts are computed from the full *active* product set so users can see how
+  // many items each option would add — not the already-filtered subset.
   const counts = useMemo(() => {
     const cat = {} as Record<Category, number>;
     const sz = {} as Record<Size, number>;
@@ -46,13 +51,13 @@ export default function ShopPageClient() {
     for (const c of CATEGORY_OPTIONS) cat[c] = 0;
     for (const s of SIZE_OPTIONS) sz[s] = 0;
     for (const c of COLOR_OPTIONS) col[c] = 0;
-    for (const p of PRODUCTS) {
+    for (const p of activeProducts) {
       cat[p.category] = (cat[p.category] ?? 0) + 1;
       for (const s of p.size) sz[s] = (sz[s] ?? 0) + 1;
       for (const c of p.color) col[c] = (col[c] ?? 0) + 1;
     }
     return { categories: cat, sizes: sz, colors: col };
-  }, []);
+  }, [activeProducts]);
 
   return (
     <Container className="py-8 lg:py-10">

@@ -16,7 +16,7 @@ const ALT_IMAGES = {
   ],
 } as const;
 
-type Seed = Omit<Product, "images" | "description" | "reviews"> & {
+type Seed = Omit<Product, "images" | "description" | "reviews" | "status"> & {
   description: string;
 };
 
@@ -237,6 +237,7 @@ export const PRODUCTS: Product[] = SEED.map((p) => ({
   ...p,
   images: [p.image, ...ALT_IMAGES[p.category]],
   reviews: getReviewsFor(p.id),
+  status: "active" as const,
 }));
 
 export function getProductById(id: string): Product | undefined {
