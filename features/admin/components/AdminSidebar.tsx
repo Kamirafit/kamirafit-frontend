@@ -49,9 +49,21 @@ function FolderIcon() {
   );
 }
 
+function OrdersIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M4 6h16" />
+      <path d="M4 12h16" />
+      <path d="M4 18h10" />
+      <circle cx="19" cy="18" r="2" />
+    </svg>
+  );
+}
+
 const ITEMS: Item[] = [
   { label: "Dashboard", href: "/dedicated-admin", icon: <DashboardIcon /> },
   { label: "Products", href: "/dedicated-admin/products", icon: <BoxIcon /> },
+  { label: "Orders", href: "/dedicated-admin/orders", icon: <OrdersIcon /> },
   { label: "Users", href: "/dedicated-admin/users", icon: <UsersIcon /> },
   { label: "Categories", href: "/dedicated-admin/categories", icon: <FolderIcon /> },
 ];
