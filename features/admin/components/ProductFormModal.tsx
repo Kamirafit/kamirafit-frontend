@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   CATEGORY_OPTIONS,
   COLOR_OPTIONS,
@@ -12,7 +13,7 @@ import {
   type Size,
 } from "@/features/product/types";
 import Button from "@/components/ui/Button";
-import FormField, { inputClass, textareaClass } from "./FormField";
+import FormField, { inputClass, selectClass, textareaClass } from "./FormField";
 import Modal from "./Modal";
 import MultiSelectChips from "./MultiSelectChips";
 
@@ -70,8 +71,11 @@ export default function ProductFormModal({
   );
 
   const [values, setValues] = useState<FormValues>(EMPTY);
-  const [imagesText, setImagesText] = useState("");
   const [errors, setErrors] = useState<Partial<Record<keyof FormValues, string>>>({});
+  // Object URLs we've minted via `URL.createObjectURL` during the lifetime of
+  // the modal — revoked on close / cleanup so we don't leak blob refs.
+  const objectUrlsRef = useRef<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -87,30 +91,74 @@ export default function ProductFormModal({
         image: initial.image,
         status: initial.status,
       });
-      setImagesText(initial.images.join("\n"));
     } else {
       setValues({ ...EMPTY, category: effectiveCategories[0] ?? "Regular" });
-      setImagesText("");
     }
     setErrors({});
   }, [open, initial, effectiveCategories]);
 
+  // Revoke any pending object URLs when the modal closes or unmounts so we
+  // don't leak references into memory. New previews are minted on each open.
+  useEffect(() => {
+    if (open) return;
+    objectUrlsRef.current.forEach((u) => URL.revokeObjectURL(u));
+    objectUrlsRef.current = [];
+  }, [open]);
+  useEffect(
+    () => () => {
+      objectUrlsRef.current.forEach((u) => URL.revokeObjectURL(u));
+      objectUrlsRef.current = [];
+    },
+    [],
+  );
+
   const set = <K extends keyof FormValues>(k: K, v: FormValues[K]) =>
     setValues((prev) => ({ ...prev, [k]: v }));
 
+  const handleFilesSelected = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const added: string[] = [];
+    for (const file of Array.from(files)) {
+      if (!file.type.startsWith("image/")) continue;
+      const url = URL.createObjectURL(file);
+      objectUrlsRef.current.push(url);
+      added.push(url);
+    }
+    if (added.length === 0) return;
+    setValues((prev) => ({
+      ...prev,
+      images: [...prev.images, ...added],
+      image: prev.image || added[0],
+    }));
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const removeImageAt = (idx: number) => {
+    setValues((prev) => {
+      const removed = prev.images[idx];
+      const images = prev.images.filter((_, i) => i !== idx);
+      // If we dropped a blob URL, revoke it immediately.
+      if (removed && removed.startsWith("blob:")) {
+        URL.revokeObjectURL(removed);
+        objectUrlsRef.current = objectUrlsRef.current.filter(
+          (u) => u !== removed,
+        );
+      }
+      const image =
+        prev.image === removed ? images[0] ?? "" : prev.image;
+      return { ...prev, images, image };
+    });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const parsedImages = imagesText
-      .split(/\n+/)
-      .map((l) => l.trim())
-      .filter(Boolean);
     const nextErrors: Partial<Record<keyof FormValues, string>> = {};
     if (!values.name.trim()) nextErrors.name = "Name is required";
     if (!(values.price > 0)) nextErrors.price = "Price must be greater than 0";
     if (!values.description.trim())
       nextErrors.description = "Description is required";
-    if (parsedImages.length === 0)
-      nextErrors.images = "Provide at least one image URL";
+    if (values.images.length === 0)
+      nextErrors.images = "Upload at least one image";
     if (values.size.length === 0)
       nextErrors.size = "Pick at least one size";
     if (values.color.length === 0)
@@ -123,8 +171,7 @@ export default function ProductFormModal({
 
     onSubmit({
       ...values,
-      images: parsedImages,
-      image: parsedImages[0],
+      image: values.images[0],
     });
   };
 
@@ -176,7 +223,7 @@ export default function ProductFormModal({
                   set("category", next);
                 }
               }}
-              className={inputClass}
+              className={selectClass}
             >
               {effectiveCategories.map((c) => (
                 <option key={c} value={c}>
@@ -224,16 +271,67 @@ export default function ProductFormModal({
         </FormField>
 
         <FormField
-          label="Image URLs"
-          hint="One URL per line. The first URL is used as the card thumbnail."
+          label="Images"
+          hint="Upload one or more product photos. The first image is used as the card thumbnail."
           error={errors.images}
         >
-          <textarea
-            value={imagesText}
-            onChange={(e) => setImagesText(e.target.value)}
-            className={textareaClass}
-            placeholder="https://images.unsplash.com/…"
-          />
+          <div className="flex flex-col gap-3">
+            <label
+              htmlFor="product-images-upload"
+              className="group flex cursor-pointer items-center justify-between gap-3 rounded-2xl border border-dashed border-line bg-ink-2/40 px-4 py-4 text-[13px] text-paper-muted transition-colors hover:border-gold hover:text-paper"
+            >
+              <span>
+                <span className="font-semibold text-paper group-hover:text-gold">
+                  Click to upload
+                </span>{" "}
+                or drop image files here
+              </span>
+              <span className="rounded-full border border-line px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-paper-muted group-hover:border-gold group-hover:text-gold">
+                Browse
+              </span>
+            </label>
+            <input
+              ref={fileInputRef}
+              id="product-images-upload"
+              type="file"
+              accept="image/*"
+              multiple
+              className="sr-only"
+              onChange={(e) => handleFilesSelected(e.target.files)}
+            />
+            {values.images.length > 0 && (
+              <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                {values.images.map((src, idx) => (
+                  <li
+                    key={`${src}-${idx}`}
+                    className="group relative aspect-square overflow-hidden rounded-xl border border-line bg-ink-2"
+                  >
+                    <Image
+                      src={src}
+                      alt={`Upload ${idx + 1}`}
+                      fill
+                      sizes="120px"
+                      className="object-cover"
+                      unoptimized={src.startsWith("blob:")}
+                    />
+                    {idx === 0 && (
+                      <span className="absolute left-1 top-1 rounded-full bg-gold px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-paper">
+                        Main
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => removeImageAt(idx)}
+                      className="absolute right-1 top-1 inline-flex h-6 w-6 items-center justify-center rounded-full border border-line bg-ink/80 text-[11px] text-paper-muted opacity-0 backdrop-blur-sm transition-all duration-200 hover:border-[#B3261E] hover:text-[#B3261E] group-hover:opacity-100"
+                      aria-label="Remove image"
+                    >
+                      ×
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </FormField>
 
         <div className="flex items-center justify-end gap-2 pt-3">

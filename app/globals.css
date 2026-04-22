@@ -49,6 +49,18 @@ body {
   color: #f8f5f2;
 }
 
+/* Hide the default up/down arrows on <input type="number"> so numeric fields
+   in forms and inline editors match our rounded pill aesthetic. */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
 /* Spotlight search — rotating placeholder word animation.
    Enter from below, hold, exit up. Replayed per-key change. */
 @keyframes spotlight-word {
