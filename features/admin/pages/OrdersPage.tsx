@@ -11,14 +11,12 @@ import {
   type OrderStatus,
   type PaymentStatus,
 } from "@/data/orders";
+import { selectClass } from "../components/FormField";
 import SearchField from "../components/SearchField";
 import { useAppSelector } from "@/features/product/hooks/redux";
 
 type OrderFilter = "all" | OrderStatus;
 type PaymentFilter = "all" | PaymentStatus;
-
-const SELECT_CLASS =
-  "rounded-full border border-line bg-ink-2 px-4 py-2.5 text-[13px] text-paper transition-colors duration-300 focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold";
 
 export default function OrdersPage() {
   const orders = useAppSelector((s) => s.adminOrders.items);
@@ -74,7 +72,7 @@ export default function OrdersPage() {
             <select
               value={orderFilter}
               onChange={(e) => setOrderFilter(e.target.value as OrderFilter)}
-              className={SELECT_CLASS}
+              className={selectClass}
             >
               <option value="all" className="bg-ink">
                 All statuses
@@ -95,7 +93,7 @@ export default function OrdersPage() {
               onChange={(e) =>
                 setPaymentFilter(e.target.value as PaymentFilter)
               }
-              className={SELECT_CLASS}
+              className={selectClass}
             >
               <option value="all" className="bg-ink">
                 All payments

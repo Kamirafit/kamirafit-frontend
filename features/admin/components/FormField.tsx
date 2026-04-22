@@ -43,6 +43,14 @@ export const inputClass =
   "w-full rounded-full border border-line bg-ink-2 px-4 py-2.5 text-[13.5px] text-paper placeholder:text-paper-muted/70 transition-colors focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold";
 
 /**
+ * Select style — identical to `inputClass` but with extra right padding so the
+ * native dropdown chevron has breathing room from the right edge. Fixes the
+ * "arrow too close to edge" issue without swapping to a custom select.
+ */
+export const selectClass =
+  "w-full rounded-full border border-line bg-ink-2 pl-4 pr-10 py-2.5 text-[13.5px] text-paper placeholder:text-paper-muted/70 transition-colors focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold";
+
+/**
  * Textareas keep a rounded-2xl shape because they're multi-line — matches the
  * `rounded-2xl` used on storefront product cards and admin card shells.
  */
