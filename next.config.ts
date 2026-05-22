@@ -17,6 +17,42 @@ const contentSecurityPolicy = [
   ...(isDev ? [] : ["upgrade-insecure-requests"]),
 ].join("; ");
 
+const securityHeaders = [
+  {
+    key: "Content-Security-Policy",
+    value: contentSecurityPolicy,
+  },
+  {
+    key: "Referrer-Policy",
+    value: "strict-origin-when-cross-origin",
+  },
+  {
+    key: "X-Content-Type-Options",
+    value: "nosniff",
+  },
+  {
+    key: "X-Frame-Options",
+    value: "DENY",
+  },
+  {
+    key: "Permissions-Policy",
+    value:
+      "camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()",
+  },
+  {
+    key: "Cross-Origin-Opener-Policy",
+    value: "same-origin",
+  },
+  ...(isDev
+    ? []
+    : [
+        {
+          key: "Strict-Transport-Security",
+          value: "max-age=31536000; includeSubDomains; preload",
+        },
+      ]),
+];
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
@@ -36,32 +72,20 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/:path*",
+        headers: securityHeaders,
+      },
+      {
+        source: "/dedicated-admin/:path*",
         headers: [
           {
-            key: "Content-Security-Policy",
-            value: contentSecurityPolicy,
+            key: "Cache-Control",
+            value: "no-store, max-age=0",
           },
           {
-            key: "Referrer-Policy",
-            value: "strict-origin-when-cross-origin",
+            key: "X-Robots-Tag",
+            value: "noindex, nofollow, noarchive",
           },
-          {
-            key: "X-Content-Type-Options",
-            value: "nosniff",
-          },
-          {
-            key: "X-Frame-Options",
-            value: "DENY",
-          },
-          {
-            key: "Permissions-Policy",
-            value:
-              "camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()",
-          },
-          {
-            key: "Cross-Origin-Opener-Policy",
-            value: "same-origin",
-          },
+          ...securityHeaders,
         ],
       },
     ];

@@ -48,8 +48,22 @@ const EMPTY: FormValues = {
   status: "active",
 };
 
+const MAX_IMAGE_URLS = 8;
+const ALLOWED_IMAGE_HOSTS = new Set(["images.unsplash.com"]);
+
 function isCategory(v: string, options: string[]): v is Category {
   return options.includes(v) && CATEGORY_OPTIONS.includes(v as Category);
+}
+
+function parseImageUrl(value: string) {
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "https:") return null;
+    if (!ALLOWED_IMAGE_HOSTS.has(url.hostname)) return null;
+    return url.toString();
+  } catch {
+    return null;
+  }
 }
 
 export default function ProductFormModal({
@@ -100,17 +114,30 @@ export default function ProductFormModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const parsedImages = imagesText
+    const imageLines = imagesText
       .split(/\n+/)
       .map((l) => l.trim())
       .filter(Boolean);
+    const parsedImages = imageLines
+      .map(parseImageUrl)
+      .filter((url): url is string => Boolean(url));
     const nextErrors: Partial<Record<keyof FormValues, string>> = {};
-    if (!values.name.trim()) nextErrors.name = "Name is required";
-    if (!(values.price > 0)) nextErrors.price = "Price must be greater than 0";
+    const name = values.name.trim();
+    const description = values.description.trim();
+    if (!name) nextErrors.name = "Name is required";
+    if (name.length > 80) nextErrors.name = "Name must stay under 80 characters";
+    if (!(values.price > 0) || values.price > 500000)
+      nextErrors.price = "Enter a realistic product price";
     if (!values.description.trim())
       nextErrors.description = "Description is required";
+    if (description.length > 600)
+      nextErrors.description = "Description must stay under 600 characters";
     if (parsedImages.length === 0)
-      nextErrors.images = "Provide at least one image URL";
+      nextErrors.images = "Use at least one HTTPS images.unsplash.com URL";
+    if (parsedImages.length !== imageLines.length)
+      nextErrors.images = "Image URLs must be HTTPS links from images.unsplash.com";
+    if (parsedImages.length > MAX_IMAGE_URLS)
+      nextErrors.images = `Use ${MAX_IMAGE_URLS} image URLs or fewer`;
     if (values.size.length === 0)
       nextErrors.size = "Pick at least one size";
     if (values.color.length === 0)
@@ -123,6 +150,8 @@ export default function ProductFormModal({
 
     onSubmit({
       ...values,
+      name,
+      description,
       images: parsedImages,
       image: parsedImages[0],
     });
@@ -142,6 +171,7 @@ export default function ProductFormModal({
               type="text"
               value={values.name}
               onChange={(e) => set("name", e.target.value)}
+              maxLength={80}
               className={inputClass}
               placeholder="Ivory Oversized Tee"
             />
@@ -150,6 +180,8 @@ export default function ProductFormModal({
             <input
               type="number"
               min={0}
+              max={500000}
+              step={1}
               value={values.price}
               onChange={(e) => set("price", Number(e.target.value))}
               className={inputClass}
@@ -161,6 +193,7 @@ export default function ProductFormModal({
           <textarea
             value={values.description}
             onChange={(e) => set("description", e.target.value)}
+            maxLength={600}
             className={textareaClass}
             placeholder="Fabric, fit, feel — in a sentence or two."
           />
@@ -225,7 +258,7 @@ export default function ProductFormModal({
 
         <FormField
           label="Image URLs"
-          hint="One URL per line. The first URL is used as the card thumbnail."
+          hint="One HTTPS images.unsplash.com URL per line. The first URL is used as the card thumbnail."
           error={errors.images}
         >
           <textarea

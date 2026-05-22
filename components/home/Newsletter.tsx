@@ -9,7 +9,8 @@ export default function Newsletter() {
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!email) return;
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) return;
     setSubmitted(true);
     setEmail("");
   }
@@ -50,8 +51,11 @@ export default function Newsletter() {
               id="newsletter-email"
               type="email"
               required
+              autoComplete="email"
+              inputMode="email"
+              maxLength={254}
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => setEmail(e.target.value.slice(0, 254))}
               placeholder="your@email.com"
               className="w-full flex-1 rounded-full border border-line bg-ink/80 px-5 py-3 text-sm text-paper placeholder:text-paper-muted/70 focus:border-gold focus:outline-none focus:ring-2 focus:ring-gold/30"
             />

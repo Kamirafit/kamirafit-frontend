@@ -59,6 +59,14 @@ export default function ShippingForm({
     onChange({ ...values, [key]: value });
   };
 
+  const setPhone = (value: string) => {
+    set("phone", value.replace(/[^\d+\s-]/g, "").slice(0, 16));
+  };
+
+  const setPincode = (value: string) => {
+    set("pincode", value.replace(/\D/g, "").slice(0, 6));
+  };
+
   const inputClass = (hasError?: boolean) =>
     `w-full rounded-xl border bg-ink-2 px-4 py-3 text-sm text-paper outline-none transition-colors placeholder:text-paper-muted/60 focus:ring-2 focus:ring-gold/30 ${
       hasError
@@ -74,6 +82,7 @@ export default function ShippingForm({
           id={fieldId("name")}
           type="text"
           autoComplete="name"
+          maxLength={80}
           value={values.name}
           onChange={(e) => set("name", e.target.value)}
           placeholder="Krishnendu Ganguly"
@@ -93,10 +102,12 @@ export default function ShippingForm({
         <input
           id={fieldId("phone")}
           type="tel"
-          inputMode="numeric"
+          inputMode="tel"
           autoComplete="tel"
+          maxLength={16}
+          pattern="[0-9+\s-]{10,16}"
           value={values.phone}
-          onChange={(e) => set("phone", e.target.value)}
+          onChange={(e) => setPhone(e.target.value)}
           placeholder="9876543210"
           className={inputClass(Boolean(errors.phone))}
           aria-invalid={Boolean(errors.phone)}
@@ -115,6 +126,7 @@ export default function ShippingForm({
           id={fieldId("address")}
           rows={3}
           autoComplete="street-address"
+          maxLength={240}
           value={values.address}
           onChange={(e) => set("address", e.target.value)}
           placeholder="House no., street, locality"
@@ -138,6 +150,7 @@ export default function ShippingForm({
             id={fieldId("city")}
             type="text"
             autoComplete="address-level2"
+            maxLength={80}
             value={values.city}
             onChange={(e) => set("city", e.target.value)}
             placeholder="Kolkata"
@@ -159,8 +172,10 @@ export default function ShippingForm({
             type="text"
             inputMode="numeric"
             autoComplete="postal-code"
+            maxLength={6}
+            pattern="[0-9]{6}"
             value={values.pincode}
-            onChange={(e) => set("pincode", e.target.value)}
+            onChange={(e) => setPincode(e.target.value)}
             placeholder="700001"
             className={inputClass(Boolean(errors.pincode))}
             aria-invalid={Boolean(errors.pincode)}

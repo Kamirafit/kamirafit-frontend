@@ -22,6 +22,20 @@ const INITIAL_VALUES: ShippingDetails = {
   pincode: "",
 };
 
+function cleanText(value: string, maxLength: number) {
+  return value.replace(/\s+/g, " ").trim().slice(0, maxLength);
+}
+
+function normalize(values: ShippingDetails): ShippingDetails {
+  return {
+    name: cleanText(values.name, 80),
+    phone: values.phone.replace(/[^\d+\s-]/g, "").trim().slice(0, 16),
+    address: cleanText(values.address, 240),
+    city: cleanText(values.city, 80),
+    pincode: values.pincode.replace(/\D/g, "").slice(0, 6),
+  };
+}
+
 function validate(values: ShippingDetails): ShippingErrors {
   const errors: ShippingErrors = {};
   if (!values.name.trim() || values.name.trim().length < 2) {
@@ -58,7 +72,9 @@ export default function CheckoutPageClient() {
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (resolved.length === 0) return;
-    const nextErrors = validate(values);
+    const cleanedValues = normalize(values);
+    setValues(cleanedValues);
+    const nextErrors = validate(cleanedValues);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
 
