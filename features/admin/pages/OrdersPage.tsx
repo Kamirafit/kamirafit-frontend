@@ -12,7 +12,7 @@ import {
   type PaymentStatus,
 } from "@/data/orders";
 import SearchField from "../components/SearchField";
-import { useAppSelector } from "@/features/product/hooks/redux";
+import { useAdminSelector } from "@/features/admin/hooks/redux";
 
 type OrderFilter = "all" | OrderStatus;
 type PaymentFilter = "all" | PaymentStatus;
@@ -21,7 +21,7 @@ const SELECT_CLASS =
   "rounded-full border border-line bg-ink-2 px-4 py-2.5 text-[13px] text-paper transition-colors duration-300 focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold";
 
 export default function OrdersPage() {
-  const orders = useAppSelector((s) => s.adminOrders.items);
+  const orders = useAdminSelector((s) => s.adminOrders.items);
 
   const [query, setQuery] = useState("");
   const [orderFilter, setOrderFilter] = useState<OrderFilter>("all");

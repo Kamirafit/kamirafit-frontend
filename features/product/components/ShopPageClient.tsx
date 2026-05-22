@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import Container from "@/components/ui/Container";
-import { useAppSelector } from "../hooks/redux";
+import { PRODUCTS } from "../data/products";
 import { useFilteredSortedProducts } from "../hooks/useFilteredSortedProducts";
 import {
   CATEGORY_OPTIONS,
@@ -35,10 +35,9 @@ export default function ShopPageClient() {
   const [sort, setSort] = useState<SortKey>("popular");
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const allProducts = useAppSelector((s) => s.adminProducts.items);
   const activeProducts = useMemo(
-    () => allProducts.filter((p) => p.status === "active"),
-    [allProducts],
+    () => PRODUCTS.filter((p) => p.status === "active"),
+    [],
   );
   const products = useFilteredSortedProducts(activeProducts, filters, sort);
 

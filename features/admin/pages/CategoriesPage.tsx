@@ -9,7 +9,10 @@ import {
   deleteCategory,
   updateCategory,
 } from "@/features/admin/store/categoriesSlice";
-import { useAppDispatch, useAppSelector } from "@/features/product/hooks/redux";
+import {
+  useAdminDispatch,
+  useAdminSelector,
+} from "@/features/admin/hooks/redux";
 import ActionButton from "../components/ActionButton";
 import CategoryFormModal from "../components/CategoryFormModal";
 import ConfirmDialog from "../components/ConfirmDialog";
@@ -24,8 +27,8 @@ function PlusIcon() {
 }
 
 export default function CategoriesPage() {
-  const dispatch = useAppDispatch();
-  const categories = useAppSelector((s) => s.adminCategories.items);
+  const dispatch = useAdminDispatch();
+  const categories = useAdminSelector((s) => s.adminCategories.items);
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<AdminCategory | null>(null);

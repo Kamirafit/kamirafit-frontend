@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
-import { useAppSelector } from "@/features/product/hooks/redux";
+import { PRODUCTS } from "@/features/product/data/products";
 import type { Product } from "@/features/product/types";
 import { useSpotlight } from "./SpotlightProvider";
 import SearchInput from "./SearchInput";
@@ -37,8 +37,7 @@ export default function SpotlightSearch() {
   const [shouldRender, setShouldRender] = useState(false);
   const [isActive, setIsActive] = useState(false);
 
-  const catalog = useAppSelector((s) => s.adminProducts.items);
-  const results = useMemo(() => searchProducts(catalog, query), [catalog, query]);
+  const results = useMemo(() => searchProducts(PRODUCTS, query), [query]);
 
   useEffect(() => {
     if (open) {

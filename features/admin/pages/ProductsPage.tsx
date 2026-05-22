@@ -10,7 +10,10 @@ import {
   toggleProductStatus,
   updateProduct,
 } from "@/features/admin/store/productsSlice";
-import { useAppDispatch, useAppSelector } from "@/features/product/hooks/redux";
+import {
+  useAdminDispatch,
+  useAdminSelector,
+} from "@/features/admin/hooks/redux";
 import type { Category, Product } from "@/features/product/types";
 import ActionButton from "../components/ActionButton";
 import ConfirmDialog from "../components/ConfirmDialog";
@@ -37,9 +40,9 @@ function PlusIcon() {
 }
 
 export default function ProductsPage() {
-  const dispatch = useAppDispatch();
-  const products = useAppSelector((s) => s.adminProducts.items);
-  const categories = useAppSelector((s) => s.adminCategories.items);
+  const dispatch = useAdminDispatch();
+  const products = useAdminSelector((s) => s.adminProducts.items);
+  const categories = useAdminSelector((s) => s.adminCategories.items);
 
   const [query, setQuery] = useState("");
   const [formOpen, setFormOpen] = useState(false);

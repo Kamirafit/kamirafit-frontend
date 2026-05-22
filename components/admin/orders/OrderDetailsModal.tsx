@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import { ORDER_STATUSES, type Order, type OrderStatus } from "@/data/orders";
 import Modal from "@/features/admin/components/Modal";
 import { updateOrderStatus } from "@/features/admin/store/ordersSlice";
-import { useAppDispatch } from "@/features/product/hooks/redux";
+import { useAdminDispatch } from "@/features/admin/hooks/redux";
 import StatusBadge from "./StatusBadge";
 
 const formatPrice = (n: number) =>
@@ -60,7 +60,7 @@ type Props = {
  * dispatched to Redux so the parent table reflects them instantly.
  */
 export default function OrderDetailsModal({ open, onClose, order }: Props) {
-  const dispatch = useAppDispatch();
+  const dispatch = useAdminDispatch();
   const title = useMemo(() => (order ? `Order ${order.id}` : "Order"), [order]);
 
   if (!order) {

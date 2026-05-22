@@ -4,7 +4,10 @@ import { useMemo, useState } from "react";
 import SectionHeader from "@/components/ui/SectionHeader";
 import type { AdminUser } from "@/data/users";
 import { updateUser } from "@/features/admin/store/usersSlice";
-import { useAppDispatch, useAppSelector } from "@/features/product/hooks/redux";
+import {
+  useAdminDispatch,
+  useAdminSelector,
+} from "@/features/admin/hooks/redux";
 import ActionButton from "../components/ActionButton";
 import DataTable, { type Column } from "../components/DataTable";
 import SearchField from "../components/SearchField";
@@ -19,8 +22,8 @@ function initials(name: string) {
 }
 
 export default function UsersPage() {
-  const dispatch = useAppDispatch();
-  const users = useAppSelector((s) => s.adminUsers.items);
+  const dispatch = useAdminDispatch();
+  const users = useAdminSelector((s) => s.adminUsers.items);
 
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState<AdminUser | null>(null);
