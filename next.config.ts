@@ -1,12 +1,20 @@
 import type { NextConfig } from "next";
 
 const isDev = process.env.NODE_ENV !== "production";
+const productImageHosts = (
+  process.env.NEXT_PUBLIC_PRODUCT_IMAGE_HOSTS ?? "images.unsplash.com"
+)
+  .split(",")
+  .map((host) => host.trim().toLowerCase())
+  .filter(Boolean);
 
 const contentSecurityPolicy = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https://images.unsplash.com",
+  `img-src 'self' data: blob: ${productImageHosts
+    .map((host) => `https://${host}`)
+    .join(" ")}`,
   "font-src 'self' data:",
   "connect-src 'self'",
   "media-src 'self'",
@@ -62,10 +70,10 @@ const nextConfig: NextConfig = {
     contentDispositionType: "attachment",
     dangerouslyAllowSVG: false,
     remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "images.unsplash.com",
-      },
+      ...productImageHosts.map((hostname) => ({
+        protocol: "https" as const,
+        hostname,
+      })),
     ],
   },
   async headers() {

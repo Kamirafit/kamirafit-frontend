@@ -50,21 +50,24 @@ const EMPTY: FormValues = {
 };
 
 const MAX_IMAGE_URLS = 8;
-const ALLOWED_IMAGE_HOSTS = new Set(["images.unsplash.com"]);
 
 function isCategory(v: string, options: string[]): v is Category {
   return options.includes(v) && CATEGORY_OPTIONS.includes(v as Category);
 }
 
-function parseImageUrl(value: string) {
+function parseImageUrl(value: string): string | null {
   try {
     const url = new URL(value);
     if (url.protocol !== "https:") return null;
-    if (!ALLOWED_IMAGE_HOSTS.has(url.hostname)) return null;
     return url.toString();
   } catch {
     return null;
   }
+}
+
+function normalizeImageSource(value: string): string | null {
+  if (value.startsWith("blob:")) return value;
+  return parseImageUrl(value);
 }
 
 export default function ProductFormModal({
@@ -166,12 +169,8 @@ export default function ProductFormModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const imageLines = imagesText
-      .split(/\n+/)
-      .map((l) => l.trim())
-      .filter(Boolean);
-    const parsedImages = imageLines
-      .map(parseImageUrl)
+    const parsedImages = values.images
+      .map(normalizeImageSource)
       .filter((url): url is string => Boolean(url));
     const nextErrors: Partial<Record<keyof FormValues, string>> = {};
     const name = values.name.trim();
@@ -185,9 +184,9 @@ export default function ProductFormModal({
     if (description.length > 600)
       nextErrors.description = "Description must stay under 600 characters";
     if (parsedImages.length === 0)
-      nextErrors.images = "Use at least one HTTPS images.unsplash.com URL";
-    if (parsedImages.length !== imageLines.length)
-      nextErrors.images = "Image URLs must be HTTPS links from images.unsplash.com";
+      nextErrors.images = "Upload at least one image or use a secure HTTPS image URL";
+    if (parsedImages.length !== values.images.length)
+      nextErrors.images = "Remote image URLs must use HTTPS";
     if (parsedImages.length > MAX_IMAGE_URLS)
       nextErrors.images = `Use ${MAX_IMAGE_URLS} image URLs or fewer`;
     if (values.size.length === 0)
@@ -309,8 +308,8 @@ export default function ProductFormModal({
         </FormField>
 
         <FormField
-          label="Image URLs"
-          hint="One HTTPS images.unsplash.com URL per line. The first URL is used as the card thumbnail."
+          label="Product images"
+          hint="Upload image files now. When the backend is ready, serve product images from your configured HTTPS media host."
           error={errors.images}
         >
           <div className="flex flex-col gap-3">
