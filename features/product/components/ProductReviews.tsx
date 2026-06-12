@@ -1,16 +1,174 @@
 "use client";
 
-import { useMemo } from "react";
+import Image from "next/image";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
 import type { Review } from "../types";
-import { StarIcon } from "./icons";
+import { CloseIcon, StarIcon } from "./icons";
 import StarRating from "./StarRating";
 
 type Props = {
+  productId: string;
   reviews: Review[];
   averageRating: number;
 };
 
-export default function ProductReviews({ reviews, averageRating }: Props) {
+type UploadPreview = {
+  id: string;
+  name: string;
+  url: string;
+};
+
+function createId(prefix: string) {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return `${prefix}-${crypto.randomUUID()}`;
+  }
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function formatReviewDate(value: string) {
+  return new Date(value).toLocaleDateString("en-IN", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .map((part) => part[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+}
+
+function ReviewImages({ images, title }: { images: string[]; title?: string }) {
+  if (images.length === 0) return null;
+
+  return (
+    <div className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-4">
+      {images.map((image, index) => (
+        <div
+          key={`${image}-${index}`}
+          className="relative aspect-square overflow-hidden rounded-lg border border-line bg-ink"
+        >
+          <Image
+            src={image}
+            alt={title ? `${title} review image ${index + 1}` : `Review image ${index + 1}`}
+            fill
+            sizes="96px"
+            className="object-cover"
+            unoptimized
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function RatingInput({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (rating: number) => void;
+}) {
+  return (
+    <div className="flex items-center gap-1" role="radiogroup" aria-label="Review rating">
+      {[1, 2, 3, 4, 5].map((rating) => (
+        <button
+          key={rating}
+          type="button"
+          role="radio"
+          aria-checked={value === rating}
+          aria-label={`${rating} star${rating === 1 ? "" : "s"}`}
+          onClick={() => onChange(rating)}
+          className="rounded-full p-1 text-gold transition-transform duration-200 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-gold/40"
+        >
+          <StarIcon
+            width={22}
+            height={22}
+            filled={rating <= value}
+            className={rating <= value ? "text-gold" : "text-line-strong"}
+          />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ReviewCard({ review }: { review: Review }) {
+  return (
+    <article className="rounded-2xl border border-line bg-ink-2 p-5 shadow-[0_24px_60px_-42px_rgba(74,14,26,0.4)] sm:p-6">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex items-center gap-3">
+          <div
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gold/10 font-display text-sm font-semibold text-gold"
+            aria-hidden
+          >
+            {getInitials(review.customerName)}
+          </div>
+          <div>
+            <p className="text-[14px] font-semibold text-paper">
+              {review.customerName}
+            </p>
+            <p className="text-[11.5px] text-paper-muted">
+              {formatReviewDate(review.createdAt)}
+            </p>
+          </div>
+        </div>
+        <StarRating rating={review.rating} size={13} />
+      </header>
+
+      {review.title ? (
+        <h3 className="mt-4 font-display text-lg font-semibold tracking-tight text-paper">
+          {review.title}
+        </h3>
+      ) : null}
+      <p className="mt-2 text-[13.5px] leading-relaxed text-paper-muted">
+        {review.comment}
+      </p>
+      <ReviewImages images={review.images} title={review.title} />
+    </article>
+  );
+}
+
+export default function ProductReviews({
+  productId,
+  reviews,
+  averageRating,
+}: Props) {
+  const [localReviews, setLocalReviews] = useState<Review[]>(reviews);
+  const [rating, setRating] = useState(5);
+  const [title, setTitle] = useState("");
+  const [comment, setComment] = useState("");
+  const [uploadedImages, setUploadedImages] = useState<UploadPreview[]>([]);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const createdObjectUrls = useRef(new Set<string>());
+
+  useEffect(() => {
+    const objectUrls = createdObjectUrls.current;
+    return () => {
+      objectUrls.forEach((url) => URL.revokeObjectURL(url));
+      objectUrls.clear();
+    };
+  }, []);
+
+  const total = localReviews.length;
+  const currentAverageRating = useMemo(() => {
+    if (total === 0) return averageRating;
+    return (
+      localReviews.reduce((sum, review) => sum + review.rating, 0) / total
+    );
+  }, [averageRating, localReviews, total]);
+
   const histogram = useMemo(() => {
     const buckets: Record<1 | 2 | 3 | 4 | 5, number> = {
       1: 0,
@@ -19,51 +177,109 @@ export default function ProductReviews({ reviews, averageRating }: Props) {
       4: 0,
       5: 0,
     };
-    for (const r of reviews) {
+    for (const review of localReviews) {
       const bucket = Math.max(
         1,
-        Math.min(5, Math.round(r.rating)),
+        Math.min(5, Math.round(review.rating)),
       ) as 1 | 2 | 3 | 4 | 5;
       buckets[bucket] += 1;
     }
     return buckets;
-  }, [reviews]);
+  }, [localReviews]);
 
-  const total = reviews.length;
-  const latest = reviews[0];
+  const handleImageUpload = (event: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? []);
+    if (files.length === 0) return;
+
+    const previews = files
+      .filter((file) => file.type.startsWith("image/"))
+      .map((file) => {
+        const url = URL.createObjectURL(file);
+        createdObjectUrls.current.add(url);
+        return {
+          id: createId("review-image"),
+          name: file.name,
+          url,
+        };
+      });
+
+    setUploadedImages((current) => [...current, ...previews]);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const removeImage = (imageId: string) => {
+    setUploadedImages((current) => {
+      const image = current.find((item) => item.id === imageId);
+      if (image) {
+        URL.revokeObjectURL(image.url);
+        createdObjectUrls.current.delete(image.url);
+      }
+      return current.filter((item) => item.id !== imageId);
+    });
+  };
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const trimmedComment = comment.trim();
+    const trimmedTitle = title.trim();
+    if (!trimmedComment) return;
+
+    const nextReview: Review = {
+      id: createId("review"),
+      productId,
+      customerName: "Guest Customer",
+      rating,
+      title: trimmedTitle || undefined,
+      comment: trimmedComment,
+      images: uploadedImages.map((image) => image.url),
+      createdAt: new Date().toISOString(),
+    };
+
+    setLocalReviews((current) => [nextReview, ...current]);
+    setRating(5);
+    setTitle("");
+    setComment("");
+    setUploadedImages([]);
+  };
 
   return (
-    <section
-      aria-labelledby="reviews-heading"
-      className="flex flex-col gap-6"
-    >
-      <div className="flex items-end justify-between gap-3">
-        <h2
-          id="reviews-heading"
-          className="font-display text-2xl font-semibold tracking-tight text-paper sm:text-3xl"
-        >
-          Rating & Reviews
-        </h2>
-        <button
-          type="button"
-          className="hidden text-[12px] font-medium uppercase tracking-[0.18em] text-paper-muted underline-offset-4 transition-colors hover:text-gold hover:underline sm:inline-flex"
-        >
-          View all {total}
-        </button>
+    <section aria-labelledby="reviews-heading" className="flex flex-col gap-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2
+            id="reviews-heading"
+            className="font-display text-2xl font-semibold tracking-tight text-paper sm:text-3xl"
+          >
+            Rating & Reviews
+          </h2>
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-[13px] text-paper-muted">
+            <StarRating rating={currentAverageRating} size={16} />
+            <span className="font-semibold text-paper">
+              {currentAverageRating.toFixed(1)}
+            </span>
+            <span>
+              ({total} Review{total === 1 ? "" : "s"})
+            </span>
+          </div>
+        </div>
+        <p className="text-[12px] font-medium uppercase tracking-[0.18em] text-paper-muted">
+          Share your fit notes
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 rounded-2xl border border-line bg-ink p-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-10 lg:p-8">
-        <div className="flex flex-col gap-5 lg:border-r lg:border-line lg:pr-8">
-          <div className="flex items-baseline gap-2">
-            <span className="font-display text-5xl font-semibold text-paper sm:text-6xl">
-              {averageRating.toFixed(1)}
-            </span>
-            <span className="text-lg text-paper-muted">/5</span>
+      <div className="grid grid-cols-1 gap-6 rounded-2xl border border-line bg-ink p-5 shadow-[0_30px_70px_-52px_rgba(74,14,26,0.35)] lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-8 lg:p-8">
+        <div className="flex flex-col gap-6 lg:border-r lg:border-line lg:pr-8">
+          <div>
+            <div className="flex items-baseline gap-2">
+              <span className="font-display text-5xl font-semibold text-paper sm:text-6xl">
+                {currentAverageRating.toFixed(1)}
+              </span>
+              <span className="text-lg text-paper-muted">/5</span>
+            </div>
+            <p className="mt-2 text-[13px] text-paper-muted">
+              Based on {total} verified review{total === 1 ? "" : "s"}
+            </p>
           </div>
-          <StarRating rating={averageRating} size={18} />
-          <p className="text-[13px] text-paper-muted">
-            Based on {total} verified review{total === 1 ? "" : "s"}
-          </p>
 
           <div className="flex flex-col gap-1.5">
             {[5, 4, 3, 2, 1].map((star) => {
@@ -77,12 +293,7 @@ export default function ProductReviews({ reviews, averageRating }: Props) {
                   <span className="flex w-5 items-center gap-0.5 tabular-nums">
                     {star}
                   </span>
-                  <StarIcon
-                    width={12}
-                    height={12}
-                    filled
-                    className="text-gold"
-                  />
+                  <StarIcon width={12} height={12} filled className="text-gold" />
                   <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-line">
                     <div
                       className="h-full bg-gold transition-[width] duration-500"
@@ -96,62 +307,109 @@ export default function ProductReviews({ reviews, averageRating }: Props) {
           </div>
         </div>
 
-        <div className="flex flex-col gap-4">
-          {latest ? (
-            <article className="rounded-xl border border-line bg-ink-2 p-5">
-              <header className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-gold/10 font-display text-sm font-semibold text-gold"
-                    aria-hidden
-                  >
-                    {latest.author
-                      .split(" ")
-                      .map((n) => n[0])
-                      .slice(0, 2)
-                      .join("")
-                      .toUpperCase()}
-                  </div>
-                  <div>
-                    <p className="text-[14px] font-semibold text-paper">
-                      {latest.author}
-                    </p>
-                    <p className="text-[11.5px] text-paper-muted">
-                      {new Date(latest.date).toLocaleDateString("en-IN", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })}
-                    </p>
-                  </div>
-                </div>
-                <StarRating rating={latest.rating} size={13} />
-              </header>
-              <p className="mt-4 text-[13.5px] leading-relaxed text-paper">
-                {latest.comment}
-              </p>
-            </article>
-          ) : null}
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div>
+            <label className="text-[12px] font-semibold uppercase tracking-[0.18em] text-paper-muted">
+              Rating
+            </label>
+            <div className="mt-2">
+              <RatingInput value={rating} onChange={setRating} />
+            </div>
+          </div>
 
-          <ul className="flex flex-col gap-3">
-            {reviews.slice(1, 3).map((r) => (
-              <li
-                key={r.id}
-                className="rounded-xl border border-line bg-ink p-4"
-              >
-                <div className="flex items-center justify-between">
-                  <p className="text-[13.5px] font-medium text-paper">
-                    {r.author}
-                  </p>
-                  <StarRating rating={r.rating} size={12} />
-                </div>
-                <p className="mt-2 line-clamp-2 text-[12.5px] leading-relaxed text-paper-muted">
-                  {r.comment}
-                </p>
-              </li>
-            ))}
-          </ul>
-        </div>
+          <div>
+            <label
+              htmlFor="review-title"
+              className="text-[12px] font-semibold uppercase tracking-[0.18em] text-paper-muted"
+            >
+              Review title
+            </label>
+            <input
+              id="review-title"
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              placeholder="Optional headline"
+              className="mt-2 w-full rounded-xl border border-line bg-ink-2 px-4 py-3 text-sm text-paper outline-none transition-colors placeholder:text-paper-muted/70 focus:border-gold"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="review-comment"
+              className="text-[12px] font-semibold uppercase tracking-[0.18em] text-paper-muted"
+            >
+              Review comment
+            </label>
+            <textarea
+              id="review-comment"
+              value={comment}
+              onChange={(event) => setComment(event.target.value)}
+              required
+              rows={4}
+              placeholder="How did it fit, feel, and wear?"
+              className="mt-2 w-full resize-none rounded-xl border border-line bg-ink-2 px-4 py-3 text-sm leading-relaxed text-paper outline-none transition-colors placeholder:text-paper-muted/70 focus:border-gold"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="review-images"
+              className="text-[12px] font-semibold uppercase tracking-[0.18em] text-paper-muted"
+            >
+              Review images
+            </label>
+            <input
+              ref={fileInputRef}
+              id="review-images"
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleImageUpload}
+              className="mt-2 block w-full cursor-pointer rounded-xl border border-dashed border-line bg-ink-2 px-4 py-3 text-sm text-paper-muted file:mr-4 file:rounded-full file:border-0 file:bg-gold file:px-4 file:py-2 file:text-[11px] file:font-semibold file:uppercase file:tracking-[0.16em] file:text-white hover:border-gold/60"
+            />
+
+            {uploadedImages.length > 0 ? (
+              <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-4">
+                {uploadedImages.map((image) => (
+                  <div
+                    key={image.id}
+                    className="group relative aspect-square overflow-hidden rounded-xl border border-line bg-ink"
+                  >
+                    <Image
+                      src={image.url}
+                      alt={image.name}
+                      fill
+                      sizes="96px"
+                      className="object-cover"
+                      unoptimized
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeImage(image.id)}
+                      aria-label={`Remove ${image.name}`}
+                      className="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full border border-white/50 bg-ink/80 text-paper shadow-lg backdrop-blur-md transition-colors hover:bg-gold hover:text-white"
+                    >
+                      <CloseIcon width={14} height={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </div>
+
+          <button
+            type="submit"
+            className="mt-1 w-full rounded-full border-2 border-gold bg-gold px-6 py-3 text-[12px] font-semibold uppercase tracking-[0.2em] text-white shadow-[0_14px_30px_-14px_rgba(74,14,26,0.6)] transition-all duration-300 hover:bg-transparent hover:text-gold"
+          >
+            Submit review
+          </button>
+        </form>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4">
+        {localReviews.map((review) => (
+          <ReviewCard key={review.id} review={review} />
+        ))}
       </div>
     </section>
   );

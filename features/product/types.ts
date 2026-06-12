@@ -2,14 +2,23 @@ export type Size = "S" | "M" | "L" | "XL";
 
 export type Color = "Black" | "White" | "Blue" | "Red";
 
-export type Category = "Oversized" | "Regular" | "Hoodies";
+export type Category =
+  | "Kurti"
+  | "Co-ords Sets"
+  | "Dresses"
+  | "T-Shirts"
+  | "Oversized T-Shirts"
+  | "Hoodies";
 
 export type Review = {
   id: string;
-  author: string;
+  productId: string;
+  customerName: string;
   rating: number;
+  title?: string;
   comment: string;
-  date: string;
+  images: string[];
+  createdAt: string;
 };
 
 export type ProductStatus = "active" | "inactive";
@@ -48,8 +57,11 @@ export type Filters = {
 export const SIZE_OPTIONS: Size[] = ["S", "M", "L", "XL"];
 export const COLOR_OPTIONS: Color[] = ["Black", "White", "Blue", "Red"];
 export const CATEGORY_OPTIONS: Category[] = [
-  "Oversized",
-  "Regular",
+  "Kurti",
+  "Co-ords Sets",
+  "Dresses",
+  "T-Shirts",
+  "Oversized T-Shirts",
   "Hoodies",
 ];
 

@@ -13,21 +13,26 @@ type Props = {
   product: Product;
 };
 
-function BagIcon({ filled = false }: { filled?: boolean }) {
+function ProductCartIcon({ filled = false }: { filled?: boolean }) {
   return (
     <svg
       width="16"
       height="16"
       viewBox="0 0 24 24"
-      fill={filled ? "currentColor" : "none"}
+      fill="none"
       stroke="currentColor"
       strokeWidth="1.6"
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden
     >
-      <path d="M6 7h12l-1.2 12.2a2 2 0 0 1-2 1.8H9.2a2 2 0 0 1-2-1.8L6 7Z" />
-      <path d="M9 7a3 3 0 0 1 6 0" />
+      <circle cx="9" cy="20" r="1.5" fill={filled ? "currentColor" : "none"} />
+      <circle cx="17" cy="20" r="1.5" fill={filled ? "currentColor" : "none"} />
+      <path d="M3 3h2l.4 2" />
+      <path
+        d="M5.4 5L7 13h10l3-8H5.4z"
+        fill={filled ? "currentColor" : "none"}
+      />
     </svg>
   );
 }
@@ -101,7 +106,7 @@ export default function ProductCard({ product }: Props) {
                   : "border-gold bg-transparent text-gold hover:bg-gold hover:text-white hover:shadow-[0_8px_20px_-8px_rgba(74,14,26,0.55)]"
               }`}
             >
-              <BagIcon filled={inCart} />
+              <ProductCartIcon filled={inCart} />
             </button>
           </div>
         </div>

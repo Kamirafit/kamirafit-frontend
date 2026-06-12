@@ -3,6 +3,7 @@
 import { useRef, type ReactNode } from "react";
 import { Provider } from "react-redux";
 import { makeAdminStore, type AdminStore } from "@/features/admin/store";
+import AuthHydrator from "@/features/auth/components/AuthHydrator";
 
 export default function AdminProviders({ children }: { children: ReactNode }) {
   const storeRef = useRef<AdminStore | null>(null);
@@ -10,5 +11,9 @@ export default function AdminProviders({ children }: { children: ReactNode }) {
     storeRef.current = makeAdminStore();
   }
 
-  return <Provider store={storeRef.current}>{children}</Provider>;
+  return (
+    <Provider store={storeRef.current}>
+      <AuthHydrator storageKey="kamira_auth_admin">{children}</AuthHydrator>
+    </Provider>
+  );
 }

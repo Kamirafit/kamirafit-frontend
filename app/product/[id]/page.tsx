@@ -77,6 +77,7 @@ export default async function ProductPage({
 
         <div className="mt-16 grid grid-cols-1 gap-16 lg:mt-20 lg:gap-20">
           <ProductReviews
+            productId={product.id}
             reviews={product.reviews}
             averageRating={product.rating}
           />

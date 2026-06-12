@@ -7,17 +7,22 @@ export type AdminCategory = {
 export const CATEGORIES: AdminCategory[] = [
   {
     id: "c-01",
-    name: "Oversized",
-    subcategories: ["Tees", "Long Tees", "Polos"],
+    name: "Indian",
+    subcategories: ["Kurti"],
   },
   {
     id: "c-02",
-    name: "Regular",
-    subcategories: ["Tees", "Crewnecks", "Polos"],
+    name: "Indo-western",
+    subcategories: ["Co-ords Sets"],
   },
   {
     id: "c-03",
-    name: "Hoodies",
-    subcategories: ["Pullover", "Full Zip", "Cropped"],
+    name: "Western",
+    subcategories: ["Dresses"],
+  },
+  {
+    id: "c-04",
+    name: "Unisex T-Shirts",
+    subcategories: ["T-Shirts", "Oversized T-Shirts", "Hoodies"],
   },
 ];

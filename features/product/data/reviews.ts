@@ -1,159 +1,181 @@
 import type { Review } from "../types";
 
-const REVIEWS_BY_PRODUCT: Record<string, Review[]> = {
+type SeedReview = Omit<Review, "productId" | "images">;
+
+const REVIEWS_BY_PRODUCT: Record<string, SeedReview[]> = {
   "p-01": [
     {
       id: "r-01-1",
-      author: "Ananya S.",
+      customerName: "Ananya S.",
       rating: 5,
+      title: "Falls exactly right",
       comment:
         "Fabric is buttery soft and the oversized fit falls exactly right. Worth every rupee.",
-      date: "2026-04-10",
+      createdAt: "2026-04-10",
     },
     {
       id: "r-01-2",
-      author: "Rohan M.",
+      customerName: "Rohan M.",
       rating: 5,
-      comment: "Honestly the best basic tee I own now. Wash-and-wear durability feels premium.",
-      date: "2026-04-02",
+      title: "Best basic tee",
+      comment:
+        "Honestly the best basic tee I own now. Wash-and-wear durability feels premium.",
+      createdAt: "2026-04-02",
     },
     {
       id: "r-01-3",
-      author: "Priya K.",
+      customerName: "Priya K.",
       rating: 4,
       comment: "Loved the ivory tone. A touch sheer in sunlight, otherwise flawless.",
-      date: "2026-03-25",
+      createdAt: "2026-03-25",
     },
     {
       id: "r-01-4",
-      author: "Dev R.",
+      customerName: "Dev R.",
       rating: 5,
       comment: "Excellent length, clean neckline. Pairs with everything I own.",
-      date: "2026-03-18",
+      createdAt: "2026-03-18",
     },
     {
       id: "r-01-5",
-      author: "Meera J.",
+      customerName: "Meera J.",
       rating: 4,
-      comment: "Sizing runs true to the chart. Relaxed but not boxy — perfect.",
-      date: "2026-03-05",
+      title: "True to size",
+      comment: "Sizing runs true to the chart. Relaxed but not boxy - perfect.",
+      createdAt: "2026-03-05",
     },
   ],
   "p-02": [
     {
       id: "r-02-1",
-      author: "Karan B.",
+      customerName: "Karan B.",
       rating: 5,
+      title: "Premium feel",
       comment: "Heavyweight cotton, deep hood, clean stitching. Premium feel throughout.",
-      date: "2026-04-12",
+      createdAt: "2026-04-12",
     },
     {
       id: "r-02-2",
-      author: "Sana T.",
+      customerName: "Sana T.",
       rating: 5,
-      comment: "The black is a proper black — not faded or blueish. Love it.",
-      date: "2026-04-04",
+      comment: "The black is a proper black - not faded or blueish. Love it.",
+      createdAt: "2026-04-04",
     },
     {
       id: "r-02-3",
-      author: "Vikram P.",
+      customerName: "Vikram P.",
       rating: 4,
       comment: "Warm without being bulky. Sleeves could be a hair longer on me.",
-      date: "2026-03-27",
+      createdAt: "2026-03-27",
     },
     {
       id: "r-02-4",
-      author: "Ishita L.",
+      customerName: "Ishita L.",
       rating: 5,
+      title: "Weekend uniform",
       comment: "My new weekend uniform. Gets compliments every time I wear it.",
-      date: "2026-03-14",
+      createdAt: "2026-03-14",
     },
     {
       id: "r-02-5",
-      author: "Arjun G.",
+      customerName: "Arjun G.",
       rating: 5,
       comment: "Kangaroo pocket is spacious and the drawcords don't fray.",
-      date: "2026-03-02",
+      createdAt: "2026-03-02",
     },
   ],
   "p-03": [
     {
       id: "r-03-1",
-      author: "Neha D.",
+      customerName: "Neha D.",
       rating: 5,
+      title: "Tailored feel",
       comment: "Classic crewneck that fits like it was tailored. Soft from day one.",
-      date: "2026-04-09",
+      createdAt: "2026-04-09",
     },
     {
       id: "r-03-2",
-      author: "Siddharth R.",
+      customerName: "Siddharth R.",
       rating: 4,
       comment: "Great everyday layer. Colour held up after multiple washes.",
-      date: "2026-03-30",
+      createdAt: "2026-03-30",
     },
     {
       id: "r-03-3",
-      author: "Tara V.",
+      customerName: "Tara V.",
       rating: 4,
-      comment: "Honest, no-nonsense tee. Fit is regular — not oversized, not slim.",
-      date: "2026-03-20",
+      comment: "Honest, no-nonsense tee. Fit is regular - not oversized, not slim.",
+      createdAt: "2026-03-20",
     },
     {
       id: "r-03-4",
-      author: "Aarav N.",
+      customerName: "Aarav N.",
       rating: 5,
+      title: "Will reorder",
       comment: "Exactly what I wanted as a base layer. Will re-order in every colour.",
-      date: "2026-03-08",
+      createdAt: "2026-03-08",
     },
     {
       id: "r-03-5",
-      author: "Kavya I.",
+      customerName: "Kavya I.",
       rating: 5,
       comment: "Holds shape beautifully. Neckline sits flat without curling.",
-      date: "2026-02-26",
+      createdAt: "2026-02-26",
     },
   ],
 };
 
-const DEFAULT_REVIEWS: Review[] = [
+const DEFAULT_REVIEWS: SeedReview[] = [
   {
     id: "r-default-1",
-    author: "Aditya V.",
+    customerName: "Aditya V.",
     rating: 5,
+    title: "Great fabric weight",
     comment:
-      "Love the fabric weight — doesn't feel cheap like most e-commerce tees I've ordered.",
-    date: "2026-04-08",
+      "Love the fabric weight - doesn't feel cheap like most e-commerce tees I've ordered.",
+    createdAt: "2026-04-08",
   },
   {
     id: "r-default-2",
-    author: "Riya S.",
+    customerName: "Riya S.",
     rating: 4,
     comment: "Fits as described on the size chart. The colour is true to the photos.",
-    date: "2026-03-28",
+    createdAt: "2026-03-28",
   },
   {
     id: "r-default-3",
-    author: "Harsh J.",
+    customerName: "Harsh J.",
     rating: 5,
+    title: "Clean stitching",
     comment: "Great silhouette and the stitching is clean inside-out. Keeper.",
-    date: "2026-03-18",
+    createdAt: "2026-03-18",
   },
   {
     id: "r-default-4",
-    author: "Mira K.",
+    customerName: "Mira K.",
     rating: 4,
     comment: "Soft and lightweight. Perfect layering piece for our weather.",
-    date: "2026-03-05",
+    createdAt: "2026-03-05",
   },
   {
     id: "r-default-5",
-    author: "Yash B.",
+    customerName: "Yash B.",
     rating: 5,
     comment: "Shipping was fast and the product exceeded expectations. Recommended.",
-    date: "2026-02-22",
+    createdAt: "2026-02-22",
   },
 ];
 
+function withProductData(review: SeedReview, productId: string): Review {
+  return {
+    ...review,
+    productId,
+    images: [],
+  };
+}
+
 export function getReviewsFor(productId: string): Review[] {
-  return REVIEWS_BY_PRODUCT[productId] ?? DEFAULT_REVIEWS;
+  return (REVIEWS_BY_PRODUCT[productId] ?? DEFAULT_REVIEWS).map((review) =>
+    withProductData(review, productId),
+  );
 }

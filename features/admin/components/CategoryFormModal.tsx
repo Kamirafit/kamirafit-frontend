@@ -86,7 +86,7 @@ export default function CategoryFormModal({
               setValues((prev) => ({ ...prev, name: e.target.value }))
             }
             className={inputClass}
-            placeholder="Oversized"
+            placeholder="Unisex T-Shirts"
           />
         </FormField>
 

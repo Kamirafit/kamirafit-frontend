@@ -41,7 +41,7 @@ const EMPTY: FormValues = {
   name: "",
   price: 0,
   description: "",
-  category: "Regular",
+  category: "T-Shirts",
   size: [],
   color: [],
   images: [],
@@ -109,7 +109,7 @@ export default function ProductFormModal({
         status: initial.status,
       });
     } else {
-      setValues({ ...EMPTY, category: effectiveCategories[0] ?? "Regular" });
+      setValues({ ...EMPTY, category: effectiveCategories[0] ?? "T-Shirts" });
     }
     setErrors({});
   }, [open, initial, effectiveCategories]);

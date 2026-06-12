@@ -22,6 +22,28 @@ import MobileFiltersDrawer from "./MobileFiltersDrawer";
 import ProductGrid from "./ProductGrid";
 import SortBar from "./SortBar";
 
+const CATEGORY_BY_SLUG: Record<string, Category> = {
+  kurti: "Kurti",
+  "co-ords-sets": "Co-ords Sets",
+  dresses: "Dresses",
+  tshirts: "T-Shirts",
+  "t-shirts": "T-Shirts",
+  "oversized-tshirts": "Oversized T-Shirts",
+  "oversized-t-shirts": "Oversized T-Shirts",
+  hoodies: "Hoodies",
+};
+
+function getInitialFilters(categorySlug?: string): Filters {
+  const category = categorySlug
+    ? CATEGORY_BY_SLUG[categorySlug.toLowerCase()]
+    : undefined;
+
+  return {
+    ...INITIAL_FILTERS,
+    categories: category ? [category] : [],
+  };
+}
+
 const INITIAL_FILTERS: Filters = {
   sizes: [],
   colors: [],
@@ -30,8 +52,14 @@ const INITIAL_FILTERS: Filters = {
   priceMax: PRICE_MAX,
 };
 
-export default function ShopPageClient() {
-  const [filters, setFilters] = useState<Filters>(INITIAL_FILTERS);
+type Props = {
+  initialCategorySlug?: string;
+};
+
+export default function ShopPageClient({ initialCategorySlug }: Props) {
+  const [filters, setFilters] = useState<Filters>(() =>
+    getInitialFilters(initialCategorySlug),
+  );
   const [sort, setSort] = useState<SortKey>("popular");
   const [mobileOpen, setMobileOpen] = useState(false);
 

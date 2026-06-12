@@ -53,22 +53,22 @@ export function DesktopCategoriesMenu() {
 
       {/*
         Positioning: top-full places the panel flush with the header bottom,
-        mt-2 adds the required 8px gap so the panel never overlaps the
-        navbar. pt-2 inside the wrapper acts as an invisible hover bridge so
-        the dropdown doesn't close while the cursor crosses the gap.
+        mt-2 adds the required 8px gap so the panel never overlaps the navbar.
+        The wrapper is just a positioner; the inner div handles visibility
+        and transitions so backdrop-filter works correctly.
       */}
       <div
         role="menu"
         aria-label="Categories"
-        className="invisible absolute left-1/2 top-full z-50 mt-2 w-[min(960px,92vw)] -translate-x-1/2 translate-y-2 pt-2 opacity-0 transition-all duration-300 ease-in-out group-hover/cats:visible group-hover/cats:translate-y-0 group-hover/cats:opacity-100"
+        className="absolute left-1/2 top-full z-50 mt-2 w-[min(960px,92vw)] -translate-x-1/2 pt-2 pointer-events-none group-hover/cats:pointer-events-auto"
       >
         {/*
-          Surface matches the sticky header exactly so the dropdown reads as
-          an extension of the navbar: ink/60 at rest, ink/45 when
-          backdrop-filter is supported, white/10 border, same deep shadow,
-          backdrop-blur-xl.
+          Milky glass surface keeps the menu readable while preserving the
+          header's frosted, semi-transparent design language.
+          Transitions and opacity are here so backdrop-filter isn't trapped
+          by a parent's opacity layer.
         */}
-        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-ink/60 text-paper shadow-[0_8px_32px_-12px_rgba(0,0,0,0.35)] backdrop-blur-xl supports-[backdrop-filter]:bg-ink/45">
+        <div className="relative invisible opacity-0 translate-y-2 group-hover/cats:visible group-hover/cats:translate-y-0 group-hover/cats:opacity-100 transition-all duration-300 ease-in-out overflow-hidden rounded-2xl border border-white/10 bg-ink/60 text-paper shadow-[0_8px_32px_-12px_rgba(0,0,0,0.35)] backdrop-blur-xl supports-[backdrop-filter]:bg-ink/45">
           <div
             aria-hidden
             className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-gold/50 to-transparent"
@@ -102,7 +102,7 @@ export function DesktopCategoriesMenu() {
               </div>
             ))}
           </div>
-          <div className="flex items-center justify-between border-t border-white/10 bg-ink/40 px-8 py-4 backdrop-blur-xl">
+          <div className="flex items-center justify-between border-t border-white/10 bg-white/5 px-8 py-4 backdrop-blur-xl">
             <p className="text-[12px] text-paper-muted">
               Free shipping on orders over ₹2,000
             </p>
@@ -151,7 +151,7 @@ export function MobileCategoriesMenu({
         }`}
       >
         <div className="min-h-0">
-          <div className="mb-2 space-y-5 rounded-xl border border-line bg-ink-2 px-4 py-4">
+          <div className="mb-2 space-y-5 rounded-xl border border-white/10 bg-ink/60 px-4 py-4 backdrop-blur-xl supports-[backdrop-filter]:bg-ink/45">
             {CATEGORY_COLUMNS.map((col) => (
               <div key={col.title}>
                 <p className="font-display text-[13px] font-bold tracking-tight text-paper">

@@ -14,6 +14,7 @@ import {
   HeartIcon,
   MenuIcon,
   SearchIcon,
+  UserIcon,
 } from "./icons";
 
 const NAV_LINKS = [
@@ -67,6 +68,7 @@ function IconTrigger({
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const { isAuthenticated } = useAppSelector((s) => s.auth);
   const cartCount = useAppSelector((s) =>
     s.cart.items.reduce((sum, it) => sum + it.quantity, 0),
   );
@@ -74,7 +76,10 @@ export default function Navbar() {
   const { setOpen: setSpotlightOpen } = useSpotlight();
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-ink/60 shadow-[0_8px_32px_-12px_rgba(0,0,0,0.35)] backdrop-blur-xl supports-[backdrop-filter]:bg-ink/45">
+    <header className="sticky top-0 z-50 w-full">
+      {/* Header Background Layer - isolated so it doesn't break child backdrop filters */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-16 -z-10 border-b border-white/10 bg-ink/60 shadow-[0_8px_32px_-12px_rgba(0,0,0,0.35)] backdrop-blur-xl supports-[backdrop-filter]:bg-ink/45" />
+
       <div className="flex h-16 w-full items-center justify-between px-4 sm:px-6 lg:px-10">
         <Link
           href="/"
@@ -125,12 +130,22 @@ export default function Navbar() {
             <CountBadge count={cartCount} />
           </Link>
 
-          <button
-            type="button"
-            className="hidden rounded-full border border-gold/70 bg-white/5 px-5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-gold backdrop-blur-md transition-all duration-300 ease-in-out hover:border-gold hover:bg-gold hover:text-white hover:shadow-[0_10px_25px_-10px_rgba(139,30,45,0.6)] md:inline-flex"
-          >
-            Login
-          </button>
+          {isAuthenticated ? (
+            <Link
+              href="/account"
+              aria-label="Account Settings"
+              className="hidden relative rounded-full border border-white/10 bg-white/5 p-2 text-paper-muted backdrop-blur-md transition-all duration-300 ease-in-out hover:border-white/20 hover:bg-white/10 hover:text-gold hover:shadow-[0_8px_20px_-10px_rgba(139,30,45,0.45)] md:inline-flex"
+            >
+              <UserIcon />
+            </Link>
+          ) : (
+            <Link
+              href="/login"
+              className="hidden text-[12px] font-medium uppercase tracking-[0.22em] text-paper transition-all duration-300 hover:text-gold md:inline-flex items-center justify-center px-4 py-2 rounded-full border border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10 hover:shadow-[0_8px_20px_-10px_rgba(139,30,45,0.45)]"
+            >
+              Login
+            </Link>
+          )}
 
           <button
             type="button"
@@ -176,12 +191,23 @@ export default function Navbar() {
               </Link>
             ))}
 
-            <button
-              type="button"
-              className="mt-3 w-full rounded-full border border-gold/70 bg-white/5 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-gold backdrop-blur-md transition-all duration-300 ease-in-out hover:border-gold hover:bg-gold hover:text-white"
-            >
-              Login
-            </button>
+            {isAuthenticated ? (
+              <Link
+                href="/account"
+                onClick={() => setOpen(false)}
+                className="mt-3 block w-full text-center rounded-full border border-gold/70 bg-white/5 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-gold backdrop-blur-md transition-all duration-300 ease-in-out hover:border-gold hover:bg-gold hover:text-white"
+              >
+                Account
+              </Link>
+            ) : (
+              <Link
+                href="/login"
+                onClick={() => setOpen(false)}
+                className="mt-3 block w-full text-center rounded-full border border-gold/70 bg-white/5 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-gold backdrop-blur-md transition-all duration-300 ease-in-out hover:border-gold hover:bg-gold hover:text-white"
+              >
+                Login
+              </Link>
+            )}
           </nav>
         </div>
       ) : null}
