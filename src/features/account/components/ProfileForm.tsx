@@ -1,25 +1,45 @@
 "use client";
 
-import { useState } from "react";
-import { MOCK_PROFILE } from "../data/mockAccount";
+import { useState, useEffect } from "react";
 import { Profile } from "../types";
+import { useProfile, useUpdateProfile } from "@/services/auth";
+import ProfileSkeleton from "@/components/skeleton/ProfileSkeleton";
 
 export default function ProfileForm() {
-  const [profile, setProfile] = useState<Profile>(MOCK_PROFILE);
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState<Profile>(MOCK_PROFILE);
+  const { data: serverProfile, isLoading } = useProfile();
+  const updateMutation = useUpdateProfile();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState<Profile>({
+    firstName: "",
+    lastName: "",
+    email: "",
+    mobileNumber: "",
+    gender: "",
+  });
+
+  useEffect(() => {
+    if (serverProfile) {
+      setFormData(serverProfile);
+    }
+  }, [serverProfile]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setProfile(formData);
+    await updateMutation.mutateAsync(formData);
     setIsEditing(false);
-    // TODO: Send to API
   };
 
   const handleCancel = () => {
-    setFormData(profile);
+    if (serverProfile) {
+      setFormData(serverProfile);
+    }
     setIsEditing(false);
   };
+
+  if (isLoading) {
+    return <ProfileSkeleton />;
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">

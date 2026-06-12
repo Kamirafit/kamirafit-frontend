@@ -5,14 +5,12 @@ import Button from "@/components/ui/Button";
 import SectionHeader from "@/components/ui/SectionHeader";
 import type { AdminCategory } from "@/data/categories";
 import {
-  addCategory,
-  deleteCategory,
-  updateCategory,
-} from "@/features/admin/store/categoriesSlice";
-import {
-  useAdminDispatch,
-  useAdminSelector,
-} from "@/features/admin/hooks/redux";
+  useAdminCategories,
+  useCreateAdminCategory,
+  useUpdateAdminCategory,
+  useDeleteAdminCategory,
+} from "@/services/admin";
+import AdminTableSkeleton from "@/components/skeleton/AdminTableSkeleton";
 import ActionButton from "../components/ActionButton";
 import CategoryFormModal from "../components/CategoryFormModal";
 import ConfirmDialog from "../components/ConfirmDialog";
@@ -27,8 +25,10 @@ function PlusIcon() {
 }
 
 export default function CategoriesPage() {
-  const dispatch = useAdminDispatch();
-  const categories = useAdminSelector((s) => s.adminCategories.items);
+  const { data: categories = [], isLoading } = useAdminCategories();
+  const createMutation = useCreateAdminCategory();
+  const updateMutation = useUpdateAdminCategory();
+  const deleteMutation = useDeleteAdminCategory();
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<AdminCategory | null>(null);
@@ -108,12 +108,16 @@ export default function CategoriesPage() {
         }
       />
 
-      <DataTable
-        columns={columns}
-        rows={categories}
-        getRowKey={(c) => c.id}
-        emptyLabel="No categories yet — add one to get started."
-      />
+      {isLoading ? (
+        <AdminTableSkeleton />
+      ) : (
+        <DataTable
+          columns={columns}
+          rows={categories}
+          getRowKey={(c) => c.id}
+          emptyLabel="No categories yet — add one to get started."
+        />
+      )}
 
       <CategoryFormModal
         open={formOpen}
@@ -124,9 +128,9 @@ export default function CategoriesPage() {
         initial={editing}
         onSubmit={(values) => {
           if (editing) {
-            dispatch(updateCategory({ id: editing.id, patch: values }));
+            updateMutation.mutate({ id: editing.id, patch: values });
           } else {
-            dispatch(addCategory(values));
+            createMutation.mutate(values);
           }
           setFormOpen(false);
           setEditing(null);
@@ -141,7 +145,7 @@ export default function CategoriesPage() {
         confirmLabel="Delete"
         danger
         onConfirm={() => {
-          if (deletingId) dispatch(deleteCategory(deletingId));
+          if (deletingId) deleteMutation.mutate(deletingId);
           setDeletingId(null);
         }}
       />

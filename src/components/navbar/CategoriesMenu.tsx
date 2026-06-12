@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { CATEGORY_COLUMNS } from "./categories-data";
 
 export { CATEGORY_COLUMNS } from "./categories-data";
@@ -34,41 +34,62 @@ function Chevron({ open }: { open: boolean }) {
  * Fade + slide animation via opacity/translate-y transitions.
  */
 export function DesktopCategoriesMenu() {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleOutsideAction = (e: MouseEvent | TouchEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("click", handleOutsideAction);
+    document.addEventListener("touchstart", handleOutsideAction);
+    return () => {
+      document.removeEventListener("click", handleOutsideAction);
+      document.removeEventListener("touchstart", handleOutsideAction);
+    };
+  }, []);
+
   return (
-    <div className="group/cats relative">
+    <div
+      ref={containerRef}
+      className="relative"
+      onMouseEnter={() => setIsOpen(true)}
+      onMouseLeave={() => setIsOpen(false)}
+    >
       <button
         type="button"
         aria-haspopup="true"
-        className="relative inline-flex items-center gap-1.5 text-[12px] font-medium uppercase tracking-[0.22em] text-paper transition-colors hover:text-gold group-hover/cats:text-gold"
+        aria-expanded={isOpen}
+        onClick={() => setIsOpen((prev) => !prev)}
+        className="relative inline-flex items-center gap-1.5 text-[12px] font-medium uppercase tracking-[0.22em] text-paper transition-colors hover:text-gold"
       >
         Categories
-        <span className="transition-transform duration-300 group-hover/cats:rotate-180">
-          <Chevron open={false} />
+        <span className={`transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}>
+          <Chevron open={isOpen} />
         </span>
         <span
           aria-hidden
-          className="pointer-events-none absolute -bottom-1 left-0 h-px w-0 bg-gold transition-all duration-300 group-hover/cats:w-full"
+          className={`pointer-events-none absolute -bottom-1 left-0 h-px bg-gold transition-all duration-300 ${
+            isOpen ? "w-full" : "w-0"
+          }`}
         />
       </button>
 
       {/*
-        Positioning: top-full places the panel flush with the header bottom,
-        mt-2 adds the required 8px gap so the panel never overlaps the navbar.
-        The wrapper is just a positioner; the inner div handles visibility
-        and transitions so backdrop-filter works correctly.
+        Positioning: top-full places the panel flush with the header bottom.
+        We change mt-2 to pt-2 (on this absolute wrapper) so there is no dead-zone gap.
+        The wrapper is always rendered, but transitions opacity and visibility.
       */}
       <div
         role="menu"
         aria-label="Categories"
-        className="absolute left-1/2 top-full z-50 mt-2 w-[min(960px,92vw)] -translate-x-1/2 pt-2 pointer-events-none group-hover/cats:pointer-events-auto"
+        className={`absolute left-1/2 top-full z-50 w-[min(960px,92vw)] -translate-x-1/2 pt-2 transition-all duration-300 ease-in-out ${
+          isOpen ? "pointer-events-auto opacity-100 visible translate-y-0" : "pointer-events-none opacity-0 invisible translate-y-2"
+        }`}
       >
-        {/*
-          Milky glass surface keeps the menu readable while preserving the
-          header's frosted, semi-transparent design language.
-          Transitions and opacity are here so backdrop-filter isn't trapped
-          by a parent's opacity layer.
-        */}
-        <div className="relative invisible opacity-0 translate-y-2 group-hover/cats:visible group-hover/cats:translate-y-0 group-hover/cats:opacity-100 transition-all duration-300 ease-in-out overflow-hidden rounded-2xl border border-white/10 bg-ink/60 text-paper shadow-[0_8px_32px_-12px_rgba(0,0,0,0.35)] backdrop-blur-xl supports-[backdrop-filter]:bg-ink/45">
+        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-ink/60 text-paper shadow-[0_8px_32px_-12px_rgba(0,0,0,0.35)] backdrop-blur-xl supports-[backdrop-filter]:bg-ink/45">
           <div
             aria-hidden
             className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-gold/50 to-transparent"
@@ -88,6 +109,7 @@ export function DesktopCategoriesMenu() {
                     <li key={item.label}>
                       <Link
                         href={item.href}
+                        onClick={() => setIsOpen(false)}
                         className="group/it inline-flex items-center gap-2 text-[13.5px] text-paper-muted transition-all duration-300 ease-in-out hover:text-gold"
                       >
                         <span
@@ -108,6 +130,7 @@ export function DesktopCategoriesMenu() {
             </p>
             <Link
               href="/shop"
+              onClick={() => setIsOpen(false)}
               className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-gold transition-colors duration-300 hover:text-gold-bright"
             >
               Shop all

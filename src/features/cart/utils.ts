@@ -1,4 +1,3 @@
-import { PRODUCTS } from "@/features/product/data/products";
 import type { CartItem } from "@/features/product/store/cartSlice";
 import type { Product } from "@/features/product/types";
 
@@ -10,10 +9,10 @@ export type ResolvedCartItem = {
   lineTotal: number;
 };
 
-export function resolveCartItems(items: CartItem[]): ResolvedCartItem[] {
+export function resolveCartItems(items: CartItem[], products: Product[]): ResolvedCartItem[] {
   return items
     .map((item) => {
-      const product = PRODUCTS.find((p) => p.id === item.id);
+      const product = products.find((p) => p.id === item.id);
       if (!product) return null;
       return {
         item,

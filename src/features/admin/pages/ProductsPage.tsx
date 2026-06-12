@@ -5,15 +5,14 @@ import { useMemo, useState } from "react";
 import Button from "@/components/ui/Button";
 import SectionHeader from "@/components/ui/SectionHeader";
 import {
-  addProduct,
-  deleteProduct,
-  toggleProductStatus,
-  updateProduct,
-} from "@/features/admin/store/productsSlice";
-import {
-  useAdminDispatch,
-  useAdminSelector,
-} from "@/features/admin/hooks/redux";
+  useAdminProducts,
+  useCreateAdminProduct,
+  useUpdateAdminProduct,
+  useToggleAdminProductStatus,
+  useDeleteAdminProduct,
+  useAdminCategories,
+} from "@/services/admin";
+import AdminTableSkeleton from "@/components/skeleton/AdminTableSkeleton";
 import type { Category, Product } from "@/features/product/types";
 import ActionButton from "../components/ActionButton";
 import ConfirmDialog from "../components/ConfirmDialog";
@@ -40,9 +39,14 @@ function PlusIcon() {
 }
 
 export default function ProductsPage() {
-  const dispatch = useAdminDispatch();
-  const products = useAdminSelector((s) => s.adminProducts.items);
-  const categories = useAdminSelector((s) => s.adminCategories.items);
+  const { data: products = [], isLoading: productsLoading } = useAdminProducts();
+  const { data: categories = [], isLoading: categoriesLoading } = useAdminCategories();
+  const createMutation = useCreateAdminProduct();
+  const updateMutation = useUpdateAdminProduct();
+  const toggleStatusMutation = useToggleAdminProductStatus();
+  const deleteMutation = useDeleteAdminProduct();
+
+  const isLoading = productsLoading || categoriesLoading;
 
   const [query, setQuery] = useState("");
   const [formOpen, setFormOpen] = useState(false);
@@ -76,25 +80,9 @@ export default function ProductsPage() {
 
   const handleSubmit = (values: FormValues) => {
     if (editing) {
-      dispatch(
-        updateProduct({
-          id: editing.id,
-          patch: {
-            name: values.name,
-            price: values.price,
-            description: values.description,
-            category: values.category as Category,
-            size: values.size,
-            color: values.color,
-            images: values.images,
-            image: values.image,
-            status: values.status,
-          },
-        }),
-      );
-    } else {
-      dispatch(
-        addProduct({
+      updateMutation.mutate({
+        id: editing.id,
+        patch: {
           name: values.name,
           price: values.price,
           description: values.description,
@@ -104,8 +92,20 @@ export default function ProductsPage() {
           images: values.images,
           image: values.image,
           status: values.status,
-        }),
-      );
+        },
+      });
+    } else {
+      createMutation.mutate({
+        name: values.name,
+        price: values.price,
+        description: values.description,
+        category: values.category as Category,
+        size: values.size,
+        color: values.color,
+        images: values.images,
+        image: values.image,
+        status: values.status,
+      });
     }
     setFormOpen(false);
     setEditing(null);
@@ -169,7 +169,7 @@ export default function ProductsPage() {
           <div className="flex items-center justify-end gap-2">
             <ActionButton
               tone={active ? "warning" : "success"}
-              onClick={() => dispatch(toggleProductStatus(p.id))}
+              onClick={() => toggleStatusMutation.mutate(p.id)}
             >
               {active ? "Deactivate" : "Activate"}
             </ActionButton>
@@ -211,12 +211,16 @@ export default function ProductsPage() {
         </span>
       </div>
 
-      <DataTable
-        columns={columns}
-        rows={filtered}
-        getRowKey={(p) => p.id}
-        emptyLabel="No products match your search."
-      />
+      {isLoading ? (
+        <AdminTableSkeleton />
+      ) : (
+        <DataTable
+          columns={columns}
+          rows={filtered}
+          getRowKey={(p) => p.id}
+          emptyLabel="No products match your search."
+        />
+      )}
 
       <ProductFormModal
         open={formOpen}
@@ -237,7 +241,7 @@ export default function ProductsPage() {
         confirmLabel="Delete"
         danger
         onConfirm={() => {
-          if (deletingId) dispatch(deleteProduct(deletingId));
+          if (deletingId) deleteMutation.mutate(deletingId);
           setDeletingId(null);
         }}
       />

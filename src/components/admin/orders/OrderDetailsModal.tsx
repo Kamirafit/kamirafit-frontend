@@ -18,11 +18,7 @@ import FormField, {
   textareaClass,
 } from "@/features/admin/components/FormField";
 import Modal from "@/features/admin/components/Modal";
-import {
-  deleteOrder,
-  updateOrder,
-} from "@/features/admin/store/ordersSlice";
-import { useAppDispatch } from "@/features/product/hooks/redux";
+import { useUpdateAdminOrder, useDeleteAdminOrder } from "@/services/admin";
 import { COLOR_OPTIONS, SIZE_OPTIONS } from "@/features/product/types";
 import StatusBadge from "./StatusBadge";
 
@@ -118,7 +114,8 @@ type Props = {
  * `ConfirmDialog` so it matches every other admin destructive action.
  */
 export default function OrderDetailsModal({ open, onClose, order }: Props) {
-  const dispatch = useAppDispatch();
+  const updateMutation = useUpdateAdminOrder();
+  const deleteMutation = useDeleteAdminOrder();
   const [draft, setDraft] = useState<Draft | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -187,22 +184,21 @@ export default function OrderDetailsModal({ open, onClose, order }: Props) {
     );
 
   const handleSave = () => {
-    dispatch(
-      updateOrder({
-        id: order.id,
-        patch: {
-          customer: draft.customer,
-          items: draft.items,
-          paymentStatus: draft.paymentStatus,
-          orderStatus: draft.orderStatus,
-        },
-      }),
-    );
+    if (!draft) return;
+    updateMutation.mutate({
+      id: order.id,
+      patch: {
+        customer: draft.customer,
+        items: draft.items,
+        paymentStatus: draft.paymentStatus,
+        orderStatus: draft.orderStatus,
+      },
+    });
     onClose();
   };
 
   const handleDelete = () => {
-    dispatch(deleteOrder(order.id));
+    deleteMutation.mutate(order.id);
     onClose();
   };
 

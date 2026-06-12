@@ -3,46 +3,53 @@
 import { useState } from "react";
 import AddressCard from "@/features/account/components/AddressCard";
 import AddressFormModal from "@/features/account/components/AddressFormModal";
-import { MOCK_ADDRESSES } from "@/features/account/data/mockAccount";
 import { Address } from "@/features/account/types";
+import { useAddresses, useCreateAddress, useUpdateAddress, useDeleteAddress } from "@/services/address";
+import AddressSkeleton from "@/components/skeleton/AddressSkeleton";
 
 export default function AddressesPage() {
-  const [addresses, setAddresses] = useState<Address[]>(MOCK_ADDRESSES);
+  const { data: addresses = [], isLoading } = useAddresses();
+  const createMutation = useCreateAddress();
+  const updateMutation = useUpdateAddress();
+  const deleteMutation = useDeleteAddress();
+
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
   const [isAdding, setIsAdding] = useState(false);
 
-  const handleSave = (address: Address) => {
-    let newAddresses = [...addresses];
-    
-    // If setting as default, remove default from others
-    if (address.isDefault) {
-      newAddresses = newAddresses.map(a => ({ ...a, isDefault: false }));
-    } else if (newAddresses.length === 0 || (isAdding && newAddresses.every(a => !a.isDefault))) {
-      // If it's the first address, or no default exists, make it default
-      address.isDefault = true;
-    }
-
+  const handleSave = async (address: Address) => {
     if (isAdding) {
-      newAddresses.push(address);
+      const addressData: Omit<Address, "id"> = {
+        type: address.type,
+        fullName: address.fullName,
+        phoneNumber: address.phoneNumber,
+        addressLine1: address.addressLine1,
+        addressLine2: address.addressLine2,
+        landmark: address.landmark,
+        city: address.city,
+        state: address.state,
+        pincode: address.pincode,
+        isDefault: address.isDefault,
+      };
+      await createMutation.mutateAsync(addressData);
     } else {
-      const idx = newAddresses.findIndex(a => a.id === address.id);
-      if (idx >= 0) newAddresses[idx] = address;
+      await updateMutation.mutateAsync({ id: address.id, data: address });
     }
-    
-    setAddresses(newAddresses);
     setIsAdding(false);
     setEditingAddress(null);
   };
 
   const handleDelete = (id: string) => {
-    setAddresses(addresses.filter(a => a.id !== id));
+    deleteMutation.mutate(id);
   };
 
   const handleSetDefault = (id: string) => {
-    setAddresses(addresses.map(a => ({
-      ...a,
-      isDefault: a.id === id
-    })));
+    const addressToUpdate = addresses.find(a => a.id === id);
+    if (addressToUpdate) {
+      updateMutation.mutate({
+        id,
+        data: { ...addressToUpdate, isDefault: true }
+      });
+    }
   };
 
   return (
@@ -59,22 +66,28 @@ export default function AddressesPage() {
         </button>
       </div>
 
-      <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {addresses.map((address) => (
-          <AddressCard
-            key={address.id}
-            address={address}
-            onEdit={setEditingAddress}
-            onDelete={handleDelete}
-            onSetDefault={handleSetDefault}
-          />
-        ))}
-        {addresses.length === 0 && (
-          <div className="col-span-full py-12 text-center text-paper-muted">
-            <p>You haven&apos;t saved any addresses yet.</p>
-          </div>
-        )}
-      </div>
+      {isLoading ? (
+        <div className="mt-8">
+          <AddressSkeleton />
+        </div>
+      ) : (
+        <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {addresses.map((address) => (
+            <AddressCard
+              key={address.id}
+              address={address}
+              onEdit={setEditingAddress}
+              onDelete={handleDelete}
+              onSetDefault={handleSetDefault}
+            />
+          ))}
+          {addresses.length === 0 && (
+            <div className="col-span-full py-12 text-center text-paper-muted">
+              <p>You haven&apos;t saved any addresses yet.</p>
+            </div>
+          )}
+        </div>
+      )}
 
       {(isAdding || editingAddress) && (
         <AddressFormModal

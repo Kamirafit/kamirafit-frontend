@@ -4,11 +4,12 @@ import { useState } from "react";
 import OrderCard from "@/features/account/components/OrderCard";
 import OrderDetailsModal from "@/features/account/components/OrderDetailsModal";
 import ReviewFormModal from "@/features/account/components/ReviewFormModal";
-import { MOCK_ORDERS } from "@/features/account/data/mockAccount";
 import { Order } from "@/features/account/types";
+import { useOrders } from "@/services/order";
+import OrderSkeleton from "@/components/skeleton/OrderSkeleton";
 
 export default function OrdersPage() {
-  const [orders] = useState<Order[]>(MOCK_ORDERS);
+  const { data: orders = [], isLoading } = useOrders();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [reviewItem, setReviewItem] = useState<{orderId: string, productId: string, productName: string, productImage: string} | null>(null);
 
@@ -25,26 +26,32 @@ export default function OrdersPage() {
         My Orders
       </h1>
       
-      <div className="mt-8 flex flex-col gap-8">
-        {orders.map((order) => (
-          <OrderCard
-            key={order.id}
-            order={order}
-            onViewDetails={setSelectedOrder}
-            onReviewProduct={(orderId, item) => setReviewItem({
-              orderId,
-              productId: item.productId,
-              productName: item.productName,
-              productImage: item.productImage
-            })}
-          />
-        ))}
-        {orders.length === 0 && (
-          <div className="py-12 text-center text-paper-muted">
-            <p>You haven&apos;t placed any orders yet.</p>
-          </div>
-        )}
-      </div>
+      {isLoading ? (
+        <div className="mt-8">
+          <OrderSkeleton />
+        </div>
+      ) : (
+        <div className="mt-8 flex flex-col gap-8">
+          {orders.map((order) => (
+            <OrderCard
+              key={order.id}
+              order={order}
+              onViewDetails={setSelectedOrder}
+              onReviewProduct={(orderId, item) => setReviewItem({
+                orderId,
+                productId: item.productId,
+                productName: item.productName,
+                productImage: item.productImage
+              })}
+            />
+          ))}
+          {orders.length === 0 && (
+            <div className="py-12 text-center text-paper-muted">
+              <p>You haven&apos;t placed any orders yet.</p>
+            </div>
+          )}
+        </div>
+      )}
 
       {selectedOrder && (
         <OrderDetailsModal

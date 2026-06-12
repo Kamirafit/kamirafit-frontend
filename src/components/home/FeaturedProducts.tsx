@@ -1,16 +1,10 @@
 import Section from "@/components/ui/Section";
 import SectionHeader from "@/components/ui/SectionHeader";
 import ProductCard from "@/features/product/components/ProductCard";
-import { PRODUCTS } from "@/features/product/data/products";
 
 import { Product } from "@/types/api";
 
-// Featured = first 4 active products from the shop catalog, so the home cards
-// render with the exact same ProductCard component as /shop (identical layout,
-// hover, wishlist, add-to-cart behavior) and link to real PDPs.
-const FEATURED_FALLBACK = PRODUCTS.filter((p) => p.status === "active").slice(0, 4);
-
-export default function FeaturedProducts({ products = FEATURED_FALLBACK }: { products?: Product[] }) {
+export default function FeaturedProducts({ products = [] }: { products?: Product[] }) {
   return (
     <Section id="shop">
       <SectionHeader

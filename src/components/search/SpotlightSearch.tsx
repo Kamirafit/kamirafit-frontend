@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
-import { PRODUCTS } from "@/features/product/data/products";
+import { useProducts } from "@/services/product";
 import type { Product } from "@/features/product/types";
 import { useSpotlight } from "./SpotlightProvider";
 import SearchInput from "./SearchInput";
@@ -37,7 +37,8 @@ export default function SpotlightSearch() {
   const [shouldRender, setShouldRender] = useState(false);
   const [isActive, setIsActive] = useState(false);
 
-  const results = useMemo(() => searchProducts(PRODUCTS, query), [query]);
+  const { data: latestProducts = [] } = useProducts();
+  const results = useMemo(() => searchProducts(latestProducts, query), [latestProducts, query]);
 
   useEffect(() => {
     if (open) {

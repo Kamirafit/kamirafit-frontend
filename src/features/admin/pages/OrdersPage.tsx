@@ -13,13 +13,14 @@ import {
 } from "@/data/orders";
 import { selectClass } from "../components/FormField";
 import SearchField from "../components/SearchField";
-import { useAdminSelector } from "@/features/admin/hooks/redux";
+import { useAdminOrders } from "@/services/admin";
+import AdminTableSkeleton from "@/components/skeleton/AdminTableSkeleton";
 
 type OrderFilter = "all" | OrderStatus;
 type PaymentFilter = "all" | PaymentStatus;
 
 export default function OrdersPage() {
-  const orders = useAdminSelector((s) => s.adminOrders.items);
+  const { data: orders = [], isLoading } = useAdminOrders();
 
   const [query, setQuery] = useState("");
   const [orderFilter, setOrderFilter] = useState<OrderFilter>("all");
@@ -111,11 +112,15 @@ export default function OrdersPage() {
         </div>
       </div>
 
-      <OrdersTable
-        rows={filtered}
-        onView={(o) => setViewingId(o.id)}
-        emptyLabel="No orders match your filters."
-      />
+      {isLoading ? (
+        <AdminTableSkeleton />
+      ) : (
+        <OrdersTable
+          rows={filtered}
+          onView={(o) => setViewingId(o.id)}
+          emptyLabel="No orders match your filters."
+        />
+      )}
 
       <OrderDetailsModal
         open={viewingId !== null}

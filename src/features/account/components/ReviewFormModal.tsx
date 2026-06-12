@@ -27,13 +27,13 @@ export default function ReviewFormModal({ orderId, productId, productName, produ
   const [hoverRating, setHoverRating] = useState(0);
   const [title, setTitle] = useState("");
   const [comment, setComment] = useState("");
-  const [images, setImages] = useState<File[]>([]);
+
   const [imageUrls, setImageUrls] = useState<string[]>([]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files);
-      setImages(prev => [...prev, ...newFiles]);
+
       
       const newUrls = newFiles.map(f => URL.createObjectURL(f));
       setImageUrls(prev => [...prev, ...newUrls]);
@@ -42,7 +42,6 @@ export default function ReviewFormModal({ orderId, productId, productName, produ
 
   const removeImage = (index: number) => {
     URL.revokeObjectURL(imageUrls[index]);
-    setImages(prev => prev.filter((_, i) => i !== index));
     setImageUrls(prev => prev.filter((_, i) => i !== index));
   };
 

@@ -9,6 +9,7 @@ import { useAppDispatch, useAppSelector } from "@/features/product/hooks/redux";
 import { clearCart } from "@/features/product/store/cartSlice";
 import { calculateTotals, formatPrice, resolveCartItems } from "../utils";
 import CheckoutOrderSummary from "./CheckoutOrderSummary";
+import { useProducts } from "@/services/product";
 import ShippingForm, {
   type ShippingDetails,
   type ShippingErrors,
@@ -58,10 +59,11 @@ function validate(values: ShippingDetails): ShippingErrors {
 }
 
 export default function CheckoutPageClient() {
+  const { data: products = [] } = useProducts();
   const items = useAppSelector((s) => s.cart.items);
   const dispatch = useAppDispatch();
 
-  const resolved = resolveCartItems(items);
+  const resolved = resolveCartItems(items, products);
   const { subtotal, delivery, total } = calculateTotals(resolved);
 
   const [values, setValues] = useState<ShippingDetails>(INITIAL_VALUES);

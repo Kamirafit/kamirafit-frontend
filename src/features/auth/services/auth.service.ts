@@ -4,7 +4,7 @@ import { User, Role } from "../store/authSlice";
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const authService = {
-  async loginCustomer(email: string, password: string):Promise<{ role: Role; user: User }> {
+  async loginCustomer(email: string, _password: string):Promise<{ role: Role; user: User }> {
     await delay(800);
     // Any email works for customer login as per requirements
     return {

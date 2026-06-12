@@ -26,6 +26,18 @@ export const productService = {
     return product as unknown as Product;
   },
 
+  getRelatedProducts: async (id: string, limit = 4): Promise<Product[]> => {
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    const all = await productService.getProducts();
+    const current = all.find((p) => p.id === id);
+    if (!current) return all.slice(0, limit);
+    return all.filter(
+      (p) => p.id !== id && p.category === current.category
+    )
+      .concat(all.filter((p) => p.id !== id && p.category !== current.category))
+      .slice(0, limit);
+  },
+
   createProduct: async (product: Omit<Product, "id" | "createdAt" | "rating" | "reviews" | "popularity">): Promise<Product> => {
     await new Promise((resolve) => setTimeout(resolve, 800));
     const newProduct: Product = {

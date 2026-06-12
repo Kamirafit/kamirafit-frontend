@@ -6,12 +6,14 @@ import SectionHeader from "@/components/ui/SectionHeader";
 import { useAppSelector } from "@/features/product/hooks/redux";
 import { calculateTotals, resolveCartItems } from "../utils";
 import CartLineItem from "./CartLineItem";
+import { useProducts } from "@/services/product";
 import CartSummary from "./CartSummary";
 import EmptyCart from "./EmptyCart";
 
 export default function CartPageClient() {
+  const { data: products = [] } = useProducts();
   const items = useAppSelector((s) => s.cart.items);
-  const resolved = resolveCartItems(items);
+  const resolved = resolveCartItems(items, products);
   const itemCount = resolved.reduce((sum, r) => sum + r.item.quantity, 0);
   const { subtotal, delivery, total } = calculateTotals(resolved);
 

@@ -6,18 +6,15 @@ import Container from "@/components/ui/Container";
 import ProductDetails from "@/features/product/components/ProductDetails";
 import ProductReviews from "@/features/product/components/ProductReviews";
 import RelatedProducts from "@/features/product/components/RelatedProducts";
-import {
-  PRODUCTS,
-  getProductById,
-  getRelatedProducts,
-} from "@/features/product/data/products";
+import { productService } from "@/services/product";
 
 type PageParams = { id: string };
 
 export const revalidate = 3600; // ISR - Revalidate detail pages every hour
 
-export function generateStaticParams(): PageParams[] {
-  return PRODUCTS.map((p) => ({ id: p.id }));
+export async function generateStaticParams(): Promise<PageParams[]> {
+  const products = await productService.getProducts();
+  return products.map((p) => ({ id: p.id }));
 }
 
 export async function generateMetadata({
@@ -26,14 +23,15 @@ export async function generateMetadata({
   params: Promise<PageParams>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const product = getProductById(id);
-  if (!product) {
+  try {
+    const product = await productService.getProduct(id);
+    return {
+      title: `${product.name} — KamiraFit`,
+      description: product.description,
+    };
+  } catch {
     return { title: "Product not found — KamiraFit" };
   }
-  return {
-    title: `${product.name} — KamiraFit`,
-    description: product.description,
-  };
 }
 
 export default async function ProductPage({
@@ -42,10 +40,14 @@ export default async function ProductPage({
   params: Promise<PageParams>;
 }) {
   const { id } = await params;
-  const product = getProductById(id);
-  if (!product) notFound();
+  let product;
+  try {
+    product = await productService.getProduct(id);
+  } catch {
+    notFound();
+  }
 
-  const related = getRelatedProducts(product.id, 4);
+  const related = await productService.getRelatedProducts(product.id, 4);
 
   return (
     <PageShell>

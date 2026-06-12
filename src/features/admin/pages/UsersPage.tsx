@@ -3,11 +3,8 @@
 import { useMemo, useState } from "react";
 import SectionHeader from "@/components/ui/SectionHeader";
 import type { AdminUser } from "@/data/users";
-import { updateUser } from "@/features/admin/store/usersSlice";
-import {
-  useAdminDispatch,
-  useAdminSelector,
-} from "@/features/admin/hooks/redux";
+import { useAdminUsers, useUpdateAdminUser } from "@/services/admin";
+import AdminTableSkeleton from "@/components/skeleton/AdminTableSkeleton";
 import ActionButton from "../components/ActionButton";
 import DataTable, { type Column } from "../components/DataTable";
 import SearchField from "../components/SearchField";
@@ -22,8 +19,8 @@ function initials(name: string) {
 }
 
 export default function UsersPage() {
-  const dispatch = useAdminDispatch();
-  const users = useAdminSelector((s) => s.adminUsers.items);
+  const { data: users = [], isLoading } = useAdminUsers();
+  const updateMutation = useUpdateAdminUser();
 
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState<AdminUser | null>(null);
@@ -99,12 +96,16 @@ export default function UsersPage() {
         </span>
       </div>
 
-      <DataTable
-        columns={columns}
-        rows={filtered}
-        getRowKey={(u) => u.id}
-        emptyLabel="No users match your search."
-      />
+      {isLoading ? (
+        <AdminTableSkeleton />
+      ) : (
+        <DataTable
+          columns={columns}
+          rows={filtered}
+          getRowKey={(u) => u.id}
+          emptyLabel="No users match your search."
+        />
+      )}
 
       <UserFormModal
         open={editing !== null}
@@ -112,7 +113,7 @@ export default function UsersPage() {
         onClose={() => setEditing(null)}
         onSubmit={(values) => {
           if (editing) {
-            dispatch(updateUser({ id: editing.id, patch: values }));
+            updateMutation.mutate({ id: editing.id, patch: values });
           }
           setEditing(null);
         }}
