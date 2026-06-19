@@ -1,4 +1,4 @@
-import type { AdminCategory, AdminOrder, AdminUser, EntityId, Product } from "../entities";
+import type { AdminCategory, AdminOrder, AdminUser, EntityId, ProductEntity, Size, Color } from "../entities";
 import type { ApiErrorDto, ApiResponseDto, DeleteResponseData, EmptyRequestDto } from "./common";
 import type { CreateProductRequestDto } from "./catalog";
 
@@ -20,17 +20,27 @@ export interface DeleteAdminCategoryRequestDto { id: EntityId; }
 export type DeleteAdminCategoryResponseDto = ApiResponseDto<DeleteResponseData>;
 export type DeleteAdminCategoryErrorDto = ApiErrorDto;
 
-export type GetAdminProductsResponseDto = ApiResponseDto<Product[]>;
+export type GetAdminProductsResponseDto = ApiResponseDto<ProductEntity[]>;
 export type GetAdminProductsRequestDto = EmptyRequestDto;
 export type GetAdminProductsErrorDto = ApiErrorDto;
 export type CreateAdminProductRequestDto = CreateProductRequestDto;
-export type CreateAdminProductResponseDto = ApiResponseDto<Product>;
+export type CreateAdminProductResponseDto = ApiResponseDto<ProductEntity>;
 export type CreateAdminProductErrorDto = ApiErrorDto;
-export interface UpdateAdminProductRequestDto { id: EntityId; data: Partial<Omit<Product, "id">>; }
-export type UpdateAdminProductResponseDto = ApiResponseDto<Product>;
+export interface UpdateAdminProductRequestDto {
+  id: EntityId;
+  data: Partial<Omit<ProductEntity, "id">> & {
+    name?: string;
+    price?: number;
+    size?: Size[];
+    color?: Color[];
+    image?: string;
+    images?: string[];
+  };
+}
+export type UpdateAdminProductResponseDto = ApiResponseDto<ProductEntity>;
 export type UpdateAdminProductErrorDto = ApiErrorDto;
 export interface ToggleAdminProductStatusRequestDto { id: EntityId; }
-export type ToggleAdminProductStatusResponseDto = ApiResponseDto<Product>;
+export type ToggleAdminProductStatusResponseDto = ApiResponseDto<ProductEntity>;
 export type ToggleAdminProductStatusErrorDto = ApiErrorDto;
 export interface DeleteAdminProductRequestDto { id: EntityId; }
 export type DeleteAdminProductResponseDto = ApiResponseDto<DeleteResponseData>;

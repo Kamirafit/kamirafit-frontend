@@ -1,36 +1,40 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { mockApi, unwrapMockResponse } from "@/api/mockApi";
-import type { Product } from "@/types/entities";
+import { adaptProduct, type Product } from "@/types/entities";
 import type {
-  CreateProductRequestDto, CreateProductResponseDto, DeleteProductResponseDto,
-  GetProductResponseDto, GetProductsResponseDto, GetRelatedProductsResponseDto,
-  UpdateProductRequestDto, UpdateProductResponseDto,
+  CreateProductRequestDto, DeleteProductResponseDto, UpdateProductRequestDto,
 } from "@/types/api/catalog";
 
 // Fetcher methods that can easily transition to Axios client calls later
 export const productService = {
-  getProducts: async (): Promise<GetProductsResponseDto["data"]> => {
-    return unwrapMockResponse(await mockApi.products.getAll());
+  getProducts: async (): Promise<Product[]> => {
+    const data = unwrapMockResponse(await mockApi.products.getAll());
+    return data.map(adaptProduct);
   },
 
-  getFeaturedProducts: async (): Promise<GetProductsResponseDto["data"]> => {
-    return unwrapMockResponse(await mockApi.products.getFeatured());
+  getFeaturedProducts: async (): Promise<Product[]> => {
+    const data = unwrapMockResponse(await mockApi.products.getFeatured());
+    return data.map(adaptProduct);
   },
 
-  getProduct: async (id: string): Promise<GetProductResponseDto["data"]> => {
-    return unwrapMockResponse(await mockApi.products.getById(id));
+  getProduct: async (id: string): Promise<Product> => {
+    const data = unwrapMockResponse(await mockApi.products.getById(id));
+    return adaptProduct(data);
   },
 
-  getRelatedProducts: async (id: string, limit = 4): Promise<GetRelatedProductsResponseDto["data"]> => {
-    return unwrapMockResponse(await mockApi.products.getRelated(id, limit));
+  getRelatedProducts: async (id: string, limit = 4): Promise<Product[]> => {
+    const data = unwrapMockResponse(await mockApi.products.getRelated(id, limit));
+    return data.map(adaptProduct);
   },
 
-  createProduct: async (product: CreateProductRequestDto): Promise<CreateProductResponseDto["data"]> => {
-    return unwrapMockResponse(await mockApi.products.create(product));
+  createProduct: async (product: CreateProductRequestDto): Promise<Product> => {
+    const data = unwrapMockResponse(await mockApi.products.create(product));
+    return adaptProduct(data);
   },
 
-  updateProduct: async (id: string, product: UpdateProductRequestDto["data"]): Promise<UpdateProductResponseDto["data"]> => {
-    return unwrapMockResponse(await mockApi.products.update(id, product));
+  updateProduct: async (id: string, product: UpdateProductRequestDto["data"]): Promise<Product> => {
+    const data = unwrapMockResponse(await mockApi.products.update(id, product));
+    return adaptProduct(data);
   },
 
   deleteProduct: async (id: string): Promise<DeleteProductResponseDto["data"]["id"]> => {
@@ -58,7 +62,7 @@ export function useProduct(id: string) {
 
 export function useCreateProduct() {
   const queryClient = useQueryClient();
-  return useMutation<Product, Error, Omit<Product, "id" | "createdAt" | "rating" | "reviews" | "popularity">>({
+  return useMutation<Product, Error, CreateProductRequestDto>({
     mutationFn: productService.createProduct,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
@@ -68,7 +72,7 @@ export function useCreateProduct() {
 
 export function useUpdateProduct() {
   const queryClient = useQueryClient();
-  return useMutation<Product, Error, { id: string; data: Partial<Product> }>({
+  return useMutation<Product, Error, { id: string; data: UpdateProductRequestDto["data"] }>({
     mutationFn: ({ id, data }) => productService.updateProduct(id, data),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["products"] });

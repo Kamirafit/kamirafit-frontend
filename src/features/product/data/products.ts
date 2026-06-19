@@ -1,4 +1,4 @@
-import type { Product } from "../types";
+import type { ProductEntity, Variant, Inventory } from "@/types/entities";
 import { getReviewsFor } from "./reviews";
 
 const ALT_IMAGES = {
@@ -28,7 +28,17 @@ const ALT_IMAGES = {
   ],
 } as const;
 
-type Seed = Omit<Product, "images" | "description" | "reviews" | "status"> & {
+type Seed = {
+  id: string;
+  name: string;
+  price: number;
+  category: "Oversized T-Shirts" | "Hoodies" | "T-Shirts" | "Kurti" | "Co-ords Sets" | "Dresses";
+  size: ("S" | "M" | "L" | "XL")[];
+  color: ("Black" | "White" | "Blue" | "Red")[];
+  rating: number;
+  image: string;
+  createdAt: string;
+  popularity: number;
   description: string;
 };
 
@@ -245,18 +255,82 @@ const SEED: Seed[] = [
   },
 ];
 
-export const PRODUCTS: Product[] = SEED.map((p) => ({
-  ...p,
-  images: [p.image, ...ALT_IMAGES[p.category]],
-  reviews: getReviewsFor(p.id),
-  status: "active" as const,
-}));
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^\w ]+/g, "")
+    .replace(/ +/g, "-");
+}
 
-export function getProductById(id: string): Product | undefined {
+export const PRODUCTS: ProductEntity[] = SEED.map((p) => {
+  const categorySlug = slugify(p.category);
+  const brand = "KamiraFit";
+  const variants: Variant[] = [];
+  let varIdx = 1;
+
+  p.color.forEach((color) => {
+    p.size.forEach((size) => {
+      const variantId = `${p.id}-v${varIdx.toString().padStart(2, "0")}`;
+      varIdx++;
+
+      const quantity = Math.floor(Math.random() * 40) + 10;
+      const reserved = Math.floor(Math.random() * 5);
+      const inventory: Inventory = {
+        quantity,
+        reserved,
+        available: quantity - reserved,
+      };
+
+      let price = p.price;
+      let salePrice: number | undefined = undefined;
+
+      if (size === "XL") {
+        price += 100;
+      }
+
+      if (p.id === "p-01" && color === "White" && size === "M") {
+        salePrice = price - 100;
+      }
+
+      const sku = `KF-${categorySlug.toUpperCase().slice(0, 3)}-${p.id.toUpperCase()}-${color.toUpperCase()}-${size}`;
+
+      variants.push({
+        id: variantId,
+        sku,
+        color,
+        size,
+        inventory,
+        price,
+        salePrice,
+        images: [p.image, ...ALT_IMAGES[p.category]],
+        isAvailable: inventory.available > 0,
+      });
+    });
+  });
+
+  return {
+    id: p.id,
+    title: p.name,
+    slug: slugify(p.name),
+    description: p.description,
+    category: p.category,
+    brand,
+    status: "active" as const,
+    variants,
+    metadata: {
+      rating: p.rating,
+      reviews: getReviewsFor(p.id),
+      popularity: p.popularity,
+      createdAt: p.createdAt + "T00:00:00Z",
+    },
+  };
+});
+
+export function getProductById(id: string): ProductEntity | undefined {
   return PRODUCTS.find((p) => p.id === id);
 }
 
-export function getRelatedProducts(id: string, limit = 4): Product[] {
+export function getRelatedProducts(id: string, limit = 4): ProductEntity[] {
   const current = getProductById(id);
   if (!current) return PRODUCTS.slice(0, limit);
   return PRODUCTS.filter(

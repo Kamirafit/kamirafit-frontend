@@ -1,13 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { mockApi, unwrapMockResponse } from "@/api/mockApi";
-import type { AdminCategory, AdminOrder as Order, AdminUser, Product } from "@/types/entities";
+import { adaptProduct, type AdminCategory, type AdminOrder as Order, type AdminUser, type Product } from "@/types/entities";
 import type {
   AdminStatsDto, CreateAdminCategoryRequestDto, CreateAdminCategoryResponseDto,
-  CreateAdminProductRequestDto, CreateAdminProductResponseDto, GetAdminCategoriesResponseDto,
-  GetAdminOrdersResponseDto, GetAdminProductsResponseDto, GetAdminStatsResponseDto,
+  CreateAdminProductRequestDto, GetAdminCategoriesResponseDto,
+  GetAdminOrdersResponseDto, GetAdminStatsResponseDto,
   GetAdminUsersResponseDto, UpdateAdminCategoryRequestDto, UpdateAdminCategoryResponseDto,
   UpdateAdminOrderRequestDto, UpdateAdminOrderResponseDto, UpdateAdminProductRequestDto,
-  UpdateAdminProductResponseDto, UpdateAdminUserRequestDto, UpdateAdminUserResponseDto,
+  UpdateAdminUserRequestDto, UpdateAdminUserResponseDto,
 } from "@/types/api/admin";
 
 export type AdminStats = AdminStatsDto;
@@ -33,20 +33,24 @@ export const adminService = {
     return unwrapMockResponse(await mockApi.admin.categories.delete(id));
   },
 
-  getProducts: async (): Promise<GetAdminProductsResponseDto["data"]> => {
-    return unwrapMockResponse(await mockApi.admin.products.getAll());
+  getProducts: async (): Promise<Product[]> => {
+    const res = unwrapMockResponse(await mockApi.admin.products.getAll());
+    return res.map(adaptProduct);
   },
 
-  createProduct: async (product: CreateAdminProductRequestDto): Promise<CreateAdminProductResponseDto["data"]> => {
-    return unwrapMockResponse(await mockApi.admin.products.create(product));
+  createProduct: async (product: CreateAdminProductRequestDto): Promise<Product> => {
+    const res = unwrapMockResponse(await mockApi.admin.products.create(product));
+    return adaptProduct(res);
   },
 
-  updateProduct: async (id: string, patch: UpdateAdminProductRequestDto["data"]): Promise<UpdateAdminProductResponseDto["data"]> => {
-    return unwrapMockResponse(await mockApi.admin.products.update(id, patch));
+  updateProduct: async (id: string, patch: UpdateAdminProductRequestDto["data"]): Promise<Product> => {
+    const res = unwrapMockResponse(await mockApi.admin.products.update(id, patch));
+    return adaptProduct(res);
   },
 
   toggleProductStatus: async (id: string): Promise<Product> => {
-    return unwrapMockResponse(await mockApi.admin.products.toggleStatus(id));
+    const res = unwrapMockResponse(await mockApi.admin.products.toggleStatus(id));
+    return adaptProduct(res);
   },
 
   deleteProduct: async (id: string): Promise<string> => {
@@ -132,7 +136,7 @@ export function useAdminProducts() {
 
 export function useCreateAdminProduct() {
   const queryClient = useQueryClient();
-  return useMutation<Product, Error, Omit<Product, "id" | "createdAt" | "rating" | "reviews" | "popularity">>({
+  return useMutation<Product, Error, CreateAdminProductRequestDto>({
     mutationFn: adminService.createProduct,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
@@ -143,7 +147,7 @@ export function useCreateAdminProduct() {
 
 export function useUpdateAdminProduct() {
   const queryClient = useQueryClient();
-  return useMutation<Product, Error, { id: string; patch: Partial<Product> }>({
+  return useMutation<Product, Error, { id: string; patch: UpdateAdminProductRequestDto["data"] }>({
     mutationFn: ({ id, patch }) => adminService.updateProduct(id, patch),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "products"] });

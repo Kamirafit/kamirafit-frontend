@@ -4,13 +4,20 @@ import { PRODUCTS } from "@/data/products";
 import { USERS } from "@/data/users";
 import { MOCK_ADDRESSES, MOCK_ORDERS, MOCK_PROFILE } from "@/features/account/data/mockAccount";
 import type {
-  Address, AdminCategory, AdminOrder, AdminUser, Cart, CartItem, Order, Product,
-  Profile, Review, User, Wishlist,
+  Address, AdminCategory, AdminOrder, AdminUser, Cart, CartItem, Order,
+  ProductEntity, Variant, Profile, Review, User, Wishlist,
 } from "@/types/entities";
 import type { CheckoutRequestDto, CheckoutResponseDto, CreateOrderRequestDto } from "@/types/api/commerce";
 import type { LoginRequestDto, RegisterRequestDto } from "@/types/api/auth";
 import type { CreateProductRequestDto, UpdateProductRequestDto } from "@/types/api/catalog";
 import type { CreateReviewRequestDto } from "@/types/api/reviews";
+
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^\w ]+/g, "")
+    .replace(/ +/g, "-");
+}
 import { STOREFRONT_CATEGORIES } from "./mock/data/storefrontCategories";
 import { simulateNetworkLatency } from "./mock/latency";
 import type { MockApiError, MockApiResponse } from "./mock/response";
@@ -34,7 +41,7 @@ async function respond<T>(factory: () => MockApiResponse<T>): Promise<MockApiRes
   }
 }
 
-let products: Product[] = [...PRODUCTS];
+let products: ProductEntity[] = [...PRODUCTS];
 let adminCategories: AdminCategory[] = [...CATEGORIES];
 const adminUsers: AdminUser[] = [...USERS];
 let adminOrders: AdminOrder[] = [...ORDERS];
@@ -66,13 +73,53 @@ const productApi = {
     return ok(ordered.slice(0, limit));
   }),
   create: (input: CreateProductRequestDto) => respond(() => {
-    const product: Product = {
-      ...input,
-      id: `p-${Math.random().toString(36).slice(2, 11)}`,
-      rating: 5,
-      reviews: [],
-      popularity: 0,
-      createdAt: new Date().toISOString(),
+    const id = `p-${Math.random().toString(36).slice(2, 11)}`;
+    const title = input.title || input.name || "Unnamed Product";
+    const slug = input.slug || slugify(title);
+    const category = input.category;
+    const brand = input.brand || "KamiraFit";
+    const status = input.status || "active";
+    const description = input.description || "";
+
+    const variants: Variant[] = input.variants || [];
+    if (variants.length === 0 && (input.size || input.color)) {
+      const sizes = input.size || ["M"];
+      const colors = input.color || ["Black"];
+      const price = input.price || 0;
+      const images = input.images || (input.image ? [input.image] : []);
+
+      let varIdx = 1;
+      colors.forEach(color => {
+        sizes.forEach(size => {
+          variants.push({
+            id: `${id}-var-${varIdx++}`,
+            sku: `KF-${category.toUpperCase().slice(0, 3)}-${id.toUpperCase()}-${color.toUpperCase()}-${size}`,
+            color,
+            size,
+            inventory: { quantity: 50, reserved: 0, available: 50 },
+            price,
+            images,
+            isAvailable: true
+          });
+        });
+      });
+    }
+
+    const product: ProductEntity = {
+      id,
+      title,
+      slug,
+      description,
+      category,
+      brand,
+      status,
+      variants,
+      metadata: {
+        rating: 5,
+        reviews: [],
+        popularity: 0,
+        createdAt: new Date().toISOString(),
+      },
     };
     products = [product, ...products];
     return ok(product);
@@ -80,7 +127,51 @@ const productApi = {
   update: (id: string, patch: UpdateProductRequestDto["data"]) => respond(() => {
     const index = products.findIndex((item) => item.id === id);
     if (index < 0) return fail("PRODUCT_NOT_FOUND", "Product not found");
-    products[index] = { ...products[index], ...patch };
+
+    const existing = products[index];
+    const title = patch.title || patch.name || existing.title;
+    const slug = patch.slug || (patch.title || patch.name ? slugify(title) : existing.slug);
+    const brand = patch.brand || existing.brand;
+    const description = patch.description || existing.description;
+    const category = patch.category || existing.category;
+    const status = patch.status || existing.status;
+
+    let variants = patch.variants || existing.variants;
+    if (!patch.variants && (patch.size || patch.color || patch.price !== undefined || patch.images || patch.image)) {
+      const sizes = patch.size || existing.variants.map(v => v.size).filter((v, i, a) => a.indexOf(v) === i);
+      const colors = patch.color || existing.variants.map(v => v.color).filter((v, i, a) => a.indexOf(v) === i);
+      const price = patch.price !== undefined ? patch.price : (existing.variants[0]?.price ?? 0);
+      const images = patch.images || existing.variants.flatMap(v => v.images).filter((v, i, a) => a.indexOf(v) === i);
+
+      variants = [];
+      let varIdx = 1;
+      colors.forEach(color => {
+        sizes.forEach(size => {
+          variants.push({
+            id: `${id}-var-${varIdx++}`,
+            sku: `KF-${category.toUpperCase().slice(0, 3)}-${id.toUpperCase()}-${color.toUpperCase()}-${size}`,
+            color,
+            size,
+            inventory: { quantity: 50, reserved: 0, available: 50 },
+            price,
+            images,
+            isAvailable: true
+          });
+        });
+      });
+    }
+
+    products[index] = {
+      ...existing,
+      title,
+      slug,
+      brand,
+      description,
+      category,
+      status,
+      variants,
+      metadata: patch.metadata ? { ...existing.metadata, ...patch.metadata } : existing.metadata,
+    };
     return ok(products[index]);
   }),
   toggleStatus: (id: string) => respond(() => {
@@ -122,7 +213,24 @@ export const mockApi = {
     place: (input: CheckoutRequestDto): Promise<MockApiResponse<CheckoutResponseDto["data"]>> => respond(() => {
       const orderItems = input.items.flatMap((item) => {
         const product = products.find((candidate) => candidate.id === item.id);
-        return product ? [{ productId: product.id, productName: product.name, productImage: product.image, quantity: item.quantity, size: item.size ?? "", color: item.color ?? "", price: product.price }] : [];
+        if (!product) return [];
+
+        const variant = product.variants.find(
+          (v) => (!item.size || v.size === item.size) && (!item.color || v.color === item.color)
+        ) || product.variants[0];
+
+        const price = variant?.price ?? 0;
+        const image = variant?.images[0] || "";
+
+        return [{
+          productId: product.id,
+          productName: product.title,
+          productImage: image,
+          quantity: item.quantity,
+          size: item.size ?? "",
+          color: item.color ?? "",
+          price: price
+        }];
       });
       const totalAmount = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0) + 79;
       const order: Order = { id: `ORD-KF-${Math.floor(10000 + Math.random() * 90000)}`, date: new Date().toISOString(), status: "Pending", items: orderItems, totalAmount, shippingAddress: { ...input.shippingAddress, id: `addr-${Date.now()}`, isDefault: false }, paymentMethod: input.paymentMethod };
@@ -157,12 +265,18 @@ export const mockApi = {
     delete: (id: string) => respond(() => { if (!addresses.some((item) => item.id === id)) return fail("ADDRESS_NOT_FOUND", "Address not found"); addresses = addresses.filter((item) => item.id !== id); return ok(id); }),
   },
   reviews: {
-    getAll: (productId: string) => respond(() => ok(products.find((item) => item.id === productId)?.reviews ?? [])),
+    getAll: (productId: string) => respond(() => ok(products.find((item) => item.id === productId)?.metadata.reviews ?? [])),
     create: (input: CreateReviewRequestDto) => respond(() => {
       const review: Review = { ...input, id: `rev-${Math.random().toString(36).slice(2, 11)}`, customerName: "Anonymous", createdAt: new Date().toISOString() };
       const index = products.findIndex((item) => item.id === input.productId);
       if (index < 0) return fail("PRODUCT_NOT_FOUND", "Product not found");
-      products[index] = { ...products[index], reviews: [...products[index].reviews, review] };
+      products[index] = {
+        ...products[index],
+        metadata: {
+          ...products[index].metadata,
+          reviews: [...products[index].metadata.reviews, review],
+        },
+      };
       return ok(review);
     }),
   },
