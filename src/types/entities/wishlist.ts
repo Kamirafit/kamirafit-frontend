@@ -1,8 +1,4 @@
-import { EntityId, ISODateTimeString } from "./common";
+import { z } from "zod";
+import { WishlistSchema } from "@/schemas/wishlist.schema";
 
-export interface Wishlist {
-  id?: EntityId;
-  userId?: EntityId;
-  productIds: EntityId[];
-  updatedAt?: ISODateTimeString;
-}
+export type Wishlist = z.infer<typeof WishlistSchema>;

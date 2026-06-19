@@ -1,24 +1,9 @@
-import { EntityId } from "./common";
+import { z } from "zod";
+import { GENDERS, GenderSchema, UserSchema, ProfileSchema } from "@/schemas/user.schema";
+import { USER_ROLES, UserRoleSchema } from "@/schemas/auth.schema";
 
-export const GENDERS = ["Male", "Female", "Other"] as const;
-export type Gender = (typeof GENDERS)[number];
-
-export interface User {
-  id?: EntityId;
-  email: string;
-  firstName?: string;
-  lastName?: string;
-  mobileNumber?: string;
-  gender?: Gender | "";
-}
-
-export interface Profile {
-  firstName: string;
-  lastName: string;
-  email: string;
-  mobileNumber: string;
-  gender: Gender | "";
-}
-
-export const USER_ROLES = ["customer", "admin"] as const;
-export type UserRole = (typeof USER_ROLES)[number];
+export { GENDERS, USER_ROLES };
+export type Gender = z.infer<typeof GenderSchema>;
+export type User = z.infer<typeof UserSchema>;
+export type Profile = z.infer<typeof ProfileSchema>;
+export type UserRole = z.infer<typeof UserRoleSchema>;

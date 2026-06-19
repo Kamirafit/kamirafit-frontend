@@ -1,29 +1,10 @@
-import { EntityId } from "./common";
+import { z } from "zod";
+import {
+  CategorySchema, CategoryNameSchema, CategorySlugSchema,
+  CATEGORY_NAMES, CATEGORY_SLUGS
+} from "@/schemas/category.schema";
 
-export const CATEGORY_NAMES = [
-  "Kurti",
-  "Co-ords Sets",
-  "Dresses",
-  "T-Shirts",
-  "Oversized T-Shirts",
-  "Hoodies",
-] as const;
-export type CategoryName = (typeof CATEGORY_NAMES)[number];
-
-export const CATEGORY_SLUGS = [
-  "kurti",
-  "co-ords-sets",
-  "dresses",
-  "t-shirts",
-  "oversized-t-shirts",
-  "hoodies",
-] as const;
-export type CategorySlug = (typeof CATEGORY_SLUGS)[number];
-
-export interface Category {
-  id: EntityId;
-  name: CategoryName;
-  slug: CategorySlug;
-  image?: string;
-  description?: string;
-}
+export { CATEGORY_NAMES, CATEGORY_SLUGS };
+export type CategoryName = z.infer<typeof CategoryNameSchema>;
+export type CategorySlug = z.infer<typeof CategorySlugSchema>;
+export type Category = z.infer<typeof CategorySchema>;

@@ -1,17 +1,5 @@
-import { EntityId, ISODateTimeString } from "./common";
-import { Size, Color } from "./product";
+import { z } from "zod";
+import { CartItemSchema, CartSchema } from "@/schemas/cart.schema";
 
-/** Client cart line. `id` is the product identifier retained for Redux compatibility. */
-export interface CartItem {
-  id: EntityId;
-  size?: Size;
-  color?: Color;
-  quantity: number;
-}
-
-export interface Cart {
-  id?: EntityId;
-  userId?: EntityId;
-  items: CartItem[];
-  updatedAt?: ISODateTimeString;
-}
+export type CartItem = z.infer<typeof CartItemSchema>;
+export type Cart = z.infer<typeof CartSchema>;

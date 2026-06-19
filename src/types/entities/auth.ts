@@ -1,10 +1,4 @@
-import { ISODateTimeString } from "./common";
-import { User, UserRole } from "./user";
+import { z } from "zod";
+import { AuthSessionSchema } from "@/schemas/auth.schema";
 
-export interface AuthSession {
-  isAuthenticated: boolean;
-  role: UserRole | null;
-  user: User | null;
-  accessToken?: string;
-  expiresAt?: ISODateTimeString;
-}
+export type AuthSession = z.infer<typeof AuthSessionSchema>;
