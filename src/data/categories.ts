@@ -1,8 +1,5 @@
-export type AdminCategory = {
-  id: string;
-  name: string;
-  subcategories: string[];
-};
+import type { AdminCategory } from "@/types/entities";
+export type { AdminCategory } from "@/types/entities";
 
 export const CATEGORIES: AdminCategory[] = [
   {

@@ -1,10 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { User } from "@/types/api";
-import { Profile } from "@/features/account/types";
+import type { Profile } from "@/types/entities";
+import type {
+  GetProfileResponseDto, LoginRequestDto, LoginResponseDto, RefreshSessionResponseDto,
+  RegisterRequestDto, RegisterResponseDto, UpdateProfileRequestDto, UpdateProfileResponseDto,
+} from "@/types/api/auth";
 
 export const authService = {
   // In production, login will set HttpOnly cookies on the browser automatically
-  login: async (credentials: { email: string; token?: string }): Promise<{ user: User }> => {
+  login: async (credentials: LoginRequestDto): Promise<LoginResponseDto["data"]> => {
     // const res = await apiClient.post<ApiResponse<{ user: User }>>("/auth/login", credentials);
     // return res.data;
     await new Promise((resolve) => setTimeout(resolve, 600));
@@ -17,7 +20,7 @@ export const authService = {
     };
   },
 
-  signup: async (userData: Omit<User, "email"> & { email: string }): Promise<{ user: User }> => {
+  signup: async (userData: RegisterRequestDto): Promise<RegisterResponseDto["data"]> => {
     // const res = await apiClient.post<ApiResponse<{ user: User }>>("/auth/signup", userData);
     // return res.data;
     await new Promise((resolve) => setTimeout(resolve, 800));
@@ -31,7 +34,7 @@ export const authService = {
   },
 
   // Refresh token flow - handles automatic access token retrieval in background via HttpOnly cookies
-  refreshToken: async (): Promise<{ accessToken: string }> => {
+  refreshToken: async (): Promise<RefreshSessionResponseDto["data"]> => {
     // const res = await apiClient.post<ApiResponse<{ accessToken: string }>>("/auth/refresh");
     // return res.data;
     await new Promise((resolve) => setTimeout(resolve, 200));
@@ -43,7 +46,7 @@ export const authService = {
     await new Promise((resolve) => setTimeout(resolve, 400));
   },
 
-  getProfile: async (): Promise<Profile> => {
+  getProfile: async (): Promise<GetProfileResponseDto["data"]> => {
     await new Promise((resolve) => setTimeout(resolve, 400));
     return {
       firstName: "Kamira",
@@ -54,7 +57,7 @@ export const authService = {
     };
   },
 
-  updateProfile: async (profile: Profile): Promise<Profile> => {
+  updateProfile: async (profile: UpdateProfileRequestDto): Promise<UpdateProfileResponseDto["data"]> => {
     await new Promise((resolve) => setTimeout(resolve, 600));
     return profile;
   },

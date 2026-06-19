@@ -1,10 +1,14 @@
-import { User, Role } from "../store/authSlice";
+import type { AuthSession, User, UserRole } from "@/types/entities";
+import type { LoginRequestDto, RegisterRequestDto } from "@/types/api/auth";
+
+type AuthResult = Pick<AuthSession, "user" | "role"> & { user: User; role: UserRole };
 
 // Mock delay to simulate network request
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const authService = {
-  async loginCustomer(email: string, _password: string):Promise<{ role: Role; user: User }> {
+  async loginCustomer(email: LoginRequestDto["email"], _password: string): Promise<AuthResult> {
+    void _password;
     await delay(800);
     // Any email works for customer login as per requirements
     return {
@@ -17,7 +21,7 @@ export const authService = {
     };
   },
 
-  async signupCustomer(data: { email: string; password?: string; firstName?: string; lastName?: string }):Promise<{ role: Role; user: User }> {
+  async signupCustomer(data: RegisterRequestDto): Promise<AuthResult> {
     await delay(800);
     return {
       role: "customer",
@@ -29,7 +33,7 @@ export const authService = {
     };
   },
 
-  async loginAdmin(email: string, password: string):Promise<{ role: Role; user: User }> {
+  async loginAdmin(email: LoginRequestDto["email"], password: string): Promise<AuthResult> {
     await delay(800);
     if (email === "admin@kamirafit.com" && password === "admin") {
       return {

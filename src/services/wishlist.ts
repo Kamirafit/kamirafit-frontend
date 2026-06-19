@@ -1,7 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { GetWishlistResponseDto, ToggleWishlistRequestDto, ToggleWishlistResponseDto } from "@/types/api/commerce";
+
+type WishlistProductIds = GetWishlistResponseDto["data"]["productIds"];
 
 export const wishlistService = {
-  getWishlist: async (): Promise<string[]> => {
+  getWishlist: async (): Promise<WishlistProductIds> => {
     // In future:
     // const res = await apiClient.get<ApiResponse<string[]>>("/wishlist");
     // return res.data;
@@ -9,7 +12,7 @@ export const wishlistService = {
     return [];
   },
 
-  toggleWishlist: async (productId: string): Promise<string[]> => {
+  toggleWishlist: async (productId: ToggleWishlistRequestDto["productId"]): Promise<ToggleWishlistResponseDto["data"]["productIds"]> => {
     // const res = await apiClient.post<ApiResponse<string[]>>(`/wishlist/toggle`, { productId });
     // return res.data;
     await new Promise((resolve) => setTimeout(resolve, 400));

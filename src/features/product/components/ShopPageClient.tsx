@@ -21,7 +21,7 @@ import MobileFiltersDrawer from "./MobileFiltersDrawer";
 import ProductGrid from "./ProductGrid";
 import SortBar from "./SortBar";
 import { useProducts } from "@/services/product";
-import { Product } from "@/types/api";
+import type { Product } from "@/types/entities";
 
 const CATEGORY_BY_SLUG: Record<string, Category> = {
   kurti: "Kurti",
@@ -72,8 +72,7 @@ export default function ShopPageClient({ initialCategorySlug, initialProducts = 
     return source.filter((p) => p.status === "active");
   }, [latestProducts, initialProducts]);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const products = useFilteredSortedProducts(activeProducts as any, filters, sort);
+  const products = useFilteredSortedProducts(activeProducts, filters, sort);
 
   // Counts are computed from the full *active* product set so users can see how
   // many items each option would add — not the already-filtered subset.

@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { Category } from "@/types/api";
+import type { Category } from "@/types/entities";
+import type { GetCategoriesResponseDto } from "@/types/api/catalog";
 
 export const categoryService = {
-  getCategories: async (): Promise<Category[]> => {
+  getCategories: async (): Promise<GetCategoriesResponseDto["data"]> => {
     // In future:
     // const res = await apiClient.get<ApiResponse<Category[]>>("/categories");
     // return res.data;

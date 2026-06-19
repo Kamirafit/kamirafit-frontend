@@ -1,17 +1,18 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Order } from "@/types/api";
+import type { Order } from "@/types/entities";
+import type { CreateOrderRequestDto, CreateOrderResponseDto, GetOrdersResponseDto } from "@/types/api/commerce";
 import { MOCK_ORDERS } from "@/features/account/data/mockAccount";
 
 export const orderService = {
-  getOrders: async (): Promise<Order[]> => {
+  getOrders: async (): Promise<GetOrdersResponseDto["data"]> => {
     // In future:
     // const res = await apiClient.get<ApiResponse<Order[]>>("/orders");
     // return res.data;
     await new Promise((resolve) => setTimeout(resolve, 500));
-    return MOCK_ORDERS as unknown as Order[];
+    return MOCK_ORDERS;
   },
 
-  createOrder: async (orderData: Omit<Order, "id" | "date" | "status">): Promise<Order> => {
+  createOrder: async (orderData: CreateOrderRequestDto): Promise<CreateOrderResponseDto["data"]> => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
     const newOrder: Order = {
       ...orderData,

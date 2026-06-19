@@ -1,12 +1,6 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import type { Color, Size } from "../types";
-
-export type CartItem = {
-  id: string;
-  size?: Size;
-  color?: Color;
-  quantity: number;
-};
+import type { CartItem, Color, Size } from "@/types/entities";
+export type { CartItem } from "@/types/entities";
 
 export type AddToCartPayload = {
   id: string;

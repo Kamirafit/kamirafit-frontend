@@ -9,13 +9,7 @@ export interface AnalyticsEvent {
 
 export function useAnalytics() {
   const trackEvent = useCallback(({ eventName, params = {} }: AnalyticsEvent) => {
-    // In production, dispatch events to GA4 (window.gtag) or Meta Pixel (window.fbq):
-    // if (typeof window !== "undefined" && (window as any).gtag) {
-    //   (window as any).gtag("event", eventName, params);
-    // }
-    // if (typeof window !== "undefined" && (window as any).fbq) {
-    //   (window as any).fbq("track", eventName, params);
-    // }
+    // In production, dispatch through typed GA4 or Meta Pixel adapters.
     console.log(`[Analytics Event] Name: ${eventName}`, params);
   }, []);
 

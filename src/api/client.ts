@@ -1,9 +1,10 @@
 import axios, { AxiosError } from "axios";
+import type { ApiErrorDto } from "@/types/api/common";
 
-export interface ApiErrorResponse {
-  success: boolean;
-  message: string;
-  code: string;
+export type ApiErrorResponse = ApiErrorDto;
+
+function isErrorPayload(value: unknown): value is { message?: string; code?: string } {
+  return typeof value === "object" && value !== null;
 }
 
 export const apiClient = axios.create({
@@ -42,12 +43,12 @@ apiClient.interceptors.response.use(
   (response) => {
     return response;
   },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (error: AxiosError<any>) => {
+  (error: AxiosError<unknown>) => {
+    const payload = isErrorPayload(error.response?.data) ? error.response.data : undefined;
     const formattedError: ApiErrorResponse = {
       success: false,
-      message: error.response?.data?.message || error.message || "An unexpected error occurred",
-      code: error.response?.data?.code || error.response?.status?.toString() || "UNKNOWN_ERROR",
+      message: payload?.message || error.message || "An unexpected error occurred",
+      code: payload?.code || error.response?.status?.toString() || "UNKNOWN_ERROR",
     };
 
     if (error.response?.status === 401) {

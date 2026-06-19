@@ -1,76 +1,31 @@
-export type Size = "S" | "M" | "L" | "XL";
+import type { CategoryName, Color, Size } from "@/types/entities";
 
-export type Color = "Black" | "White" | "Blue" | "Red";
+export type {
+  CategoryName as Category,
+  Color,
+  Product,
+  ProductStatus,
+  Review,
+  Size,
+} from "@/types/entities";
 
-export type Category =
-  | "Kurti"
-  | "Co-ords Sets"
-  | "Dresses"
-  | "T-Shirts"
-  | "Oversized T-Shirts"
-  | "Hoodies";
+export type SortKey = "price-asc" | "price-desc" | "newest" | "popular";
 
-export type Review = {
-  id: string;
-  productId: string;
-  customerName: string;
-  rating: number;
-  title?: string;
-  comment: string;
-  images: string[];
-  createdAt: string;
-};
-
-export type ProductStatus = "active" | "inactive";
-
-export type Product = {
-  id: string;
-  name: string;
-  price: number;
-  category: Category;
-  size: Size[];
-  color: Color[];
-  rating: number;
-  image: string;
-  images: string[];
-  description: string;
-  reviews: Review[];
-  createdAt: string;
-  popularity: number;
-  status: ProductStatus;
-};
-
-export type SortKey =
-  | "price-asc"
-  | "price-desc"
-  | "newest"
-  | "popular";
-
-export type Filters = {
+export interface Filters {
   sizes: Size[];
   colors: Color[];
-  categories: Category[];
+  categories: CategoryName[];
   priceMin: number;
   priceMax: number;
-};
+}
 
 export const SIZE_OPTIONS: Size[] = ["S", "M", "L", "XL"];
 export const COLOR_OPTIONS: Color[] = ["Black", "White", "Blue", "Red"];
-export const CATEGORY_OPTIONS: Category[] = [
-  "Kurti",
-  "Co-ords Sets",
-  "Dresses",
-  "T-Shirts",
-  "Oversized T-Shirts",
-  "Hoodies",
+export const CATEGORY_OPTIONS: CategoryName[] = [
+  "Kurti", "Co-ords Sets", "Dresses", "T-Shirts", "Oversized T-Shirts", "Hoodies",
 ];
-
 export const PRICE_MIN = 0;
 export const PRICE_MAX = 2000;
-
 export const COLOR_SWATCH: Record<Color, string> = {
-  Black: "#111111",
-  White: "#f5f5f5",
-  Blue: "#2563eb",
-  Red: "#dc2626",
+  Black: "#111111", White: "#f5f5f5", Blue: "#2563eb", Red: "#dc2626",
 };

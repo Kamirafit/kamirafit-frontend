@@ -1,10 +1,5 @@
-export type AdminUser = {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-};
+import type { AdminUser } from "@/types/entities";
+export type { AdminUser } from "@/types/entities";
 
 export const USERS: AdminUser[] = [
   {

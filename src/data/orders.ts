@@ -6,50 +6,18 @@
  * can later replace `ORDERS` with a fetched payload without changing the UI.
  */
 
-export const PAYMENT_STATUSES = ["Paid", "Pending", "Failed"] as const;
-export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
+import type {
+  AdminOrder,
+  AdminOrderItem,
+  OrderCustomer,
+  AdminOrderStatus,
+  PaymentStatus,
+} from "@/types/entities";
+export { PAYMENT_STATUSES, ADMIN_ORDER_STATUSES as ORDER_STATUSES } from "@/types/entities";
+export type { PaymentStatus, AdminOrderStatus as OrderStatus, OrderCustomer } from "@/types/entities";
 
-export const ORDER_STATUSES = [
-  "Pending",
-  "Confirmed",
-  "In Transit",
-  "Delivered",
-  "Return Requested",
-  "Return In Progress",
-  "Return Completed",
-  "Refund Initiated",
-  "Refund Completed",
-  "Cancelled",
-] as const;
-export type OrderStatus = (typeof ORDER_STATUSES)[number];
-
-export type OrderItem = {
-  productId: string;
-  name: string;
-  image: string;
-  size: string;
-  color: string;
-  quantity: number;
-  price: number;
-};
-
-export type OrderCustomer = {
-  name: string;
-  phone: string;
-  address: string;
-};
-
-export type Order = {
-  id: string;
-  customer: OrderCustomer;
-  items: OrderItem[];
-  subtotal: number;
-  deliveryFee: number;
-  total: number;
-  paymentStatus: PaymentStatus;
-  orderStatus: OrderStatus;
-  createdAt: string;
-};
+export type OrderItem = AdminOrderItem;
+export type Order = AdminOrder;
 
 const DELIVERY_FEE = 79;
 
@@ -58,7 +26,7 @@ function makeOrder(
   customer: OrderCustomer,
   items: OrderItem[],
   paymentStatus: PaymentStatus,
-  orderStatus: OrderStatus,
+  orderStatus: AdminOrderStatus,
   createdAt: string,
 ): Order {
   const subtotal = items.reduce((s, it) => s + it.price * it.quantity, 0);

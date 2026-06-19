@@ -3,13 +3,16 @@ import { CATEGORIES, AdminCategory } from "@/data/categories";
 import { PRODUCTS, Product } from "@/data/products";
 import { USERS, AdminUser } from "@/data/users";
 import { ORDERS, Order } from "@/data/orders";
+import type {
+  AdminStatsDto, CreateAdminCategoryRequestDto, CreateAdminCategoryResponseDto,
+  CreateAdminProductRequestDto, CreateAdminProductResponseDto, GetAdminCategoriesResponseDto,
+  GetAdminOrdersResponseDto, GetAdminProductsResponseDto, GetAdminStatsResponseDto,
+  GetAdminUsersResponseDto, UpdateAdminCategoryRequestDto, UpdateAdminCategoryResponseDto,
+  UpdateAdminOrderRequestDto, UpdateAdminOrderResponseDto, UpdateAdminProductRequestDto,
+  UpdateAdminProductResponseDto, UpdateAdminUserRequestDto, UpdateAdminUserResponseDto,
+} from "@/types/api/admin";
 
-export interface AdminStats {
-  salesTotal: number;
-  ordersCount: number;
-  productsCount: number;
-  usersCount: number;
-}
+export type AdminStats = AdminStatsDto;
 
 // Session-persistent local state for admin mutations
 let localCategories = [...CATEGORIES];
@@ -18,7 +21,7 @@ const localUsers = [...USERS];
 let localOrders = [...ORDERS];
 
 export const adminService = {
-  getStats: async (): Promise<AdminStats> => {
+  getStats: async (): Promise<GetAdminStatsResponseDto["data"]> => {
     await new Promise((resolve) => setTimeout(resolve, 300));
     const salesTotal = localOrders
       .filter((o) => o.paymentStatus === "Paid")
@@ -31,12 +34,12 @@ export const adminService = {
     };
   },
 
-  getCategories: async (): Promise<AdminCategory[]> => {
+  getCategories: async (): Promise<GetAdminCategoriesResponseDto["data"]> => {
     await new Promise((resolve) => setTimeout(resolve, 300));
     return [...localCategories];
   },
 
-  createCategory: async (category: Omit<AdminCategory, "id">): Promise<AdminCategory> => {
+  createCategory: async (category: CreateAdminCategoryRequestDto): Promise<CreateAdminCategoryResponseDto["data"]> => {
     await new Promise((resolve) => setTimeout(resolve, 400));
     const newCategory: AdminCategory = {
       ...category,
@@ -46,7 +49,7 @@ export const adminService = {
     return newCategory;
   },
 
-  updateCategory: async (id: string, patch: Partial<Omit<AdminCategory, "id">>): Promise<AdminCategory> => {
+  updateCategory: async (id: string, patch: UpdateAdminCategoryRequestDto["data"]): Promise<UpdateAdminCategoryResponseDto["data"]> => {
     await new Promise((resolve) => setTimeout(resolve, 400));
     const idx = localCategories.findIndex((c) => c.id === id);
     if (idx !== -1) {
@@ -62,12 +65,12 @@ export const adminService = {
     return id;
   },
 
-  getProducts: async (): Promise<Product[]> => {
+  getProducts: async (): Promise<GetAdminProductsResponseDto["data"]> => {
     await new Promise((resolve) => setTimeout(resolve, 450));
-    return [...localProducts] as unknown as Product[];
+    return [...localProducts];
   },
 
-  createProduct: async (product: Omit<Product, "id" | "createdAt" | "rating" | "reviews" | "popularity">): Promise<Product> => {
+  createProduct: async (product: CreateAdminProductRequestDto): Promise<CreateAdminProductResponseDto["data"]> => {
     await new Promise((resolve) => setTimeout(resolve, 500));
     const newProduct: Product = {
       ...product,
@@ -76,17 +79,17 @@ export const adminService = {
       reviews: [],
       popularity: 0,
       createdAt: new Date().toISOString().slice(0, 10),
-    } as unknown as Product;
-    localProducts.push(newProduct as unknown as Product);
+    };
+    localProducts.push(newProduct);
     return newProduct;
   },
 
-  updateProduct: async (id: string, patch: Partial<Product>): Promise<Product> => {
+  updateProduct: async (id: string, patch: UpdateAdminProductRequestDto["data"]): Promise<UpdateAdminProductResponseDto["data"]> => {
     await new Promise((resolve) => setTimeout(resolve, 500));
     const idx = localProducts.findIndex((p) => p.id === id);
     if (idx !== -1) {
-      localProducts[idx] = { ...localProducts[idx], ...patch } as unknown as Product;
-      return localProducts[idx] as unknown as Product;
+      localProducts[idx] = { ...localProducts[idx], ...patch };
+      return localProducts[idx];
     }
     throw new Error("Product not found");
   },
@@ -98,8 +101,8 @@ export const adminService = {
       localProducts[idx] = {
         ...localProducts[idx],
         status: localProducts[idx].status === "active" ? "inactive" : "active",
-      } as unknown as Product;
-      return localProducts[idx] as unknown as Product;
+      };
+      return localProducts[idx];
     }
     throw new Error("Product not found");
   },
@@ -110,12 +113,12 @@ export const adminService = {
     return id;
   },
 
-  getUsers: async (): Promise<AdminUser[]> => {
+  getUsers: async (): Promise<GetAdminUsersResponseDto["data"]> => {
     await new Promise((resolve) => setTimeout(resolve, 400));
     return [...localUsers];
   },
 
-  updateUser: async (id: string, patch: Partial<Omit<AdminUser, "id">>): Promise<AdminUser> => {
+  updateUser: async (id: string, patch: UpdateAdminUserRequestDto["data"]): Promise<UpdateAdminUserResponseDto["data"]> => {
     await new Promise((resolve) => setTimeout(resolve, 400));
     const idx = localUsers.findIndex((u) => u.id === id);
     if (idx !== -1) {
@@ -125,16 +128,16 @@ export const adminService = {
     throw new Error("User not found");
   },
 
-  getOrders: async (): Promise<Order[]> => {
+  getOrders: async (): Promise<GetAdminOrdersResponseDto["data"]> => {
     await new Promise((resolve) => setTimeout(resolve, 400));
     return [...localOrders];
   },
 
-  updateOrder: async (id: string, patch: Partial<Order>): Promise<Order> => {
+  updateOrder: async (id: string, patch: UpdateAdminOrderRequestDto["data"]): Promise<UpdateAdminOrderResponseDto["data"]> => {
     await new Promise((resolve) => setTimeout(resolve, 400));
     const idx = localOrders.findIndex((o) => o.id === id);
     if (idx !== -1) {
-      localOrders[idx] = { ...localOrders[idx], ...patch } as unknown as Order;
+      localOrders[idx] = { ...localOrders[idx], ...patch };
       return localOrders[idx];
     }
     throw new Error("Order not found");

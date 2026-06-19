@@ -1,18 +1,9 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import type { AuthSession, User, UserRole } from "@/types/entities";
 
-export type Role = "customer" | "admin" | null;
-
-export interface User {
-  email: string;
-  firstName?: string;
-  lastName?: string;
-}
-
-export interface AuthState {
-  isAuthenticated: boolean;
-  role: Role;
-  user: User | null;
-}
+export type Role = UserRole | null;
+export type { User } from "@/types/entities";
+export type AuthState = Pick<AuthSession, "isAuthenticated" | "role" | "user">;
 
 const initialState: AuthState = {
   isAuthenticated: false,

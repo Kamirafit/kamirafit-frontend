@@ -1,17 +1,21 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Address } from "@/types/api";
+import type { Address } from "@/types/entities";
+import type {
+  CreateAddressRequestDto, CreateAddressResponseDto, DeleteAddressResponseDto,
+  GetAddressesResponseDto, UpdateAddressRequestDto, UpdateAddressResponseDto,
+} from "@/types/api/commerce";
 import { MOCK_ADDRESSES } from "@/features/account/data/mockAccount";
 
 export const addressService = {
-  getAddresses: async (): Promise<Address[]> => {
+  getAddresses: async (): Promise<GetAddressesResponseDto["data"]> => {
     // In future:
     // const res = await apiClient.get<ApiResponse<Address[]>>("/addresses");
     // return res.data;
     await new Promise((resolve) => setTimeout(resolve, 400));
-    return MOCK_ADDRESSES as unknown as Address[];
+    return MOCK_ADDRESSES;
   },
 
-  createAddress: async (address: Omit<Address, "id">): Promise<Address> => {
+  createAddress: async (address: CreateAddressRequestDto): Promise<CreateAddressResponseDto["data"]> => {
     await new Promise((resolve) => setTimeout(resolve, 600));
     const newAddress: Address = {
       ...address,
@@ -20,12 +24,12 @@ export const addressService = {
     return newAddress;
   },
 
-  updateAddress: async (id: string, address: Partial<Address>): Promise<Address> => {
+  updateAddress: async (id: string, address: UpdateAddressRequestDto["data"]): Promise<UpdateAddressResponseDto["data"]> => {
     await new Promise((resolve) => setTimeout(resolve, 600));
     return { id, ...address } as Address;
   },
 
-  deleteAddress: async (id: string): Promise<string> => {
+  deleteAddress: async (id: string): Promise<DeleteAddressResponseDto["data"]["id"]> => {
     await new Promise((resolve) => setTimeout(resolve, 500));
     return id;
   },

@@ -1,32 +1,37 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Product } from "@/types/api";
+import type { Product } from "@/types/entities";
+import type {
+  CreateProductRequestDto, CreateProductResponseDto, DeleteProductResponseDto,
+  GetProductResponseDto, GetProductsResponseDto, GetRelatedProductsResponseDto,
+  UpdateProductRequestDto, UpdateProductResponseDto,
+} from "@/types/api/catalog";
 import { PRODUCTS, getProductById } from "@/features/product/data/products";
 
 // Fetcher methods that can easily transition to Axios client calls later
 export const productService = {
-  getProducts: async (): Promise<Product[]> => {
+  getProducts: async (): Promise<GetProductsResponseDto["data"]> => {
     // In future:
     // const res = await apiClient.get<ApiResponse<Product[]>>("/products");
     // return res.data;
     await new Promise((resolve) => setTimeout(resolve, 500));
-    return PRODUCTS as unknown as Product[];
+    return PRODUCTS;
   },
 
-  getFeaturedProducts: async (): Promise<Product[]> => {
+  getFeaturedProducts: async (): Promise<GetProductsResponseDto["data"]> => {
     await new Promise((resolve) => setTimeout(resolve, 400));
-    return (PRODUCTS as unknown as Product[]).filter((p) => p.status === "active").slice(0, 4);
+    return PRODUCTS.filter((p) => p.status === "active").slice(0, 4);
   },
 
-  getProduct: async (id: string): Promise<Product> => {
+  getProduct: async (id: string): Promise<GetProductResponseDto["data"]> => {
     await new Promise((resolve) => setTimeout(resolve, 500));
     const product = getProductById(id);
     if (!product) {
       throw new Error("Product not found");
     }
-    return product as unknown as Product;
+    return product;
   },
 
-  getRelatedProducts: async (id: string, limit = 4): Promise<Product[]> => {
+  getRelatedProducts: async (id: string, limit = 4): Promise<GetRelatedProductsResponseDto["data"]> => {
     await new Promise((resolve) => setTimeout(resolve, 300));
     const all = await productService.getProducts();
     const current = all.find((p) => p.id === id);
@@ -38,7 +43,7 @@ export const productService = {
       .slice(0, limit);
   },
 
-  createProduct: async (product: Omit<Product, "id" | "createdAt" | "rating" | "reviews" | "popularity">): Promise<Product> => {
+  createProduct: async (product: CreateProductRequestDto): Promise<CreateProductResponseDto["data"]> => {
     await new Promise((resolve) => setTimeout(resolve, 800));
     const newProduct: Product = {
       ...product,
@@ -51,12 +56,12 @@ export const productService = {
     return newProduct;
   },
 
-  updateProduct: async (id: string, product: Partial<Product>): Promise<Product> => {
+  updateProduct: async (id: string, product: UpdateProductRequestDto["data"]): Promise<UpdateProductResponseDto["data"]> => {
     await new Promise((resolve) => setTimeout(resolve, 800));
     return { id, ...product } as Product;
   },
 
-  deleteProduct: async (id: string): Promise<string> => {
+  deleteProduct: async (id: string): Promise<DeleteProductResponseDto["data"]["id"]> => {
     await new Promise((resolve) => setTimeout(resolve, 600));
     return id;
   },
