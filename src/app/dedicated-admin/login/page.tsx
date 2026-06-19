@@ -2,16 +2,14 @@
 
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useDispatch } from "react-redux";
-import { loginSuccess } from "@/features/auth/store/authSlice";
-import { authService } from "@/features/auth/services/auth.service";
+import { useLoginAdmin } from "@/features/auth/hooks";
 import { getUserFriendlyError } from "@/lib/errors";
 import Button from "@/components/ui/Button";
 
 function AdminLoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const dispatch = useDispatch();
+  const loginAdmin = useLoginAdmin();
 
   const redirectPath = searchParams.get("redirect") || "/dedicated-admin";
 
@@ -31,12 +29,7 @@ function AdminLoginContent() {
       }
 
       // Execute Admin Login
-      const res = await authService.loginAdmin(email, password);
-
-      // Store auth state in local storage (same key so it hydrates)
-      const authData = { isAuthenticated: true, role: res.role, user: res.user };
-      localStorage.setItem("kamira_auth_admin", JSON.stringify(authData));
-      dispatch(loginSuccess(res));
+      await loginAdmin.mutateAsync({ email, password });
 
       // Redirect back to dashboard or target
       router.push(redirectPath);

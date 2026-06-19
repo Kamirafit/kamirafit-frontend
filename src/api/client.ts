@@ -1,5 +1,6 @@
 import axios, { AxiosError } from "axios";
 import type { ApiErrorDto } from "@/types/api/common";
+import { AuthStorage } from "@/features/auth/services/authStorage";
 
 export type ApiErrorResponse = ApiErrorDto;
 
@@ -20,18 +21,9 @@ apiClient.interceptors.request.use(
     if (typeof window !== "undefined") {
       const url = config.url || "";
       const isAdminRequest = url.includes("/admin") || url.includes("/dedicated-admin") || window.location.pathname.startsWith("/dedicated-admin");
-      const storageKey = isAdminRequest ? "kamira_auth_admin" : "kamira_auth_customer";
-      
-      const stored = localStorage.getItem(storageKey);
-      if (stored) {
-        try {
-          const authData = JSON.parse(stored);
-          if (authData.isAuthenticated && authData.user) {
-            config.headers.Authorization = `Bearer mock-jwt-token-for-${authData.user.email}`;
-          }
-        } catch (e) {
-          console.error("Failed to parse token from local storage", e);
-        }
+      const authData = isAdminRequest ? AuthStorage.getAdminAuth() : AuthStorage.getCustomerAuth();
+      if (authData && authData.isAuthenticated && authData.user) {
+        config.headers.Authorization = `Bearer mock-jwt-token-for-${authData.user.email}`;
       }
     }
     return config;
@@ -55,10 +47,10 @@ apiClient.interceptors.response.use(
       if (typeof window !== "undefined") {
         const isAdminRequest = window.location.pathname.startsWith("/dedicated-admin");
         if (isAdminRequest) {
-          localStorage.removeItem("kamira_auth_admin");
+          AuthStorage.clearAdminAuth();
           window.location.href = `/dedicated-admin/login?redirect=${encodeURIComponent(window.location.pathname)}`;
         } else {
-          localStorage.removeItem("kamira_auth_customer");
+          AuthStorage.clearCustomerAuth();
           window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
         }
       }

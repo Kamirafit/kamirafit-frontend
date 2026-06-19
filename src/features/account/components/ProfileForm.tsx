@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Profile } from "../types";
-import { useProfile, useUpdateProfile } from "@/services/auth";
+import { useProfile, useUpdateProfile } from "@/features/auth/hooks";
 import ProfileSkeleton from "@/components/skeleton/ProfileSkeleton";
 import { ErrorState, OfflineState } from "@/components/states";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";

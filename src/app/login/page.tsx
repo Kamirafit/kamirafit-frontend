@@ -2,9 +2,7 @@
 
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useDispatch } from "react-redux";
-import { loginSuccess } from "@/features/auth/store/authSlice";
-import { authService } from "@/features/auth/services/auth.service";
+import { useLoginCustomer, useSignupCustomer } from "@/features/auth/hooks";
 import { getUserFriendlyError } from "@/lib/errors";
 import PageShell from "@/components/layout/PageShell";
 import Button from "@/components/ui/Button";
@@ -12,7 +10,8 @@ import Button from "@/components/ui/Button";
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const dispatch = useDispatch();
+  const loginCustomer = useLoginCustomer();
+  const signupCustomer = useSignupCustomer();
   
   const redirectPath = searchParams.get("redirect") || "/";
   
@@ -44,26 +43,14 @@ function LoginContent() {
           throw new Error("Passwords do not match.");
         }
         
-        // Execute Signup
-        const res = await authService.signupCustomer({
+        await signupCustomer.mutateAsync({
           email,
           password,
           firstName,
           lastName,
         });
-
-        // Store auth state
-        const authData = { isAuthenticated: true, role: res.role, user: res.user };
-        localStorage.setItem("kamira_auth_customer", JSON.stringify(authData));
-        dispatch(loginSuccess(res));
       } else {
-        // Execute Login
-        const res = await authService.loginCustomer(email, password);
-
-        // Store auth state
-        const authData = { isAuthenticated: true, role: res.role, user: res.user };
-        localStorage.setItem("kamira_auth_customer", JSON.stringify(authData));
-        dispatch(loginSuccess(res));
+        await loginCustomer.mutateAsync({ email, password });
       }
 
       // Redirect back

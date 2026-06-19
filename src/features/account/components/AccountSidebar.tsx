@@ -3,10 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { logoutSuccess } from "@/features/auth/store/authSlice";
+import { useSelector } from "react-redux";
 import { RootState } from "@/features/product/store";
-import { useLogout } from "@/services/auth";
+import { useLogout } from "@/features/auth/hooks";
 
 const NAV_ITEMS = [
   { label: "My Orders", href: "/account/orders" },
@@ -18,7 +17,6 @@ const NAV_ITEMS = [
 export default function AccountSidebar() {
   const pathname = usePathname();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const dispatch = useDispatch();
   const logoutMutation = useLogout();
   const { user } = useSelector((state: RootState) => state.auth);
   
@@ -91,8 +89,6 @@ export default function AccountSidebar() {
                 onClick={async () => {
                   setShowLogoutModal(false);
                   await logoutMutation.mutateAsync();
-                  dispatch(logoutSuccess());
-                  localStorage.removeItem("kamira_auth_customer");
                   window.location.href = "/";
                 }}
                 className="rounded-full bg-[#DC2626] px-5 py-2 text-[12px] font-semibold uppercase tracking-wider text-white shadow-md transition-colors hover:bg-[#B91C1C]"

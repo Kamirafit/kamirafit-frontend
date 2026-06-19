@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
-import { setAuthHydrated, AuthState } from "../store/authSlice";
+import { setAuthHydrated } from "../store/authSlice";
+import { AuthStorage } from "../services/authStorage";
 
 export default function AuthHydrator({
   children,
@@ -16,9 +17,10 @@ export default function AuthHydrator({
 
   useEffect(() => {
     try {
-      const storedAuth = localStorage.getItem(storageKey);
-      if (storedAuth) {
-        const authData: AuthState = JSON.parse(storedAuth);
+      const authData = storageKey === "kamira_auth_admin"
+        ? AuthStorage.getAdminAuth()
+        : AuthStorage.getCustomerAuth();
+      if (authData) {
         dispatch(setAuthHydrated(authData));
       }
     } catch (error) {
