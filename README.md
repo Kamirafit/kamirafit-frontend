@@ -1,98 +1,308 @@
 # KamiraFit
 
-KamiraFit is a Next.js storefront and admin dashboard for a clothing business. The current codebase is the frontend application: it includes the shopping experience, cart, wishlist, checkout UI, product browsing, search, and a protected demo admin area. The production backend is planned separately with Node.js, Express, and MongoDB.
+Modern apparel ecommerce platform built with Next.js, TypeScript, Redux Toolkit, React Query, and a scalable domain-driven frontend architecture.
 
-## Table of Contents
+---
 
-- [Tech Stack](#tech-stack)
-- [Features](#features)
-- [Project Status](#project-status)
-- [Getting Started](#getting-started)
-- [Environment Variables](#environment-variables)
-- [Available Scripts](#available-scripts)
-- [Architecture](#architecture)
-- [Routing](#routing)
-- [State Management](#state-management)
-- [Security](#security)
-- [Performance](#performance)
-- [Deployment on Vercel](#deployment-on-vercel)
-- [Backend Integration Plan](#backend-integration-plan)
-- [Quality Checks](#quality-checks)
-- [Recommended Production Checklist](#recommended-production-checklist)
+## Overview
+
+KamiraFit is an ecommerce platform focused on fashion and lifestyle products including:
+
+- Oversized T-Shirts
+- Round Neck T-Shirts
+- Hoodies
+- Pet Collection
+
+The application is currently in active development.
+
+At this stage:
+
+- Frontend architecture is implemented.
+- Product, cart, wishlist, account, and admin flows are available.
+- Mock API infrastructure is used for development and UI testing.
+- Runtime validation is implemented using Zod.
+- Backend integration is planned for a future phase.
+
+---
 
 ## Tech Stack
 
-- Framework: Next.js 15 App Router
-- Language: TypeScript
-- UI: React 19
-- Styling: Tailwind CSS 4
-- State: Redux Toolkit + React Redux
-- Hosting: Vercel
-- Package manager: npm
+### Frontend
 
-## Features
+- Next.js 15
+- React 19
+- TypeScript
+- Tailwind CSS
 
-- Responsive ecommerce storefront
-- Home page with hero, featured products, categories, testimonials, and newsletter UI
-- Shop page with filtering, sorting, product grid, and mobile filters
-- Product detail pages generated from static product data
-- Cart and wishlist state
-- Checkout UI with shipping form validation
-- Spotlight search
-- Dedicated admin dashboard under `/dedicated-admin`
-- Admin product, category, order, and user management UI
-- Security headers, admin route protection, and image host configuration
+### State Management
 
-## Project Status
+- Redux Toolkit
+- React Redux
 
-This repository currently contains the frontend and mock/admin UI state only.
+### Server State
 
-Important notes:
+- TanStack React Query
 
-- Product, order, category, and user data are currently local seed data.
-- Admin changes are client-side demo state and are not persisted to a database yet.
-- Checkout is a UI flow only. No real payment gateway is connected yet.
-- The backend will be developed later with Node.js, Express, and MongoDB.
+### Validation
 
-## Getting Started
+- Zod
 
-### Prerequisites
+### Networking
 
-Install:
+- Axios
 
-- Node.js 20 or newer
-- npm
+### Development Infrastructure
 
-Check your versions:
+- Centralized Mock API
+- DTO Contracts
+- Runtime Validation
+- Feature-Based Architecture
 
-```bash
-node --version
-npm --version
+---
+
+## Architecture
+
+The project follows a feature-driven architecture designed for long-term scalability.
+
+```text
+src/
+├── app/
+├── api/
+├── components/
+├── data/
+├── features/
+├── hooks/
+├── providers/
+├── services/
+├── types/
+├── schemas/
+└── lib/
 ```
 
-### Install Dependencies
+---
+
+## Domain Model
+
+Entities are organized by domain.
+
+```text
+src/types/entities/
+├── address.ts
+├── admin.ts
+├── auth.ts
+├── cart.ts
+├── category.ts
+├── common.ts
+├── order.ts
+├── payment.ts
+├── product.ts
+├── review.ts
+├── user.ts
+├── wishlist.ts
+└── index.ts
+```
+
+---
+
+## Product Architecture
+
+Products support variant-based inventory.
+
+```text
+Product
+ ├── id
+ ├── title
+ ├── description
+ ├── category
+ ├── brand
+ ├── variants[]
+ └── metadata
+
+Variant
+ ├── id
+ ├── sku
+ ├── size
+ ├── color
+ ├── inventory
+ ├── images
+ ├── price
+ └── salePrice
+```
+
+This structure supports:
+
+- Multiple sizes
+- Multiple colors
+- Independent inventory
+- Independent pricing
+- Multiple product images
+- SKU management
+
+---
+
+## Validation Layer
+
+Runtime validation is implemented using Zod.
+
+```text
+src/schemas/
+├── address.schema.ts
+├── admin.schema.ts
+├── auth.schema.ts
+├── cart.schema.ts
+├── category.schema.ts
+├── order.schema.ts
+├── payment.schema.ts
+├── product.schema.ts
+├── review.schema.ts
+├── user.schema.ts
+└── wishlist.schema.ts
+```
+
+TypeScript types are derived directly from schemas where applicable.
+
+Example:
+
+```ts
+export type Product = z.infer<typeof ProductSchema>;
+```
+
+This ensures compile-time and runtime safety.
+
+---
+
+## API Contract Layer
+
+API contracts are centralized and versionable.
+
+```text
+src/types/api/
+```
+
+Contains:
+
+- Request DTOs
+- Response DTOs
+- Error DTOs
+
+The frontend is developed against stable contracts before backend implementation.
+
+---
+
+## Mock API Infrastructure
+
+A centralized Mock API layer is used during development.
+
+```text
+Component
+    ↓
+React Query Hook
+    ↓
+Service Layer
+    ↓
+Mock API
+    ↓
+Mock Data
+```
+
+Benefits:
+
+- Frontend development is independent of backend availability.
+- Easy transition to real APIs.
+- Consistent network simulation.
+- Contract validation.
+
+---
+
+## Async State System
+
+Reusable state components exist for all asynchronous operations.
+
+### Supported States
+
+- Loading
+- Success
+- Empty
+- Error
+- Offline
+
+Reusable components:
+
+```text
+LoadingState
+EmptyState
+ErrorState
+OfflineState
+RouteErrorState
+```
+
+---
+
+## Authentication
+
+Current authentication is mock-based and intended for development only.
+
+Features:
+
+- Customer Login
+- Admin Login
+- Session Restoration
+- Auth Storage Abstraction
+
+Future production implementation:
+
+- JWT Authentication
+- Refresh Tokens
+- Protected APIs
+- Role-Based Access Control
+
+---
+
+## Application Routes
+
+### Storefront
+
+```text
+/
+/shop
+/product/[id]
+/cart
+/checkout
+/wishlist
+```
+
+### Customer Account
+
+```text
+/account
+/account/profile
+/account/orders
+/account/addresses
+/account/pan
+```
+
+### Admin
+
+```text
+/dedicated-admin
+/dedicated-admin/login
+/dedicated-admin/products
+/dedicated-admin/orders
+/dedicated-admin/users
+/dedicated-admin/categories
+```
+
+---
+
+## Development
+
+Install dependencies:
 
 ```bash
 npm install
 ```
 
-### Configure Environment
-
-Create a local environment file:
-
-```bash
-cp .env.example .env.local
-```
-
-If `.env.example` does not exist yet, create `.env.local` manually:
-
-```env
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=change-this-to-a-long-random-password
-NEXT_PUBLIC_PRODUCT_IMAGE_HOSTS=images.unsplash.com
-```
-
-### Run Locally
+Run development server:
 
 ```bash
 npm run dev
@@ -104,349 +314,96 @@ Open:
 http://localhost:3000
 ```
 
-Admin area:
+---
 
-```text
-http://localhost:3000/dedicated-admin
-```
+## Current Status
 
-In development, if `ADMIN_USERNAME` or `ADMIN_PASSWORD` is missing, the admin route is allowed so local work is not blocked. In production, missing admin credentials fail closed.
+### Completed
 
-## Environment Variables
+- Frontend Architecture
+- Product Catalog
+- Cart Flow
+- Wishlist Flow
+- Account Flow
+- Admin Flow
+- React Query Integration
+- Redux Toolkit Integration
+- Mock API Infrastructure
+- API Contracts
+- Zod Validation
+- Error Handling Infrastructure
 
-| Variable | Required | Used By | Description |
-| --- | --- | --- | --- |
-| `ADMIN_USERNAME` | Production | Middleware | Basic Auth username for `/dedicated-admin`. |
-| `ADMIN_PASSWORD` | Production | Middleware | Basic Auth password for `/dedicated-admin`. Use a long random value. |
-| `NEXT_PUBLIC_PRODUCT_IMAGE_HOSTS` | Recommended | Next image config + CSP | Comma-separated HTTPS image hosts allowed by `next/image` and CSP. |
+### In Progress
 
-Example:
+- Backend Development
+- Database Integration
+- Authentication APIs
 
-```env
-ADMIN_USERNAME=kamirafit-admin
-ADMIN_PASSWORD=use-a-password-manager-generated-secret
-NEXT_PUBLIC_PRODUCT_IMAGE_HOSTS=images.unsplash.com,res.cloudinary.com,cdn.kamirafit.com
-```
+### Planned
 
-When the real backend/media pipeline is ready, replace the demo image host with the production media host.
+- MongoDB
+- Node.js Backend
+- JWT Authentication
+- Razorpay Integration
+- Shiprocket Integration
+- Email Notifications
+- Analytics
+- SEO Enhancements
+- Production Deployment
 
-## Available Scripts
+---
 
-```bash
-npm run dev
-```
+## Engineering Principles
 
-Starts the development server with Turbopack.
+The project follows:
 
-```bash
-npm run build
-```
+- Feature-based architecture
+- Domain-driven modeling
+- Strict TypeScript
+- Runtime validation
+- Reusable UI patterns
+- Contract-first API design
+- Separation of concerns
+- Scalability-first development
 
-Creates an optimized production build.
+---
 
-```bash
-npm run start
-```
+## Future Roadmap
 
-Runs the production build locally. Run `npm run build` first.
+### Backend
 
-```bash
-npm run lint
-```
+- Node.js
+- Express
+- MongoDB
+- JWT Authentication
 
-Runs ESLint.
+### Commerce
 
-Recommended security check:
+- Product Management
+- Order Management
+- Inventory Management
+- Coupon System
 
-```bash
-npm audit
-```
+### Payments
 
-## Architecture
+- Razorpay
 
-High-level structure:
+### Logistics
 
-```text
-app/
-  layout.tsx                    Root layout and global providers
-  page.tsx                      Home page
-  shop/                         Product listing route
-  product/[id]/                 Product detail route
-  cart/                         Cart route
-  checkout/                     Checkout UI route
-  wishlist/                     Wishlist route
-  dedicated-admin/              Protected admin route group
+- Shiprocket
 
-components/
-  home/                         Home page sections
-  layout/                       Shared page shell
-  navbar/                       Navigation/category menu
-  search/                       Spotlight search
-  ui/                           Reusable UI primitives
-  admin/                        Admin-specific shared components
+### Growth
 
-features/
-  product/                      Product UI, product types, product store hooks
-  cart/                         Cart and checkout components/utilities
-  admin/                        Admin pages, admin Redux store, admin components
+- Google Analytics
+- Meta Pixel
+- SEO Optimization
+- Performance Optimization
 
-data/
-  products.ts                   Storefront product data re-export
-  orders.ts                     Mock order data
-  users.ts                      Mock user data
-  categories.ts                 Mock category data
-
-lib/
-  format.ts                     Formatting helpers
-
-middleware.ts                   Admin Basic Auth middleware
-next.config.ts                  Security headers, image config, Next settings
-```
-
-### Design Approach
-
-The app uses route-level composition in `app/`, feature modules under `features/`, and reusable display components under `components/`. Public storefront code and admin code are intentionally separated so customer-facing bundles do not depend on admin-only state.
-
-## Routing
-
-Public routes:
-
-- `/`
-- `/shop`
-- `/product/[id]`
-- `/cart`
-- `/checkout`
-- `/wishlist`
-
-Admin routes:
-
-- `/dedicated-admin`
-- `/dedicated-admin/products`
-- `/dedicated-admin/categories`
-- `/dedicated-admin/orders`
-- `/dedicated-admin/users`
-
-The admin route group is:
-
-- protected by middleware Basic Auth
-- marked `noindex`
-- served with `Cache-Control: no-store`
-- forced dynamic with `revalidate = 0`
-
-## State Management
-
-There are two Redux stores:
-
-- Storefront store: cart and wishlist only
-- Admin store: products, orders, categories, and users
-
-This separation avoids leaking admin-oriented data into the customer storefront state tree.
-
-Current state is client-side only. Once the backend is ready, admin mutations and checkout/order actions should be moved to authenticated API calls.
-
-## Security
-
-Implemented frontend/security hardening:
-
-- Admin Basic Auth middleware for `/dedicated-admin`
-- Timing-safe credential comparison
-- Production fail-closed behavior if admin credentials are missing
-- Security headers:
-  - Content Security Policy
-  - `X-Frame-Options: DENY`
-  - `X-Content-Type-Options: nosniff`
-  - `Referrer-Policy: strict-origin-when-cross-origin`
-  - `Permissions-Policy`
-  - `Cross-Origin-Opener-Policy`
-  - HSTS in production
-- Admin `no-store` cache policy
-- Admin `X-Robots-Tag: noindex, nofollow, noarchive`
-- `next/image` remote hosts controlled by `NEXT_PUBLIC_PRODUCT_IMAGE_HOSTS`
-- SVG image optimization disabled
-- Dependency override for patched `postcss`
-
-Security expectations for the future backend:
-
-- Do not trust frontend cart totals or product prices.
-- Recalculate order totals server-side.
-- Use server-side authentication and authorization.
-- Validate every API request with a schema library.
-- Verify payment provider webhooks server-side.
-- Store sensitive secrets only in environment variables.
-
-## Performance
-
-Current optimizations:
-
-- Next.js App Router with static generation for public product pages
-- Turbopack for development/build script
-- `next/font` for optimized local font delivery
-- `next/image` with AVIF/WebP support
-- Long image cache TTL
-- Public pages can be statically cached
-- Admin pages are dynamic and uncached
-- Public storefront Redux store excludes admin reducers
-
-Build output should be checked before deployment:
-
-```bash
-npm run build
-```
-
-## Deployment on Vercel
-
-This project is intended to deploy on Vercel.
-
-### Vercel Setup
-
-1. Push the repository to GitHub.
-2. Import the repository in Vercel.
-3. Use the default framework preset: Next.js.
-4. Set environment variables in Vercel Project Settings.
-5. Deploy.
-
-### Build Settings
-
-Vercel should detect these automatically:
-
-```text
-Install Command: npm install
-Build Command: npm run build
-Output Directory: .next
-```
-
-### Required Vercel Environment Variables
-
-Set these for Production, Preview, and Development as needed:
-
-```env
-ADMIN_USERNAME=kamirafit-admin
-ADMIN_PASSWORD=use-a-long-random-secret
-NEXT_PUBLIC_PRODUCT_IMAGE_HOSTS=images.unsplash.com
-```
-
-When real product media is hosted elsewhere:
-
-```env
-NEXT_PUBLIC_PRODUCT_IMAGE_HOSTS=cdn.kamirafit.com,res.cloudinary.com
-```
-
-### Admin Deployment Notes
-
-The admin area currently uses Basic Auth as a temporary frontend-era guard. After the backend is ready, replace this with real backend-backed admin authentication and role-based access control.
-
-## Backend Integration Plan
-
-The planned backend stack is Node.js, Express, and MongoDB.
-
-Recommended backend responsibilities:
-
-- Authentication:
-  - admin login
-  - customer login, if customer accounts are added
-  - password hashing with Argon2id or bcrypt
-  - secure session cookies or refresh-token rotation
-
-- Authorization:
-  - role-based access control
-  - admin-only product/category/order/user APIs
-  - server-side ownership checks for customer orders
-
-- Products:
-  - product CRUD
-  - product status
-  - category filters
-  - image/media references
-  - inventory tracking
-
-- Cart and checkout:
-  - server-side price calculation
-  - coupon validation, if added
-  - shipping calculation, if added
-  - order creation
-
-- Payments:
-  - Stripe, Razorpay, Cashfree, or another provider
-  - hosted payment pages
-  - signed webhook verification
-  - update order payment state only from verified webhooks
-
-- Orders:
-  - order status management
-  - payment status
-  - admin order notes
-  - customer notifications
-
-- Media:
-  - upload product images to a controlled media service
-  - store image URLs or public IDs in MongoDB
-  - expose only approved CDN/media hosts to the frontend
-
-Suggested API shape:
-
-```text
-GET    /api/products
-GET    /api/products/:id
-POST   /api/admin/products
-PATCH  /api/admin/products/:id
-DELETE /api/admin/products/:id
-
-GET    /api/admin/orders
-GET    /api/admin/orders/:id
-PATCH  /api/admin/orders/:id/status
-
-POST   /api/checkout
-POST   /api/payments/webhook
-
-POST   /api/auth/login
-POST   /api/auth/logout
-GET    /api/auth/session
-```
-
-## Quality Checks
-
-Run before opening a PR or deploying:
-
-```bash
-npm run lint
-npm run build
-npm audit
-```
-
-Optional local production smoke test:
-
-```bash
-npm run build
-npm run start
-```
-
-Then visit:
-
-```text
-http://localhost:3000
-http://localhost:3000/shop
-http://localhost:3000/cart
-http://localhost:3000/checkout
-http://localhost:3000/dedicated-admin
-```
-
-## Recommended Production Checklist
-
-Before using this for real customers:
-
-- Replace mock data with backend APIs.
-- Replace Basic Auth with proper admin authentication.
-- Add server-side authorization to every admin API.
-- Add real payment gateway integration.
-- Verify payment status using signed webhooks.
-- Recalculate cart totals on the backend.
-- Add database backups.
-- Add monitoring and error tracking.
-- Add rate limiting on auth, checkout, newsletter, and admin routes.
-- Add audit logs for admin changes.
-- Add automated tests for checkout, admin auth, product CRUD, and payment webhooks.
-- Configure production image host in `NEXT_PUBLIC_PRODUCT_IMAGE_HOSTS`.
+---
 
 ## License
 
-This project is private and proprietary to KamiraFit.
+Private project.
+All rights reserved.
+
+© KamiraFit
