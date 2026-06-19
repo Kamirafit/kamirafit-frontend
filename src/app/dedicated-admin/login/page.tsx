@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { loginSuccess } from "@/features/auth/store/authSlice";
 import { authService } from "@/features/auth/services/auth.service";
+import { getUserFriendlyError } from "@/lib/errors";
 import Button from "@/components/ui/Button";
 
 function AdminLoginContent() {
@@ -40,8 +41,7 @@ function AdminLoginContent() {
       // Redirect back to dashboard or target
       router.push(redirectPath);
     } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : "Invalid admin credentials.";
-      setError(errorMsg);
+      setError(getUserFriendlyError(err, "We couldn’t sign you in. Check your details and try again."));
     } finally {
       setLoading(false);
     }

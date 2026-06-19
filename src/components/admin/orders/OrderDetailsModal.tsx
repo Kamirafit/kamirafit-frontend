@@ -21,6 +21,7 @@ import Modal from "@/features/admin/components/Modal";
 import { useUpdateAdminOrder, useDeleteAdminOrder } from "@/services/admin";
 import { COLOR_OPTIONS, SIZE_OPTIONS } from "@/features/product/types";
 import StatusBadge from "./StatusBadge";
+import ErrorState from "@/components/states/ErrorState";
 
 const formatPrice = (n: number) =>
   new Intl.NumberFormat("en-IN", {
@@ -185,21 +186,22 @@ export default function OrderDetailsModal({ open, onClose, order }: Props) {
 
   const handleSave = () => {
     if (!draft) return;
-    updateMutation.mutate({
-      id: order.id,
-      patch: {
-        customer: draft.customer,
-        items: draft.items,
-        paymentStatus: draft.paymentStatus,
-        orderStatus: draft.orderStatus,
+    updateMutation.mutate(
+      {
+        id: order.id,
+        patch: {
+          customer: draft.customer,
+          items: draft.items,
+          paymentStatus: draft.paymentStatus,
+          orderStatus: draft.orderStatus,
+        },
       },
-    });
-    onClose();
+      { onSuccess: onClose },
+    );
   };
 
   const handleDelete = () => {
-    deleteMutation.mutate(order.id);
-    onClose();
+    deleteMutation.mutate(order.id, { onSuccess: onClose });
   };
 
   return (
@@ -211,6 +213,7 @@ export default function OrderDetailsModal({ open, onClose, order }: Props) {
         maxWidth="lg"
       >
         <div className="flex flex-col gap-8">
+          {updateMutation.isError || deleteMutation.isError ? <ErrorState className="min-h-0 py-6" title="Order change not saved" message="Please try that action again." /> : null}
           <section className="flex flex-col gap-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <SectionTitle>Order info</SectionTitle>

@@ -1,6 +1,6 @@
 export default function OrderSkeleton() {
   return (
-    <div className="space-y-6 animate-pulse">
+    <div role="status" aria-label="Loading orders" aria-busy="true" className="space-y-6 animate-pulse">
       {Array.from({ length: 2 }).map((_, idx) => (
         <div key={idx} className="rounded-2xl border border-line bg-ink p-6 space-y-4">
           <div className="flex items-center justify-between border-b border-line pb-4">

@@ -15,12 +15,16 @@ import { selectClass } from "../components/FormField";
 import SearchField from "../components/SearchField";
 import { useAdminOrders } from "@/services/admin";
 import AdminTableSkeleton from "@/components/skeleton/AdminTableSkeleton";
+import { EmptyState, ErrorState, OfflineState } from "@/components/states";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 
 type OrderFilter = "all" | OrderStatus;
 type PaymentFilter = "all" | PaymentStatus;
 
 export default function OrdersPage() {
-  const { data: orders = [], isLoading } = useAdminOrders();
+  const ordersQuery = useAdminOrders();
+  const { data: orders = [], isLoading } = ordersQuery;
+  const isOnline = useOnlineStatus();
 
   const [query, setQuery] = useState("");
   const [orderFilter, setOrderFilter] = useState<OrderFilter>("all");
@@ -112,8 +116,14 @@ export default function OrdersPage() {
         </div>
       </div>
 
-      {isLoading ? (
+      {!isOnline && orders.length === 0 ? (
+        <OfflineState onRetry={() => void ordersQuery.refetch()} />
+      ) : isLoading ? (
         <AdminTableSkeleton />
+      ) : ordersQuery.isError ? (
+        <ErrorState message="We couldn’t load orders." onRetry={() => void ordersQuery.refetch()} />
+      ) : orders.length === 0 ? (
+        <EmptyState title="No orders yet" description="New customer orders will appear here." />
       ) : (
         <OrdersTable
           rows={filtered}

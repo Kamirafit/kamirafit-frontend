@@ -22,6 +22,8 @@ import ProductGrid from "./ProductGrid";
 import SortBar from "./SortBar";
 import { useProducts } from "@/services/product";
 import type { Product } from "@/types/entities";
+import { ErrorState, LoadingState, OfflineState } from "@/components/states";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 
 const CATEGORY_BY_SLUG: Record<string, Category> = {
   kurti: "Kurti",
@@ -65,7 +67,8 @@ export default function ShopPageClient({ initialCategorySlug, initialProducts = 
   const [sort, setSort] = useState<SortKey>("popular");
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const { data: latestProducts = [] } = useProducts();
+  const { data: latestProducts = [], isLoading, isError, refetch } = useProducts();
+  const isOnline = useOnlineStatus();
 
   const activeProducts = useMemo(() => {
     const source = latestProducts.length > 0 ? latestProducts : initialProducts;
@@ -73,6 +76,7 @@ export default function ShopPageClient({ initialCategorySlug, initialProducts = 
   }, [latestProducts, initialProducts]);
 
   const products = useFilteredSortedProducts(activeProducts, filters, sort);
+  const hasInitialData = initialProducts.length > 0;
 
   // Counts are computed from the full *active* product set so users can see how
   // many items each option would add — not the already-filtered subset.
@@ -130,7 +134,15 @@ export default function ShopPageClient({ initialCategorySlug, initialProducts = 
             onOpenMobileFilters={() => setMobileOpen(true)}
           />
           <div className="mt-6">
-            <ProductGrid products={products} />
+            {!isOnline && !hasInitialData && latestProducts.length === 0 ? (
+              <OfflineState onRetry={() => void refetch()} />
+            ) : isLoading && !hasInitialData ? (
+              <LoadingState label="Loading products…" />
+            ) : isError && !hasInitialData && latestProducts.length === 0 ? (
+              <ErrorState message="We couldn’t load the shop right now." onRetry={() => void refetch()} />
+            ) : (
+              <ProductGrid products={products} />
+            )}
           </div>
         </section>
       </div>

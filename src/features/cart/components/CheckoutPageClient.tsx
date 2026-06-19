@@ -15,6 +15,8 @@ import ShippingForm, {
   type ShippingDetails,
   type ShippingErrors,
 } from "./ShippingForm";
+import { ErrorState, LoadingState, OfflineState } from "@/components/states";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 
 const INITIAL_VALUES: ShippingDetails = {
   name: "",
@@ -60,7 +62,8 @@ function validate(values: ShippingDetails): ShippingErrors {
 }
 
 export default function CheckoutPageClient() {
-  const { data: products = [] } = useProducts();
+  const { data: products = [], isLoading, isError, refetch } = useProducts();
+  const isOnline = useOnlineStatus();
   const items = useAppSelector((s) => s.cart.items);
   const dispatch = useAppDispatch();
 
@@ -132,6 +135,18 @@ export default function CheckoutPageClient() {
         </div>
       </Container>
     );
+  }
+
+  if (!isOnline && items.length > 0) {
+    return <Container width="narrow" className="py-20"><OfflineState onRetry={() => void refetch()} /></Container>;
+  }
+
+  if (isLoading && products.length === 0) {
+    return <Container width="narrow" className="py-20"><LoadingState label="Preparing checkout…" /></Container>;
+  }
+
+  if (isError && products.length === 0 && items.length > 0) {
+    return <Container width="narrow" className="py-20"><ErrorState message="We couldn’t prepare checkout." onRetry={() => void refetch()} /></Container>;
   }
 
   if (resolved.length === 0) {

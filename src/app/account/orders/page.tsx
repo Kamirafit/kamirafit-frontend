@@ -7,9 +7,12 @@ import ReviewFormModal from "@/features/account/components/ReviewFormModal";
 import { Order } from "@/features/account/types";
 import { useOrders } from "@/services/order";
 import OrderSkeleton from "@/components/skeleton/OrderSkeleton";
+import { EmptyState, ErrorState, OfflineState } from "@/components/states";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 
 export default function OrdersPage() {
-  const { data: orders = [], isLoading } = useOrders();
+  const { data: orders = [], isLoading, isError, refetch } = useOrders();
+  const isOnline = useOnlineStatus();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [reviewItem, setReviewItem] = useState<{orderId: string, productId: string, productName: string, productImage: string} | null>(null);
 
@@ -26,10 +29,16 @@ export default function OrdersPage() {
         My Orders
       </h1>
       
-      {isLoading ? (
+      {!isOnline && orders.length === 0 ? (
+        <div className="mt-8"><OfflineState onRetry={() => void refetch()} /></div>
+      ) : isLoading ? (
         <div className="mt-8">
           <OrderSkeleton />
         </div>
+      ) : isError ? (
+        <div className="mt-8"><ErrorState message="We couldn’t load your orders." onRetry={() => void refetch()} /></div>
+      ) : orders.length === 0 ? (
+        <div className="mt-8"><EmptyState title="No orders yet" description="When you place an order, you’ll be able to track it here." /></div>
       ) : (
         <div className="mt-8 flex flex-col gap-8">
           {orders.map((order) => (
@@ -45,11 +54,6 @@ export default function OrdersPage() {
               })}
             />
           ))}
-          {orders.length === 0 && (
-            <div className="py-12 text-center text-paper-muted">
-              <p>You haven&apos;t placed any orders yet.</p>
-            </div>
-          )}
         </div>
       )}
 

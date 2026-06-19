@@ -9,6 +9,8 @@ import ActionButton from "../components/ActionButton";
 import DataTable, { type Column } from "../components/DataTable";
 import SearchField from "../components/SearchField";
 import UserFormModal from "../components/UserFormModal";
+import { EmptyState, ErrorState, OfflineState } from "@/components/states";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 
 function initials(name: string) {
   return name
@@ -19,7 +21,9 @@ function initials(name: string) {
 }
 
 export default function UsersPage() {
-  const { data: users = [], isLoading } = useAdminUsers();
+  const usersQuery = useAdminUsers();
+  const { data: users = [], isLoading } = usersQuery;
+  const isOnline = useOnlineStatus();
   const updateMutation = useUpdateAdminUser();
 
   const [query, setQuery] = useState("");
@@ -96,8 +100,14 @@ export default function UsersPage() {
         </span>
       </div>
 
-      {isLoading ? (
+      {!isOnline && users.length === 0 ? (
+        <OfflineState onRetry={() => void usersQuery.refetch()} />
+      ) : isLoading ? (
         <AdminTableSkeleton />
+      ) : usersQuery.isError ? (
+        <ErrorState message="We couldn’t load customers." onRetry={() => void usersQuery.refetch()} />
+      ) : users.length === 0 ? (
+        <EmptyState title="No customers yet" description="Registered customers will appear here." />
       ) : (
         <DataTable
           columns={columns}
@@ -106,6 +116,8 @@ export default function UsersPage() {
           emptyLabel="No users match your search."
         />
       )}
+
+      {updateMutation.isError ? <ErrorState className="min-h-0 py-6" title="Customer not updated" message="Please try saving those changes again." /> : null}
 
       <UserFormModal
         open={editing !== null}

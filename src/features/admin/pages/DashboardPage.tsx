@@ -5,6 +5,8 @@ import { useMemo } from "react";
 import SectionHeader from "@/components/ui/SectionHeader";
 import { useAdminCategories, useAdminProducts, useAdminUsers } from "@/services/admin";
 import AdminCard from "../components/AdminCard";
+import { EmptyState, ErrorState, LoadingState, OfflineState } from "@/components/states";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 
 const formatPrice = (n: number) =>
   new Intl.NumberFormat("en-IN", {
@@ -44,9 +46,13 @@ function PanelHeader({
 }
 
 export default function DashboardPage() {
-  const { data: products = [] } = useAdminProducts();
-  const { data: users = [] } = useAdminUsers();
-  const { data: categories = [] } = useAdminCategories();
+  const productsQuery = useAdminProducts();
+  const usersQuery = useAdminUsers();
+  const categoriesQuery = useAdminCategories();
+  const products = useMemo(() => productsQuery.data ?? [], [productsQuery.data]);
+  const users = useMemo(() => usersQuery.data ?? [], [usersQuery.data]);
+  const categories = useMemo(() => categoriesQuery.data ?? [], [categoriesQuery.data]);
+  const isOnline = useOnlineStatus();
 
   const kpis: Kpi[] = useMemo(() => {
     const active = products.filter((p) => p.status === "active");
@@ -81,6 +87,16 @@ export default function DashboardPage() {
   }, [products, users, categories]);
 
   const recent = useMemo(() => products.slice(0, 6), [products]);
+
+  if (!isOnline && products.length === 0 && users.length === 0 && categories.length === 0) {
+    return <OfflineState onRetry={() => { void productsQuery.refetch(); void usersQuery.refetch(); void categoriesQuery.refetch(); }} />;
+  }
+  if (productsQuery.isLoading || usersQuery.isLoading || categoriesQuery.isLoading) {
+    return <LoadingState label="Loading dashboard…" />;
+  }
+  if (productsQuery.isError || usersQuery.isError || categoriesQuery.isError) {
+    return <ErrorState message="We couldn’t load the dashboard." onRetry={() => { void productsQuery.refetch(); void usersQuery.refetch(); void categoriesQuery.refetch(); }} />;
+  }
 
   return (
     <div className="flex flex-col gap-10">
@@ -117,7 +133,7 @@ export default function DashboardPage() {
               </Link>
             }
           />
-          <ul className="divide-y divide-line">
+          {recent.length === 0 ? <div className="p-5"><EmptyState title="No products yet" description="Add a product to see catalog activity here." /></div> : <ul className="divide-y divide-line">
             {recent.map((p) => (
               <li
                 key={p.id}
@@ -136,7 +152,7 @@ export default function DashboardPage() {
                 </span>
               </li>
             ))}
-          </ul>
+          </ul>}
         </AdminCard>
 
         <AdminCard>

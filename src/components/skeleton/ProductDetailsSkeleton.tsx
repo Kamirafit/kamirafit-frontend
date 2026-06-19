@@ -1,6 +1,6 @@
 export default function ProductDetailsSkeleton() {
   return (
-    <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-16 animate-pulse">
+    <div role="status" aria-label="Loading product details" aria-busy="true" className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-16 animate-pulse">
       {/* Product Image Column */}
       <div className="aspect-[3/4] w-full rounded-2xl bg-ink-3" />
       

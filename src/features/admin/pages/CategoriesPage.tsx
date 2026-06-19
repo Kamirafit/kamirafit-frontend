@@ -15,6 +15,8 @@ import ActionButton from "../components/ActionButton";
 import CategoryFormModal from "../components/CategoryFormModal";
 import ConfirmDialog from "../components/ConfirmDialog";
 import DataTable, { type Column } from "../components/DataTable";
+import { EmptyState, ErrorState, OfflineState } from "@/components/states";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 
 function PlusIcon() {
   return (
@@ -25,7 +27,9 @@ function PlusIcon() {
 }
 
 export default function CategoriesPage() {
-  const { data: categories = [], isLoading } = useAdminCategories();
+  const categoriesQuery = useAdminCategories();
+  const { data: categories = [], isLoading } = categoriesQuery;
+  const isOnline = useOnlineStatus();
   const createMutation = useCreateAdminCategory();
   const updateMutation = useUpdateAdminCategory();
   const deleteMutation = useDeleteAdminCategory();
@@ -108,8 +112,14 @@ export default function CategoriesPage() {
         }
       />
 
-      {isLoading ? (
+      {!isOnline && categories.length === 0 ? (
+        <OfflineState onRetry={() => void categoriesQuery.refetch()} />
+      ) : isLoading ? (
         <AdminTableSkeleton />
+      ) : categoriesQuery.isError ? (
+        <ErrorState message="We couldn’t load categories." onRetry={() => void categoriesQuery.refetch()} />
+      ) : categories.length === 0 ? (
+        <EmptyState title="No categories yet" description="Add a category to organize the product catalog." />
       ) : (
         <DataTable
           columns={columns}
@@ -118,6 +128,8 @@ export default function CategoriesPage() {
           emptyLabel="No categories yet — add one to get started."
         />
       )}
+
+      {[createMutation, updateMutation, deleteMutation].some((mutation) => mutation.isError) ? <ErrorState className="min-h-0 py-6" title="Category change not saved" message="Please try that action again." /> : null}
 
       <CategoryFormModal
         open={formOpen}

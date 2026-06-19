@@ -9,9 +9,12 @@ import CartLineItem from "./CartLineItem";
 import { useProducts } from "@/services/product";
 import CartSummary from "./CartSummary";
 import EmptyCart from "./EmptyCart";
+import { ErrorState, LoadingState, OfflineState } from "@/components/states";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 
 export default function CartPageClient() {
-  const { data: products = [] } = useProducts();
+  const { data: products = [], isLoading, isError, refetch } = useProducts();
+  const isOnline = useOnlineStatus();
   const items = useAppSelector((s) => s.cart.items);
   const resolved = resolveCartItems(items, products);
   const itemCount = resolved.reduce((sum, r) => sum + r.item.quantity, 0);
@@ -27,7 +30,13 @@ export default function CartPageClient() {
         className="mb-12"
       />
 
-      {resolved.length === 0 ? (
+      {!isOnline && products.length === 0 && items.length > 0 ? (
+        <OfflineState onRetry={() => void refetch()} />
+      ) : isLoading && products.length === 0 ? (
+        <LoadingState label="Loading your cart…" />
+      ) : isError && products.length === 0 && items.length > 0 ? (
+        <ErrorState message="We couldn’t load the products in your cart." onRetry={() => void refetch()} />
+      ) : resolved.length === 0 ? (
         <EmptyCart />
       ) : (
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_380px] lg:gap-12">

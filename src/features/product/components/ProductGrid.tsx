@@ -1,5 +1,6 @@
 import type { Product } from "../types";
 import ProductCard from "./ProductCard";
+import EmptyState from "@/components/states/EmptyState";
 
 type Props = {
   products: Product[];
@@ -7,16 +8,7 @@ type Props = {
 
 export default function ProductGrid({ products }: Props) {
   if (products.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-neutral-300 bg-neutral-50 px-6 py-20 text-center">
-        <p className="text-base font-medium text-neutral-900">
-          No products match your filters.
-        </p>
-        <p className="mt-1 text-sm text-neutral-500">
-          Try widening the price range or clearing a filter.
-        </p>
-      </div>
-    );
+    return <EmptyState title="No products found" description="Try widening the price range or clearing a filter." />;
   }
 
   return (

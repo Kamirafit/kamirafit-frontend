@@ -3,6 +3,7 @@ import SectionHeader from "@/components/ui/SectionHeader";
 import ProductCard from "@/features/product/components/ProductCard";
 
 import { Product } from "@/types/api";
+import EmptyState from "@/components/states/EmptyState";
 
 export default function FeaturedProducts({ products = [] }: { products?: Product[] }) {
   return (
@@ -26,11 +27,11 @@ export default function FeaturedProducts({ products = [] }: { products?: Product
         }
       />
 
-      <div className="mt-12 grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 lg:mt-16 lg:grid-cols-4 lg:gap-x-8">
+      {products.length === 0 ? <div className="mt-12"><EmptyState title="No featured products" description="Our next edit is being prepared. Browse the full shop in the meantime." /></div> : <div className="mt-12 grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 lg:mt-16 lg:grid-cols-4 lg:gap-x-8">
         {products.map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}
-      </div>
+      </div>}
     </Section>
   );
 }

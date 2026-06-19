@@ -6,9 +6,12 @@ import AddressFormModal from "@/features/account/components/AddressFormModal";
 import { Address } from "@/features/account/types";
 import { useAddresses, useCreateAddress, useUpdateAddress, useDeleteAddress } from "@/services/address";
 import AddressSkeleton from "@/components/skeleton/AddressSkeleton";
+import { EmptyState, ErrorState, OfflineState } from "@/components/states";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 
 export default function AddressesPage() {
-  const { data: addresses = [], isLoading } = useAddresses();
+  const { data: addresses = [], isLoading, isError, refetch } = useAddresses();
+  const isOnline = useOnlineStatus();
   const createMutation = useCreateAddress();
   const updateMutation = useUpdateAddress();
   const deleteMutation = useDeleteAddress();
@@ -66,10 +69,20 @@ export default function AddressesPage() {
         </button>
       </div>
 
-      {isLoading ? (
+      {createMutation.isError || updateMutation.isError || deleteMutation.isError ? (
+        <div className="mt-6"><ErrorState className="min-h-0 py-6" title="Address change not saved" message="Please check your connection and try again." /></div>
+      ) : null}
+
+      {!isOnline && addresses.length === 0 ? (
+        <div className="mt-8"><OfflineState onRetry={() => void refetch()} /></div>
+      ) : isLoading ? (
         <div className="mt-8">
           <AddressSkeleton />
         </div>
+      ) : isError ? (
+        <div className="mt-8"><ErrorState message="We couldn’t load your addresses." onRetry={() => void refetch()} /></div>
+      ) : addresses.length === 0 ? (
+        <div className="mt-8"><EmptyState title="No saved addresses" description="Add a delivery address to make checkout faster." /></div>
       ) : (
         <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
           {addresses.map((address) => (
@@ -81,11 +94,6 @@ export default function AddressesPage() {
               onSetDefault={handleSetDefault}
             />
           ))}
-          {addresses.length === 0 && (
-            <div className="col-span-full py-12 text-center text-paper-muted">
-              <p>You haven&apos;t saved any addresses yet.</p>
-            </div>
-          )}
         </div>
       )}
 

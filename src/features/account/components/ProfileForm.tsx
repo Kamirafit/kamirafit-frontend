@@ -4,9 +4,12 @@ import { useState, useEffect } from "react";
 import { Profile } from "../types";
 import { useProfile, useUpdateProfile } from "@/services/auth";
 import ProfileSkeleton from "@/components/skeleton/ProfileSkeleton";
+import { ErrorState, OfflineState } from "@/components/states";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 
 export default function ProfileForm() {
-  const { data: serverProfile, isLoading } = useProfile();
+  const { data: serverProfile, isLoading, isError, refetch } = useProfile();
+  const isOnline = useOnlineStatus();
   const updateMutation = useUpdateProfile();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -37,12 +40,21 @@ export default function ProfileForm() {
     setIsEditing(false);
   };
 
+  if (!isOnline && !serverProfile) {
+    return <OfflineState onRetry={() => void refetch()} />;
+  }
+
   if (isLoading) {
     return <ProfileSkeleton />;
   }
 
+  if (isError || !serverProfile) {
+    return <ErrorState message="We couldn’t load your profile." onRetry={() => void refetch()} />;
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
+      {updateMutation.isError ? <ErrorState className="min-h-0 py-6" title="Changes weren’t saved" message="Please check your connection and try saving again." /> : null}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
           <label className="text-[12px] font-medium text-paper-muted uppercase tracking-wider">

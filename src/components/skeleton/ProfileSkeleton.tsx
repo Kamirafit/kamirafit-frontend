@@ -1,6 +1,6 @@
 export default function ProfileSkeleton() {
   return (
-    <div className="rounded-2xl border border-line bg-ink p-6 sm:p-8 space-y-6 animate-pulse">
+    <div role="status" aria-label="Loading profile" aria-busy="true" className="rounded-2xl border border-line bg-ink p-6 sm:p-8 space-y-6 animate-pulse">
       <div className="h-6 w-1/4 rounded bg-ink-4 mb-4" />
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div className="space-y-2">

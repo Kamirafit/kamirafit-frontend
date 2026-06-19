@@ -22,6 +22,8 @@ import ProductFormModal, {
 } from "../components/ProductFormModal";
 import SearchField from "../components/SearchField";
 import StatusPill from "../components/StatusPill";
+import { EmptyState, ErrorState, OfflineState } from "@/components/states";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 
 const formatPrice = (n: number) =>
   new Intl.NumberFormat("en-IN", {
@@ -39,8 +41,11 @@ function PlusIcon() {
 }
 
 export default function ProductsPage() {
-  const { data: products = [], isLoading: productsLoading } = useAdminProducts();
-  const { data: categories = [], isLoading: categoriesLoading } = useAdminCategories();
+  const productsQuery = useAdminProducts();
+  const categoriesQuery = useAdminCategories();
+  const { data: products = [], isLoading: productsLoading } = productsQuery;
+  const { data: categories = [], isLoading: categoriesLoading } = categoriesQuery;
+  const isOnline = useOnlineStatus();
   const createMutation = useCreateAdminProduct();
   const updateMutation = useUpdateAdminProduct();
   const toggleStatusMutation = useToggleAdminProductStatus();
@@ -211,8 +216,14 @@ export default function ProductsPage() {
         </span>
       </div>
 
-      {isLoading ? (
+      {!isOnline && products.length === 0 ? (
+        <OfflineState onRetry={() => { void productsQuery.refetch(); void categoriesQuery.refetch(); }} />
+      ) : isLoading ? (
         <AdminTableSkeleton />
+      ) : productsQuery.isError || categoriesQuery.isError ? (
+        <ErrorState message="We couldn’t load the product catalog." onRetry={() => { void productsQuery.refetch(); void categoriesQuery.refetch(); }} />
+      ) : products.length === 0 ? (
+        <EmptyState title="No products yet" description="Create your first product to start building the catalog." />
       ) : (
         <DataTable
           columns={columns}
@@ -221,6 +232,10 @@ export default function ProductsPage() {
           emptyLabel="No products match your search."
         />
       )}
+
+      {[createMutation, updateMutation, toggleStatusMutation, deleteMutation].some((mutation) => mutation.isError) ? (
+        <ErrorState className="min-h-0 py-6" title="Change not saved" message="Please try that action again." />
+      ) : null}
 
       <ProductFormModal
         open={formOpen}
