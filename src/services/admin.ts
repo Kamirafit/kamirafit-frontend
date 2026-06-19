@@ -1,8 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { CATEGORIES, AdminCategory } from "@/data/categories";
-import { PRODUCTS, Product } from "@/data/products";
-import { USERS, AdminUser } from "@/data/users";
-import { ORDERS, Order } from "@/data/orders";
+import { mockApi, unwrapMockResponse } from "@/api/mockApi";
+import type { AdminCategory, AdminOrder as Order, AdminUser, Product } from "@/types/entities";
 import type {
   AdminStatsDto, CreateAdminCategoryRequestDto, CreateAdminCategoryResponseDto,
   CreateAdminProductRequestDto, CreateAdminProductResponseDto, GetAdminCategoriesResponseDto,
@@ -14,139 +12,65 @@ import type {
 
 export type AdminStats = AdminStatsDto;
 
-// Session-persistent local state for admin mutations
-let localCategories = [...CATEGORIES];
-let localProducts = [...PRODUCTS];
-const localUsers = [...USERS];
-let localOrders = [...ORDERS];
-
 export const adminService = {
   getStats: async (): Promise<GetAdminStatsResponseDto["data"]> => {
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    const salesTotal = localOrders
-      .filter((o) => o.paymentStatus === "Paid")
-      .reduce((sum, o) => sum + o.total, 0);
-    return {
-      salesTotal: salesTotal || 125400,
-      ordersCount: localOrders.length,
-      productsCount: localProducts.length,
-      usersCount: localUsers.length,
-    };
+    return unwrapMockResponse(await mockApi.admin.getStats());
   },
 
   getCategories: async (): Promise<GetAdminCategoriesResponseDto["data"]> => {
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    return [...localCategories];
+    return unwrapMockResponse(await mockApi.admin.categories.getAll());
   },
 
   createCategory: async (category: CreateAdminCategoryRequestDto): Promise<CreateAdminCategoryResponseDto["data"]> => {
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    const newCategory: AdminCategory = {
-      ...category,
-      id: `c-${Date.now().toString(36)}`,
-    };
-    localCategories.push(newCategory);
-    return newCategory;
+    return unwrapMockResponse(await mockApi.admin.categories.create(category));
   },
 
   updateCategory: async (id: string, patch: UpdateAdminCategoryRequestDto["data"]): Promise<UpdateAdminCategoryResponseDto["data"]> => {
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    const idx = localCategories.findIndex((c) => c.id === id);
-    if (idx !== -1) {
-      localCategories[idx] = { ...localCategories[idx], ...patch };
-      return localCategories[idx];
-    }
-    throw new Error("Category not found");
+    return unwrapMockResponse(await mockApi.admin.categories.update(id, patch));
   },
 
   deleteCategory: async (id: string): Promise<string> => {
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    localCategories = localCategories.filter((c) => c.id !== id);
-    return id;
+    return unwrapMockResponse(await mockApi.admin.categories.delete(id));
   },
 
   getProducts: async (): Promise<GetAdminProductsResponseDto["data"]> => {
-    await new Promise((resolve) => setTimeout(resolve, 450));
-    return [...localProducts];
+    return unwrapMockResponse(await mockApi.admin.products.getAll());
   },
 
   createProduct: async (product: CreateAdminProductRequestDto): Promise<CreateAdminProductResponseDto["data"]> => {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    const newProduct: Product = {
-      ...product,
-      id: `p-${Math.random().toString(36).substr(2, 9)}`,
-      rating: 5,
-      reviews: [],
-      popularity: 0,
-      createdAt: new Date().toISOString().slice(0, 10),
-    };
-    localProducts.push(newProduct);
-    return newProduct;
+    return unwrapMockResponse(await mockApi.admin.products.create(product));
   },
 
   updateProduct: async (id: string, patch: UpdateAdminProductRequestDto["data"]): Promise<UpdateAdminProductResponseDto["data"]> => {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    const idx = localProducts.findIndex((p) => p.id === id);
-    if (idx !== -1) {
-      localProducts[idx] = { ...localProducts[idx], ...patch };
-      return localProducts[idx];
-    }
-    throw new Error("Product not found");
+    return unwrapMockResponse(await mockApi.admin.products.update(id, patch));
   },
 
   toggleProductStatus: async (id: string): Promise<Product> => {
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    const idx = localProducts.findIndex((p) => p.id === id);
-    if (idx !== -1) {
-      localProducts[idx] = {
-        ...localProducts[idx],
-        status: localProducts[idx].status === "active" ? "inactive" : "active",
-      };
-      return localProducts[idx];
-    }
-    throw new Error("Product not found");
+    return unwrapMockResponse(await mockApi.admin.products.toggleStatus(id));
   },
 
   deleteProduct: async (id: string): Promise<string> => {
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    localProducts = localProducts.filter((p) => p.id !== id);
-    return id;
+    return unwrapMockResponse(await mockApi.admin.products.delete(id));
   },
 
   getUsers: async (): Promise<GetAdminUsersResponseDto["data"]> => {
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    return [...localUsers];
+    return unwrapMockResponse(await mockApi.admin.users.getAll());
   },
 
   updateUser: async (id: string, patch: UpdateAdminUserRequestDto["data"]): Promise<UpdateAdminUserResponseDto["data"]> => {
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    const idx = localUsers.findIndex((u) => u.id === id);
-    if (idx !== -1) {
-      localUsers[idx] = { ...localUsers[idx], ...patch };
-      return localUsers[idx];
-    }
-    throw new Error("User not found");
+    return unwrapMockResponse(await mockApi.admin.users.update(id, patch));
   },
 
   getOrders: async (): Promise<GetAdminOrdersResponseDto["data"]> => {
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    return [...localOrders];
+    return unwrapMockResponse(await mockApi.admin.orders.getAll());
   },
 
   updateOrder: async (id: string, patch: UpdateAdminOrderRequestDto["data"]): Promise<UpdateAdminOrderResponseDto["data"]> => {
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    const idx = localOrders.findIndex((o) => o.id === id);
-    if (idx !== -1) {
-      localOrders[idx] = { ...localOrders[idx], ...patch };
-      return localOrders[idx];
-    }
-    throw new Error("Order not found");
+    return unwrapMockResponse(await mockApi.admin.orders.update(id, patch));
   },
 
   deleteOrder: async (id: string): Promise<string> => {
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    localOrders = localOrders.filter((o) => o.id !== id);
-    return id;
+    return unwrapMockResponse(await mockApi.admin.orders.delete(id));
   },
 };
 

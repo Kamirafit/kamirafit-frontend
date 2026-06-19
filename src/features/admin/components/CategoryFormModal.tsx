@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { AdminCategory } from "@/data/categories";
+import type { AdminCategory } from "@/types/entities";
 import Button from "@/components/ui/Button";
 import FormField, { inputClass } from "./FormField";
 import Modal from "./Modal";

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Button from "@/components/ui/Button";
 import SectionHeader from "@/components/ui/SectionHeader";
-import type { AdminCategory } from "@/data/categories";
+import type { AdminCategory } from "@/types/entities";
 import {
   useAdminCategories,
   useCreateAdminCategory,

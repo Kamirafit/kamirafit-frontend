@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import SectionHeader from "@/components/ui/SectionHeader";
-import type { AdminUser } from "@/data/users";
+import type { AdminUser } from "@/types/entities";
 import { useAdminUsers, useUpdateAdminUser } from "@/services/admin";
 import AdminTableSkeleton from "@/components/skeleton/AdminTableSkeleton";
 import ActionButton from "../components/ActionButton";

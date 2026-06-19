@@ -1,19 +1,18 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import {
-  ORDERS,
-  type Order,
-  type OrderCustomer,
-  type OrderItem,
-  type OrderStatus,
-  type PaymentStatus,
-} from "@/data/orders";
+import type {
+  AdminOrder as Order,
+  AdminOrderItem as OrderItem,
+  AdminOrderStatus as OrderStatus,
+  OrderCustomer,
+  PaymentStatus,
+} from "@/types/entities";
 
 type State = {
   items: Order[];
 };
 
 const initialState: State = {
-  items: ORDERS,
+  items: [],
 };
 
 const DELIVERY_FEE = 79;

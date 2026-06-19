@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import SectionHeader from "@/components/ui/SectionHeader";
-import { useAdminSelector } from "@/features/admin/hooks/redux";
+import { useAdminCategories, useAdminProducts, useAdminUsers } from "@/services/admin";
 import AdminCard from "../components/AdminCard";
 
 const formatPrice = (n: number) =>
@@ -44,9 +44,9 @@ function PanelHeader({
 }
 
 export default function DashboardPage() {
-  const products = useAdminSelector((s) => s.adminProducts.items);
-  const users = useAdminSelector((s) => s.adminUsers.items);
-  const categories = useAdminSelector((s) => s.adminCategories.items);
+  const { data: products = [] } = useAdminProducts();
+  const { data: users = [] } = useAdminUsers();
+  const { data: categories = [] } = useAdminCategories();
 
   const kpis: Kpi[] = useMemo(() => {
     const active = products.filter((p) => p.status === "active");

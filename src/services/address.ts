@@ -1,37 +1,26 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { mockApi, unwrapMockResponse } from "@/api/mockApi";
 import type { Address } from "@/types/entities";
 import type {
   CreateAddressRequestDto, CreateAddressResponseDto, DeleteAddressResponseDto,
   GetAddressesResponseDto, UpdateAddressRequestDto, UpdateAddressResponseDto,
 } from "@/types/api/commerce";
-import { MOCK_ADDRESSES } from "@/features/account/data/mockAccount";
 
 export const addressService = {
   getAddresses: async (): Promise<GetAddressesResponseDto["data"]> => {
-    // In future:
-    // const res = await apiClient.get<ApiResponse<Address[]>>("/addresses");
-    // return res.data;
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    return MOCK_ADDRESSES;
+    return unwrapMockResponse(await mockApi.addresses.getAll());
   },
 
   createAddress: async (address: CreateAddressRequestDto): Promise<CreateAddressResponseDto["data"]> => {
-    await new Promise((resolve) => setTimeout(resolve, 600));
-    const newAddress: Address = {
-      ...address,
-      id: `addr-${Math.random().toString(36).substr(2, 9)}`,
-    };
-    return newAddress;
+    return unwrapMockResponse(await mockApi.addresses.create(address));
   },
 
   updateAddress: async (id: string, address: UpdateAddressRequestDto["data"]): Promise<UpdateAddressResponseDto["data"]> => {
-    await new Promise((resolve) => setTimeout(resolve, 600));
-    return { id, ...address } as Address;
+    return unwrapMockResponse(await mockApi.addresses.update(id, address));
   },
 
   deleteAddress: async (id: string): Promise<DeleteAddressResponseDto["data"]["id"]> => {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    return id;
+    return unwrapMockResponse(await mockApi.addresses.delete(id));
   },
 };
 

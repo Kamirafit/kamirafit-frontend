@@ -4,13 +4,13 @@ import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import Button from "@/components/ui/Button";
 import {
-  ORDER_STATUSES,
+  ADMIN_ORDER_STATUSES as ORDER_STATUSES,
   PAYMENT_STATUSES,
-  type Order,
-  type OrderItem,
-  type OrderStatus,
+  type AdminOrder as Order,
+  type AdminOrderItem as OrderItem,
+  type AdminOrderStatus as OrderStatus,
   type PaymentStatus,
-} from "@/data/orders";
+} from "@/types/entities";
 import ConfirmDialog from "@/features/admin/components/ConfirmDialog";
 import FormField, {
   inputClass,

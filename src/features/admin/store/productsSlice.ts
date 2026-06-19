@@ -1,5 +1,4 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import { PRODUCTS } from "@/data/products";
 import type { Product } from "@/features/product/types";
 
 type State = {
@@ -7,7 +6,7 @@ type State = {
 };
 
 const initialState: State = {
-  items: PRODUCTS,
+  items: [],
 };
 
 export type ProductDraft = Omit<Product, "id" | "reviews" | "rating" | "popularity" | "createdAt"> & {

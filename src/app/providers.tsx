@@ -6,6 +6,7 @@ import { makeStore, type AppStore } from "@/features/product/store";
 import SpotlightProvider from "@/components/search/SpotlightProvider";
 import AuthHydrator from "@/features/auth/components/AuthHydrator";
 import QueryProvider from "@/providers/QueryProvider";
+import CommerceStateSync from "@/features/product/components/CommerceStateSync";
 
 export default function Providers({ children }: { children: ReactNode }) {
   const storeRef = useRef<AppStore | null>(null);
@@ -16,6 +17,7 @@ export default function Providers({ children }: { children: ReactNode }) {
     <Provider store={storeRef.current}>
       <AuthHydrator storageKey="kamira_auth_customer">
         <QueryProvider>
+          <CommerceStateSync />
           <SpotlightProvider>{children}</SpotlightProvider>
         </QueryProvider>
       </AuthHydrator>

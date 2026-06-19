@@ -1,27 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { mockApi, unwrapMockResponse } from "@/api/mockApi";
 import type { Review } from "@/types/entities";
 import type { CreateReviewRequestDto, CreateReviewResponseDto, GetReviewsResponseDto } from "@/types/api/reviews";
-import { getProductById } from "@/features/product/data/products";
 
 export const reviewService = {
   getReviews: async (productId: string): Promise<GetReviewsResponseDto["data"]> => {
-    // In future:
-    // const res = await apiClient.get<ApiResponse<Review[]>>(`/products/${productId}/reviews`);
-    // return res.data;
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    const product = getProductById(productId);
-    return product ? product.reviews : [];
+    return unwrapMockResponse(await mockApi.reviews.getAll(productId));
   },
 
   createReview: async (review: CreateReviewRequestDto): Promise<CreateReviewResponseDto["data"]> => {
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    const newReview: Review = {
-      ...review,
-      id: `rev-${Math.random().toString(36).substr(2, 9)}`,
-      customerName: "Anonymous",
-      createdAt: new Date().toISOString(),
-    };
-    return newReview;
+    return unwrapMockResponse(await mockApi.reviews.create(review));
   },
 };
 

@@ -1,12 +1,12 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import { USERS, type AdminUser } from "@/data/users";
+import type { AdminUser } from "@/types/entities";
 
 type State = {
   items: AdminUser[];
 };
 
 const initialState: State = {
-  items: USERS,
+  items: [],
 };
 
 const usersSlice = createSlice({

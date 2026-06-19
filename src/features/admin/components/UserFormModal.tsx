@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { AdminUser } from "@/data/users";
+import type { AdminUser } from "@/types/entities";
 import Button from "@/components/ui/Button";
 import FormField, { inputClass, textareaClass } from "./FormField";
 import Modal from "./Modal";

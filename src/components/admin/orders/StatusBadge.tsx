@@ -1,4 +1,4 @@
-import type { OrderStatus, PaymentStatus } from "@/data/orders";
+import type { AdminOrderStatus as OrderStatus, PaymentStatus } from "@/types/entities";
 
 type Tone = {
   /** Tailwind border color (e.g. "border-[#D97706]/40"). */

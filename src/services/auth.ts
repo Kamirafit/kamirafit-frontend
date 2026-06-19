@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { mockApi, unwrapMockResponse } from "@/api/mockApi";
 import type { Profile } from "@/types/entities";
 import type {
   GetProfileResponseDto, LoginRequestDto, LoginResponseDto, RefreshSessionResponseDto,
@@ -8,58 +9,28 @@ import type {
 export const authService = {
   // In production, login will set HttpOnly cookies on the browser automatically
   login: async (credentials: LoginRequestDto): Promise<LoginResponseDto["data"]> => {
-    // const res = await apiClient.post<ApiResponse<{ user: User }>>("/auth/login", credentials);
-    // return res.data;
-    await new Promise((resolve) => setTimeout(resolve, 600));
-    return {
-      user: {
-        email: credentials.email,
-        firstName: "Kamira",
-        lastName: "User",
-      },
-    };
+    return unwrapMockResponse(await mockApi.auth.login(credentials));
   },
 
   signup: async (userData: RegisterRequestDto): Promise<RegisterResponseDto["data"]> => {
-    // const res = await apiClient.post<ApiResponse<{ user: User }>>("/auth/signup", userData);
-    // return res.data;
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    return {
-      user: {
-        email: userData.email,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-      },
-    };
+    return unwrapMockResponse(await mockApi.auth.register(userData));
   },
 
   // Refresh token flow - handles automatic access token retrieval in background via HttpOnly cookies
   refreshToken: async (): Promise<RefreshSessionResponseDto["data"]> => {
-    // const res = await apiClient.post<ApiResponse<{ accessToken: string }>>("/auth/refresh");
-    // return res.data;
-    await new Promise((resolve) => setTimeout(resolve, 200));
-    return { accessToken: "mock-new-access-token" };
+    return unwrapMockResponse(await mockApi.auth.refresh());
   },
 
   logout: async (): Promise<void> => {
-    // await apiClient.post("/auth/logout");
-    await new Promise((resolve) => setTimeout(resolve, 400));
+    unwrapMockResponse(await mockApi.auth.logout());
   },
 
   getProfile: async (): Promise<GetProfileResponseDto["data"]> => {
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    return {
-      firstName: "Kamira",
-      lastName: "User",
-      email: "user@kamirafit.com",
-      mobileNumber: "9876543210",
-      gender: "Female",
-    };
+    return unwrapMockResponse(await mockApi.auth.getProfile());
   },
 
   updateProfile: async (profile: UpdateProfileRequestDto): Promise<UpdateProfileResponseDto["data"]> => {
-    await new Promise((resolve) => setTimeout(resolve, 600));
-    return profile;
+    return unwrapMockResponse(await mockApi.auth.updateProfile(profile));
   },
 };
 

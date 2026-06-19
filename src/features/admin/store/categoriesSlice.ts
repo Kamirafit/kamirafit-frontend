@@ -1,12 +1,12 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import { CATEGORIES, type AdminCategory } from "@/data/categories";
+import type { AdminCategory } from "@/types/entities";
 
 type State = {
   items: AdminCategory[];
 };
 
 const initialState: State = {
-  items: CATEGORIES,
+  items: [],
 };
 
 type CategoryDraft = {

@@ -5,12 +5,12 @@ import SectionHeader from "@/components/ui/SectionHeader";
 import OrderDetailsModal from "@/components/admin/orders/OrderDetailsModal";
 import OrdersTable from "@/components/admin/orders/OrdersTable";
 import {
-  ORDER_STATUSES,
+  ADMIN_ORDER_STATUSES as ORDER_STATUSES,
   PAYMENT_STATUSES,
-  type Order,
-  type OrderStatus,
+  type AdminOrder as Order,
+  type AdminOrderStatus as OrderStatus,
   type PaymentStatus,
-} from "@/data/orders";
+} from "@/types/entities";
 import { selectClass } from "../components/FormField";
 import SearchField from "../components/SearchField";
 import { useAdminOrders } from "@/services/admin";

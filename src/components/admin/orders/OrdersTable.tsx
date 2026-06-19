@@ -1,6 +1,6 @@
 "use client";
 
-import type { Order } from "@/data/orders";
+import type { AdminOrder as Order } from "@/types/entities";
 import ActionButton from "@/features/admin/components/ActionButton";
 import DataTable, { type Column } from "@/features/admin/components/DataTable";
 import StatusBadge from "./StatusBadge";

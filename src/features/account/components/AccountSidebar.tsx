@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { logoutSuccess } from "@/features/auth/store/authSlice";
 import { RootState } from "@/features/product/store";
+import { useLogout } from "@/services/auth";
 
 const NAV_ITEMS = [
   { label: "My Orders", href: "/account/orders" },
@@ -18,6 +19,7 @@ export default function AccountSidebar() {
   const pathname = usePathname();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const dispatch = useDispatch();
+  const logoutMutation = useLogout();
   const { user } = useSelector((state: RootState) => state.auth);
   
   const displayName = user
@@ -86,8 +88,9 @@ export default function AccountSidebar() {
                 Cancel
               </button>
               <button
-                onClick={() => {
+                onClick={async () => {
                   setShowLogoutModal(false);
+                  await logoutMutation.mutateAsync();
                   dispatch(logoutSuccess());
                   localStorage.removeItem("kamira_auth_customer");
                   window.location.href = "/";

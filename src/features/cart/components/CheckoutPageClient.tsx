@@ -10,6 +10,7 @@ import { clearCart } from "@/features/product/store/cartSlice";
 import { calculateTotals, formatPrice, resolveCartItems } from "../utils";
 import CheckoutOrderSummary from "./CheckoutOrderSummary";
 import { useProducts } from "@/services/product";
+import { useCheckout } from "@/services/checkout";
 import ShippingForm, {
   type ShippingDetails,
   type ShippingErrors,
@@ -68,10 +69,10 @@ export default function CheckoutPageClient() {
 
   const [values, setValues] = useState<ShippingDetails>(INITIAL_VALUES);
   const [errors, setErrors] = useState<ShippingErrors>({});
-  const [submitting, setSubmitting] = useState(false);
   const [placedOrderTotal, setPlacedOrderTotal] = useState<number | null>(null);
+  const checkoutMutation = useCheckout();
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (resolved.length === 0) return;
     const cleanedValues = normalize(values);
@@ -80,12 +81,25 @@ export default function CheckoutPageClient() {
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
 
-    setSubmitting(true);
-    window.setTimeout(() => {
-      setPlacedOrderTotal(total);
+    try {
+      const result = await checkoutMutation.mutateAsync({
+        items,
+        shippingAddress: {
+          type: "Home",
+          fullName: cleanedValues.name,
+          phoneNumber: cleanedValues.phone,
+          addressLine1: cleanedValues.address,
+          city: cleanedValues.city,
+          state: "",
+          pincode: cleanedValues.pincode,
+        },
+        paymentMethod: "Mock payment",
+      });
+      setPlacedOrderTotal(result.order.totalAmount);
       dispatch(clearCart());
-      setSubmitting(false);
-    }, 600);
+    } catch {
+      setErrors({ address: "Unable to place the order. Please try again." });
+    }
   };
 
   if (placedOrderTotal !== null) {
@@ -160,7 +174,7 @@ export default function CheckoutPageClient() {
             errors={errors}
             onChange={setValues}
             onSubmit={handleSubmit}
-            submitting={submitting}
+            submitting={checkoutMutation.isPending}
           />
         </section>
 
@@ -174,10 +188,10 @@ export default function CheckoutPageClient() {
           <button
             type="submit"
             form="checkout-form"
-            disabled={submitting}
+            disabled={checkoutMutation.isPending}
             className={buttonClasses("primary", "lg")}
           >
-            {submitting ? "Placing order…" : `Pay Now · ${formatPrice(total)}`}
+            {checkoutMutation.isPending ? "Placing order…" : `Pay Now · ${formatPrice(total)}`}
           </button>
           <p className="text-xs text-paper-muted/80">
             Payment gateway not connected — this is a UI-only flow.
