@@ -25,6 +25,8 @@ import StatusPill from "../components/StatusPill";
 import { EmptyState, ErrorState, OfflineState } from "@/components/states";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 
+type ProductStatusFilter = "all" | "active" | "inactive";
+
 const formatPrice = (n: number) =>
   new Intl.NumberFormat("en-IN", {
     style: "currency",
@@ -54,8 +56,10 @@ export default function ProductsPage() {
   const isLoading = productsLoading || categoriesLoading;
 
   const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<ProductStatusFilter>("all");
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
+  const [duplicating, setDuplicating] = useState<Product | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const categoryOptions = useMemo(
@@ -65,13 +69,12 @@ export default function ProductsPage() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return products;
-    return products.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        p.category.toLowerCase().includes(q),
-    );
-  }, [products, query]);
+    return products.filter((product) => {
+      const matchesStatus = statusFilter === "all" || product.status === statusFilter;
+      const matchesQuery = !q || product.name.toLowerCase().includes(q) || product.category.toLowerCase().includes(q);
+      return matchesStatus && matchesQuery;
+    });
+  }, [products, query, statusFilter]);
 
   const openAdd = () => {
     setEditing(null);
@@ -79,12 +82,19 @@ export default function ProductsPage() {
   };
 
   const openEdit = (product: Product) => {
+    setDuplicating(null);
     setEditing(product);
     setFormOpen(true);
   };
 
+  const openDuplicate = (product: Product) => {
+    setEditing(null);
+    setDuplicating(product);
+    setFormOpen(true);
+  };
+
   const handleSubmit = (values: FormValues) => {
-    if (editing) {
+    if (editing && !duplicating) {
       updateMutation.mutate({
         id: editing.id,
         patch: {
@@ -114,6 +124,7 @@ export default function ProductsPage() {
     }
     setFormOpen(false);
     setEditing(null);
+    setDuplicating(null);
   };
 
   const deletingProduct = deletingId
@@ -148,6 +159,19 @@ export default function ProductsPage() {
       ),
     },
     {
+      key: "inventory",
+      label: "Inventory",
+      render: (p) => {
+        const total = p.variants.reduce((sum, variant) => sum + variant.inventory.available, 0);
+        const low = p.variants.filter((variant) => variant.inventory.available <= 5).length;
+        return (
+          <div className="flex flex-col">
+            <span className="font-medium text-paper">{p.variants.length} variants · {total} stock</span>
+            <span className={low ? "text-[11px] text-[#B3261E]" : "text-[11px] text-[#16A34A]"}>{low ? low + " low-stock" : "All healthy"}</span>
+          </div>
+        );
+      },
+    },    {
       key: "price",
       label: "Price",
       render: (p) => (
@@ -179,6 +203,7 @@ export default function ProductsPage() {
               {active ? "Deactivate" : "Activate"}
             </ActionButton>
             <ActionButton onClick={() => openEdit(p)}>Edit</ActionButton>
+            <ActionButton onClick={() => openDuplicate(p)}>Duplicate</ActionButton>
             <ActionButton tone="danger" onClick={() => setDeletingId(p.id)}>
               Delete
             </ActionButton>
@@ -202,18 +227,20 @@ export default function ProductsPage() {
         }
       />
 
-      <div className="flex items-center gap-3">
-        <div className="w-full sm:max-w-xs">
-          <SearchField
-            value={query}
-            onChange={setQuery}
-            placeholder="Search products…"
-            label="Search products"
-          />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="w-full sm:max-w-xs">
+            <SearchField value={query} onChange={setQuery} placeholder="Search products…" label="Search products" />
+          </div>
+          <span className="text-[12px] text-paper-muted">{filtered.length} of {products.length}</span>
         </div>
-        <span className="text-[12px] text-paper-muted">
-          {filtered.length} of {products.length}
-        </span>
+        <div className="flex flex-wrap items-center gap-2" aria-label="Filter products by status">
+          {(["all", "active", "inactive"] as const).map((status) => (
+            <button key={status} type="button" onClick={() => setStatusFilter(status)} aria-pressed={statusFilter === status} className={statusFilter === status ? "rounded-full border border-gold bg-gold px-3.5 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-ink" : "rounded-full border border-line px-3.5 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-paper-muted hover:border-gold hover:text-gold"}>
+              {status === "all" ? "All products" : status === "active" ? "Active" : "Inactive"}
+            </button>
+          ))}
+        </div>
       </div>
 
       {!isOnline && products.length === 0 ? (
@@ -242,9 +269,11 @@ export default function ProductsPage() {
         onClose={() => {
           setFormOpen(false);
           setEditing(null);
+          setDuplicating(null);
         }}
         onSubmit={handleSubmit}
-        initial={editing}
+        initial={duplicating ?? editing}
+        duplicate={Boolean(duplicating)}
         categoryOptions={categoryOptions}
       />
 

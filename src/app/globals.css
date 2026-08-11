@@ -81,3 +81,33 @@ input[type="number"] {
     opacity: 0;
   }
 }
+
+
+/* Mobile storefront shell: keep the tab bar clear of page content and device safe areas. */
+@media (max-width: 767px) {
+  body { min-width: 320px; padding-bottom: env(safe-area-inset-bottom); }
+  main { padding-bottom: 5.6rem; }
+  footer { display: none; }
+  button, a { -webkit-tap-highlight-color: transparent; }
+}
+
+/* Keep admin modal scrolling functional without showing a browser scrollbar. */
+.modal-scrollbar-hidden {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.modal-scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+/* Hide both the outer and nested scrollbars in every modal while preserving scrolling. */
+.modal-scrollbar-hidden,
+.modal-scrollbar-hidden * {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.modal-scrollbar-hidden::-webkit-scrollbar,
+.modal-scrollbar-hidden *::-webkit-scrollbar {
+  display: none;
+}
