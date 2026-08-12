@@ -3,6 +3,7 @@ import SectionHeader from "@/components/ui/SectionHeader";
 import { categoryService } from "@/services/category";
 import CategoryCard, { type Category } from "./CategoryCard";
 import EmptyState from "@/components/states/EmptyState";
+import { DEFAULT_CATEGORY_IMAGE, getValidImageSrc } from "@/lib/format";
 
 const PARENT_CATEGORY: Record<string, string> = {
   kurti: "Indian",
@@ -13,16 +14,31 @@ const PARENT_CATEGORY: Record<string, string> = {
   hoodies: "Unisex T-Shirts",
 };
 
+const DEFAULT_CATEGORY_IMAGES: Record<string, string> = {
+  kurti: "https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?auto=format&fit=crop&w=800&q=80",
+  "co-ords-sets": "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80",
+  dresses: "https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=800&q=80",
+  "t-shirts": "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=80",
+  "oversized-t-shirts": "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=800&q=80",
+  hoodies: "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=800&q=80",
+};
+
 export default async function Categories() {
   const categories: Category[] = (await categoryService.getCategories()).map(
-    (category) => ({
-      id: category.slug,
-      title: category.name,
-      description: category.description ?? "Explore the latest KamiraFit styles.",
-      subcategoryPreview: PARENT_CATEGORY[category.slug] ?? category.name,
-      href: `/shop?category=${category.slug}`,
-      image: category.image ?? "",
-    }),
+    (category) => {
+      const fallbackImage =
+        DEFAULT_CATEGORY_IMAGES[category.slug] ?? DEFAULT_CATEGORY_IMAGE;
+      const image = getValidImageSrc(category.image, fallbackImage);
+
+      return {
+        id: category.slug,
+        title: category.name,
+        description: category.description ?? "Explore the latest KamiraFit styles.",
+        subcategoryPreview: PARENT_CATEGORY[category.slug] ?? category.name,
+        href: `/shop?category=${category.slug}`,
+        image,
+      };
+    },
   );
 
   return (

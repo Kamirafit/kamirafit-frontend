@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { DEFAULT_PRODUCT_IMAGE, getValidImageSrc } from "@/lib/format";
 import { Order, OrderStatus, OrderItem } from "../types";
 import { formatPrice } from "@/lib/format";
 
@@ -77,11 +78,13 @@ export default function OrderCard({ order, onViewDetails, onReviewProduct }: Pro
         </div>
 
         <div className="flex flex-col gap-5">
-          {order.items.map((item, index) => (
-            <div key={index} className="flex flex-col sm:flex-row gap-4">
-              <div className="relative h-24 w-20 overflow-hidden rounded-md border border-line bg-ink-2 shrink-0">
-                <Image src={item.productImage} alt={item.productName} fill className="object-cover" />
-              </div>
+          {order.items.map((item, index) => {
+            const imageSrc = getValidImageSrc(item.productImage, DEFAULT_PRODUCT_IMAGE);
+            return (
+              <div key={index} className="flex flex-col sm:flex-row gap-4">
+                <div className="relative h-24 w-20 overflow-hidden rounded-md border border-line bg-ink-2 shrink-0">
+                  <Image src={imageSrc} alt={item.productName} fill className="object-cover" />
+                </div>
               <div className="flex flex-1 flex-col justify-center sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="font-display text-[15px] font-medium text-paper hover:text-gold cursor-pointer transition-colors">
@@ -111,7 +114,8 @@ export default function OrderCard({ order, onViewDetails, onReviewProduct }: Pro
                 )}
               </div>
             </div>
-          ))}
+          );
+        })}
         </div>
       </div>
     </div>

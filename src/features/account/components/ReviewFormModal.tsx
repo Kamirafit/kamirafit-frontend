@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { DEFAULT_PRODUCT_IMAGE, getValidImageSrc } from "@/lib/format";
 
 type ReviewSubmitData = {
   orderId: string;
@@ -29,6 +30,8 @@ export default function ReviewFormModal({ orderId, productId, productName, produ
   const [comment, setComment] = useState("");
 
   const [imageUrls, setImageUrls] = useState<string[]>([]);
+  
+  const validProductImage = getValidImageSrc(productImage, DEFAULT_PRODUCT_IMAGE);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -79,7 +82,7 @@ export default function ReviewFormModal({ orderId, productId, productName, produ
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
           <div className="flex gap-4 items-center bg-ink-2 p-3 rounded-xl border border-line">
             <div className="relative h-16 w-16 overflow-hidden rounded-md border border-line">
-              <Image src={productImage} alt={productName} fill className="object-cover" />
+              <Image src={validProductImage} alt={productName} fill className="object-cover" />
             </div>
             <p className="font-display text-sm font-medium text-paper">{productName}</p>
           </div>
@@ -141,9 +144,11 @@ export default function ReviewFormModal({ orderId, productId, productName, produ
             <label className="text-[11px] font-medium text-paper-muted uppercase tracking-wider">Add Photos (Optional)</label>
             
             <div className="mt-2 flex flex-wrap gap-3">
-              {imageUrls.map((url, i) => (
-                <div key={url} className="relative h-20 w-20 rounded-lg border border-line overflow-hidden group">
-                  <Image src={url} alt={`preview ${i}`} fill className="object-cover" />
+              {imageUrls.map((url, i) => {
+                const previewSrc = getValidImageSrc(url, DEFAULT_PRODUCT_IMAGE);
+                return (
+                  <div key={url + i} className="relative h-20 w-20 rounded-lg border border-line overflow-hidden group">
+                    <Image src={previewSrc} alt={`preview ${i}`} fill className="object-cover" />
                   <button
                     type="button"
                     onClick={() => removeImage(i)}
@@ -154,7 +159,8 @@ export default function ReviewFormModal({ orderId, productId, productName, produ
                     </svg>
                   </button>
                 </div>
-              ))}
+              );
+            })}
               
               {imageUrls.length < 4 && (
                 <label className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-line bg-ink-2 text-paper-muted transition-colors hover:border-gold hover:bg-gold/5 hover:text-gold">

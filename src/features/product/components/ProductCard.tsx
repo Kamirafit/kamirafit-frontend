@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { formatPrice } from "@/lib/format";
+import { DEFAULT_PRODUCT_IMAGE, formatPrice, getValidImageSrc } from "@/lib/format";
 import { useAppDispatch, useAppSelector } from "../hooks/redux";
 import { addToCart } from "../store/cartSlice";
 import { toggleWishlist } from "../store/wishlistSlice";
@@ -43,6 +43,7 @@ export default function ProductCard({ product }: Props) {
   const inCart = useAppSelector((s) =>
     s.cart.items.some((it) => it.id === product.id),
   );
+  const imageSrc = getValidImageSrc(product.image, DEFAULT_PRODUCT_IMAGE);
 
   return (
     <article className="group flex flex-col overflow-hidden rounded-2xl border border-line bg-ink transition-all duration-300 hover:-translate-y-0.5 hover:border-gold/40 hover:shadow-[0_30px_60px_-30px_rgba(74,14,26,0.25)]">
@@ -52,7 +53,7 @@ export default function ProductCard({ product }: Props) {
         className="relative block aspect-[4/5] w-full overflow-hidden bg-ink-2"
       >
         <Image
-          src={product.image}
+          src={imageSrc}
           alt={product.name}
           fill
           sizes="(min-width: 1280px) 22vw, (min-width: 1024px) 30vw, (min-width: 640px) 45vw, 50vw"

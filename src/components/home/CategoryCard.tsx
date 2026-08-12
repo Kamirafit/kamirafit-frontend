@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { DEFAULT_CATEGORY_IMAGE, getValidImageSrc } from "@/lib/format";
 
 export type Category = {
   id: string;
@@ -15,13 +16,15 @@ type Props = {
 };
 
 export default function CategoryCard({ category }: Props) {
+  const imageSrc = getValidImageSrc(category.image, DEFAULT_CATEGORY_IMAGE);
+
   return (
     <Link
       href={category.href}
       className="group relative block aspect-[4/5] overflow-hidden rounded-2xl border border-line bg-ink-2 shadow-[0_30px_60px_-30px_rgba(74,14,26,0.12)] transition-all duration-300 hover:-translate-y-1 hover:border-gold/60 hover:shadow-[0_40px_80px_-30px_rgba(139,30,45,0.22)]"
     >
       <Image
-        src={category.image}
+        src={imageSrc}
         alt={category.title}
         fill
         sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { DEFAULT_PRODUCT_IMAGE, getValidImageSrc } from "@/lib/format";
 import { Order, OrderStatus } from "../types";
 import { formatPrice } from "@/lib/format";
 
@@ -83,11 +84,13 @@ export default function OrderDetailsModal({ order, onClose }: Props) {
               Items Ordered
             </h3>
             <div className="flex flex-col gap-4">
-              {order.items.map((item, index) => (
-                <div key={index} className="flex gap-4">
-                  <div className="relative h-20 w-16 overflow-hidden rounded-md border border-line bg-ink-2 shrink-0">
-                    <Image src={item.productImage} alt={item.productName} fill className="object-cover" />
-                  </div>
+              {order.items.map((item, index) => {
+                const imageSrc = getValidImageSrc(item.productImage, DEFAULT_PRODUCT_IMAGE);
+                return (
+                  <div key={index} className="flex gap-4">
+                    <div className="relative h-20 w-16 overflow-hidden rounded-md border border-line bg-ink-2 shrink-0">
+                      <Image src={imageSrc} alt={item.productName} fill className="object-cover" />
+                    </div>
                   <div className="flex flex-1 flex-col justify-center">
                     <p className="font-display text-[15px] font-medium text-paper">
                       {item.productName}
@@ -100,7 +103,8 @@ export default function OrderDetailsModal({ order, onClose }: Props) {
                     </p>
                   </div>
                 </div>
-              ))}
+              );
+            })}
             </div>
           </div>
 

@@ -17,7 +17,7 @@ if (process.env.NEXT_PUBLIC_API_URL) {
   }
 }
 
-const connectSources = ["'self'", "https://kamirafit-backend.onrender.com", apiConnectHost].filter(Boolean).join(" ");
+const connectSources = ["'self'", "http://localhost:10000", "https://kamirafit-backend.onrender.com", apiConnectHost].filter(Boolean).join(" ");
 
 const contentSecurityPolicy = [
   "default-src 'self'",

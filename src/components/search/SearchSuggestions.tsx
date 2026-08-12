@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
-import { formatPrice } from "@/lib/format";
+import { DEFAULT_PRODUCT_IMAGE, formatPrice, getValidImageSrc } from "@/lib/format";
 import type { Product } from "@/features/product/types";
 
 type Props = {
@@ -57,6 +57,7 @@ export default function SearchSuggestions({
     <ul ref={listRef} className="max-h-[50vh] overflow-y-auto py-2">
       {results.map((product, i) => {
         const active = i === selectedIndex;
+        const imageSrc = getValidImageSrc(product.image, DEFAULT_PRODUCT_IMAGE);
         return (
           <li key={product.id} data-index={i}>
             <Link
@@ -69,7 +70,7 @@ export default function SearchSuggestions({
             >
               <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md border border-line bg-ink-2">
                 <Image
-                  src={product.image}
+                  src={imageSrc}
                   alt=""
                   fill
                   sizes="48px"

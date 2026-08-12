@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import { DEFAULT_PRODUCT_IMAGE, getValidImageSrc } from "@/lib/format";
 
 type Props = {
   images: string[];
@@ -10,7 +11,8 @@ type Props = {
 
 export default function ProductGallery({ images, alt }: Props) {
   const [active, setActive] = useState(0);
-  const activeSrc = images[active] ?? images[0];
+  const rawActiveSrc = images[active] ?? images[0];
+  const activeSrc = getValidImageSrc(rawActiveSrc, DEFAULT_PRODUCT_IMAGE);
 
   return (
     <div className="flex flex-col gap-4">
@@ -34,6 +36,7 @@ export default function ProductGallery({ images, alt }: Props) {
         >
           {images.slice(0, 4).map((src, i) => {
             const selected = i === active;
+            const thumbSrc = getValidImageSrc(src, DEFAULT_PRODUCT_IMAGE);
             return (
               <button
                 key={src + i}
@@ -49,7 +52,7 @@ export default function ProductGallery({ images, alt }: Props) {
                 }`}
               >
                 <Image
-                  src={src}
+                  src={thumbSrc}
                   alt={`${alt} thumbnail ${i + 1}`}
                   fill
                   sizes="120px"

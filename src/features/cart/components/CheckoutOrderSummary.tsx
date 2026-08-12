@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { COLOR_SWATCH } from "@/features/product/types";
+import { DEFAULT_PRODUCT_IMAGE, getValidImageSrc } from "@/lib/format";
 import { DELIVERY_FEE, formatPrice, type ResolvedCartItem } from "../utils";
 
 type Props = {
@@ -28,6 +29,7 @@ export default function CheckoutOrderSummary({
       <ul className="flex flex-col divide-y divide-line">
         {resolved.map((r) => {
           const { item, product, lineTotal } = r;
+          const imageSrc = getValidImageSrc(product.image, DEFAULT_PRODUCT_IMAGE);
           return (
             <li
               key={`${item.id}-${item.size ?? "-"}-${item.color ?? "-"}`}
@@ -35,7 +37,7 @@ export default function CheckoutOrderSummary({
             >
               <div className="relative h-16 w-14 shrink-0 overflow-hidden rounded-lg border border-line bg-ink">
                 <Image
-                  src={product.image}
+                  src={imageSrc}
                   alt={product.name}
                   fill
                   sizes="56px"

@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { formatPrice } from "@/lib/format";
+import { DEFAULT_PRODUCT_IMAGE, formatPrice, getValidImageSrc } from "@/lib/format";
 
 export type Product = {
   id: string;
@@ -22,12 +22,13 @@ export default function ProductCard({ product }: Props) {
   const badgeBg = product.tag
     ? BADGE_CLASS[product.tag] ?? "bg-gold"
     : undefined;
+  const imageSrc = getValidImageSrc(product.image, DEFAULT_PRODUCT_IMAGE);
 
   return (
     <article className="group flex flex-col">
       <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl border border-line bg-ink-2 transition-all duration-300 group-hover:-translate-y-1 group-hover:scale-[1.02] group-hover:border-gold/50 group-hover:shadow-lg group-hover:shadow-[0_30px_60px_-30px_rgba(139,30,45,0.35)]">
         <Image
-          src={product.image}
+          src={imageSrc}
           alt={product.name}
           fill
           sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
