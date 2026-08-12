@@ -4,6 +4,12 @@ import { AuthStorage } from "@/features/auth/services/authStorage";
 
 export type ApiErrorResponse = ApiErrorDto;
 
+export async function unwrapApiResponse<T>(request: Promise<{ data: { success: boolean; data?: T; message?: string } }>): Promise<T> {
+  const response = await request;
+  if (!response.data.success) throw new Error(response.data.message || "API request failed");
+  return response.data.data as T;
+}
+
 function isErrorPayload(value: unknown): value is { message?: string; code?: string } {
   return typeof value === "object" && value !== null;
 }
@@ -23,7 +29,7 @@ apiClient.interceptors.request.use(
       const isAdminRequest = url.includes("/admin") || url.includes("/dedicated-admin") || window.location.pathname.startsWith("/dedicated-admin");
       const authData = isAdminRequest ? AuthStorage.getAdminAuth() : AuthStorage.getCustomerAuth();
       if (authData && authData.isAuthenticated && authData.user) {
-        config.headers.Authorization = `Bearer mock-jwt-token-for-${authData.user.email}`;
+        if (authData.accessToken) config.headers.Authorization = `Bearer ${authData.accessToken}`;
       }
     }
     return config;

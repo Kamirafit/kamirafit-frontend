@@ -3,7 +3,7 @@ import type { AuthSession, User, UserRole } from "@/types/entities";
 
 export type Role = UserRole | null;
 export type { User } from "@/types/entities";
-export type AuthState = Pick<AuthSession, "isAuthenticated" | "role" | "user">;
+export type AuthState = Pick<AuthSession, "isAuthenticated" | "role" | "user" | "accessToken">;
 
 const initialState: AuthState = {
   isAuthenticated: false,
@@ -17,21 +17,24 @@ const authSlice = createSlice({
   reducers: {
     loginSuccess: (
       state,
-      action: PayloadAction<{ role: Role; user: User }>
+      action: PayloadAction<{ role: Role; user: User; accessToken?: string }>
     ) => {
       state.isAuthenticated = true;
       state.role = action.payload.role;
       state.user = action.payload.user;
+      state.accessToken = action.payload.accessToken;
     },
     logoutSuccess: (state) => {
       state.isAuthenticated = false;
       state.role = null;
       state.user = null;
+      state.accessToken = undefined;
     },
     setAuthHydrated: (state, action: PayloadAction<AuthState>) => {
       state.isAuthenticated = action.payload.isAuthenticated;
       state.role = action.payload.role;
       state.user = action.payload.user;
+      state.accessToken = action.payload.accessToken;
     },
   },
 });

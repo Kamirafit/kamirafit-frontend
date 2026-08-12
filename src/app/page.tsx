@@ -8,10 +8,11 @@ import PageShell from "@/components/layout/PageShell";
 
 import { productService } from "@/services/product";
 
+export const dynamic = "force-dynamic";
 export const revalidate = 3600; // ISR - Revalidate every hour
 
 export default async function Home() {
-  const products = await productService.getFeaturedProducts();
+  const products = await productService.getFeaturedProducts().catch(() => []);
 
   return (
     <PageShell>

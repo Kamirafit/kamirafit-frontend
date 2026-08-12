@@ -1,63 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { mockApi, unwrapMockResponse } from "@/api/mockApi";
+import { apiClient, unwrapApiResponse } from "@/api/client";
 import type { Address } from "@/types/entities";
-import type {
-  CreateAddressRequestDto, CreateAddressResponseDto, DeleteAddressResponseDto,
-  GetAddressesResponseDto, UpdateAddressRequestDto, UpdateAddressResponseDto,
-} from "@/types/api/commerce";
-
 export const addressService = {
-  getAddresses: async (): Promise<GetAddressesResponseDto["data"]> => {
-    return unwrapMockResponse(await mockApi.addresses.getAll());
-  },
-
-  createAddress: async (address: CreateAddressRequestDto): Promise<CreateAddressResponseDto["data"]> => {
-    return unwrapMockResponse(await mockApi.addresses.create(address));
-  },
-
-  updateAddress: async (id: string, address: UpdateAddressRequestDto["data"]): Promise<UpdateAddressResponseDto["data"]> => {
-    return unwrapMockResponse(await mockApi.addresses.update(id, address));
-  },
-
-  deleteAddress: async (id: string): Promise<DeleteAddressResponseDto["data"]["id"]> => {
-    return unwrapMockResponse(await mockApi.addresses.delete(id));
-  },
+ getAddresses:()=>unwrapApiResponse<Address[]>(apiClient.get("/orders/addresses")),
+ createAddress:(a:Omit<Address,"id">)=>unwrapApiResponse<Address>(apiClient.post("/orders/addresses",a)),
+ updateAddress:(id:string,a:Partial<Address>)=>unwrapApiResponse<Address>(apiClient.put("/orders/addresses/"+id,a)),
+ deleteAddress:(id:string)=>unwrapApiResponse<{id:string}>(apiClient.delete("/orders/addresses/"+id)).then(x=>x.id),
 };
-
-export function useAddresses() {
-  return useQuery<Address[]>({
-    queryKey: ["addresses"],
-    queryFn: addressService.getAddresses,
-    staleTime: 5 * 60 * 1000,
-  });
-}
-
-export function useCreateAddress() {
-  const queryClient = useQueryClient();
-  return useMutation<Address, Error, Omit<Address, "id">>({
-    mutationFn: addressService.createAddress,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["addresses"] });
-    },
-  });
-}
-
-export function useUpdateAddress() {
-  const queryClient = useQueryClient();
-  return useMutation<Address, Error, { id: string; data: Partial<Address> }>({
-    mutationFn: ({ id, data }) => addressService.updateAddress(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["addresses"] });
-    },
-  });
-}
-
-export function useDeleteAddress() {
-  const queryClient = useQueryClient();
-  return useMutation<string, Error, string>({
-    mutationFn: addressService.deleteAddress,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["addresses"] });
-    },
-  });
-}
+export function useAddresses(){return useQuery<Address[]>({queryKey:["addresses"],queryFn:addressService.getAddresses,staleTime:300000});}
+export function useCreateAddress(){const q=useQueryClient();return useMutation({mutationFn:addressService.createAddress,onSuccess:()=>q.invalidateQueries({queryKey:["addresses"]})});}
+export function useUpdateAddress(){const q=useQueryClient();return useMutation({mutationFn:({id,data}:{id:string;data:Partial<Address>})=>addressService.updateAddress(id,data),onSuccess:()=>q.invalidateQueries({queryKey:["addresses"]})});}
+export function useDeleteAddress(){const q=useQueryClient();return useMutation({mutationFn:addressService.deleteAddress,onSuccess:()=>q.invalidateQueries({queryKey:["addresses"]})});}

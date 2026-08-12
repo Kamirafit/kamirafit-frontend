@@ -10,11 +10,16 @@ import { productService } from "@/services/product";
 
 type PageParams = { id: string };
 
+export const dynamic = "force-dynamic";
 export const revalidate = 3600; // ISR - Revalidate detail pages every hour
 
 export async function generateStaticParams(): Promise<PageParams[]> {
-  const products = await productService.getProducts();
-  return products.map((p) => ({ id: p.id }));
+  try {
+    const products = await productService.getProducts();
+    return products.map((p) => ({ id: p.id }));
+  } catch {
+    return [];
+  }
 }
 
 export async function generateMetadata({

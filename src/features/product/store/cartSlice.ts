@@ -20,11 +20,7 @@ type CartState = {
 };
 
 const initialState: CartState = {
-  items: [
-    { id: "p-01", size: "M", color: "White", quantity: 1 },
-    { id: "p-02", size: "L", color: "Black", quantity: 2 },
-    { id: "p-04", size: "M", color: "Blue", quantity: 1 },
-  ],
+  items: [],
 };
 
 function matchesKey(item: CartItem, key: CartItemKey): boolean {
@@ -84,6 +80,9 @@ const cartSlice = createSlice({
         existing.quantity -= 1;
       }
     },
+    replaceCart(state, action: PayloadAction<CartItem[]>) {
+      state.items = action.payload;
+    },
     clearCart(state) {
       state.items = [];
     },
@@ -97,5 +96,6 @@ export const {
   incrementQuantity,
   decrementQuantity,
   clearCart,
+  replaceCart,
 } = cartSlice.actions;
 export default cartSlice.reducer;

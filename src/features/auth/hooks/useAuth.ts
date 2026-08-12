@@ -14,7 +14,7 @@ export function useLoginCustomer() {
       return await authService.loginCustomer(email, password || "");
     },
     onSuccess: (data) => {
-      const authData = { isAuthenticated: true, role: data.role, user: data.user };
+      const authData = { isAuthenticated: true, role: data.role, user: data.user, accessToken: data.accessToken };
       AuthStorage.setCustomerAuth(authData);
       dispatch(loginSuccess(data));
       queryClient.setQueryData(["currentUser"], data.user);
@@ -30,7 +30,7 @@ export function useSignupCustomer() {
       return await authService.signupCustomer(data);
     },
     onSuccess: (data) => {
-      const authData = { isAuthenticated: true, role: data.role, user: data.user };
+      const authData = { isAuthenticated: true, role: data.role, user: data.user, accessToken: data.accessToken };
       AuthStorage.setCustomerAuth(authData);
       dispatch(loginSuccess(data));
       queryClient.setQueryData(["currentUser"], data.user);
@@ -46,7 +46,7 @@ export function useLoginAdmin() {
       return await authService.loginAdmin(email, password || "");
     },
     onSuccess: (data) => {
-      const authData = { isAuthenticated: true, role: data.role, user: data.user };
+      const authData = { isAuthenticated: true, role: data.role, user: data.user, accessToken: data.accessToken };
       AuthStorage.setAdminAuth(authData);
       dispatch(loginSuccess(data));
       queryClient.setQueryData(["currentUser"], data.user);

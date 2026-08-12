@@ -2,6 +2,7 @@ import PageShell from "@/components/layout/PageShell";
 import ShopPageClient from "@/features/product/components/ShopPageClient";
 import { productService } from "@/services/product";
 
+export const dynamic = "force-dynamic";
 export const revalidate = 60; // ISR - Revalidate shop listings every minute
 
 export const metadata = {
@@ -22,7 +23,7 @@ export default async function ShopPage({
   const { category } = await searchParams;
   const initialCategorySlug = Array.isArray(category) ? category[0] : category;
 
-  const initialProducts = await productService.getProducts();
+  const initialProducts = await productService.getProducts().catch(() => []);
 
   return (
     <PageShell>

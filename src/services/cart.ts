@@ -1,20 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { mockApi, unwrapMockResponse } from "@/api/mockApi";
+import { apiClient, unwrapApiResponse } from "@/api/client";
 import type { CartItem } from "@/types/entities";
-
 export const cartService = {
-  getCart: async () => unwrapMockResponse(await mockApi.cart.get()),
-  updateCart: async (items: CartItem[]) => unwrapMockResponse(await mockApi.cart.update(items)),
+  getCart: () => unwrapApiResponse<any>(apiClient.get("/cart")),
+  updateCart: (items: CartItem[]) => unwrapApiResponse<any>(apiClient.put("/cart", { items })),
 };
-
-export function useCart() {
-  return useQuery({ queryKey: ["cart"], queryFn: cartService.getCart });
-}
-
-export function useUpdateCart() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: cartService.updateCart,
-    onSuccess: (cart) => queryClient.setQueryData(["cart"], cart),
-  });
-}
+export function useCart(enabled = true){return useQuery({queryKey:["cart"],queryFn:cartService.getCart,enabled:enabled && typeof window!=="undefined"});}
+export function useUpdateCart(){const q=useQueryClient();return useMutation({mutationFn:cartService.updateCart,onSuccess:(cart)=>q.setQueryData(["cart"],cart)});}

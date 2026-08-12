@@ -1,32 +1,8 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { mockApi, unwrapMockResponse } from "@/api/mockApi";
+import { useQuery } from "@tanstack/react-query";
+import { apiClient, unwrapApiResponse } from "@/api/client";
 import type { Order } from "@/types/entities";
-import type { CreateOrderRequestDto, CreateOrderResponseDto, GetOrdersResponseDto } from "@/types/api/commerce";
-
 export const orderService = {
-  getOrders: async (): Promise<GetOrdersResponseDto["data"]> => {
-    return unwrapMockResponse(await mockApi.orders.getAll());
-  },
-
-  createOrder: async (orderData: CreateOrderRequestDto): Promise<CreateOrderResponseDto["data"]> => {
-    return unwrapMockResponse(await mockApi.orders.create(orderData));
-  },
+ getOrders:()=>unwrapApiResponse<Order[]>(apiClient.get("/orders")),
+ getOrder:(id:string)=>unwrapApiResponse<Order>(apiClient.get("/orders/"+id)),
 };
-
-export function useOrders() {
-  return useQuery<Order[]>({
-    queryKey: ["orders"],
-    queryFn: orderService.getOrders,
-    staleTime: 1 * 60 * 1000, // 1 minute
-  });
-}
-
-export function useCreateOrder() {
-  const queryClient = useQueryClient();
-  return useMutation<Order, Error, Omit<Order, "id" | "date" | "status">>({
-    mutationFn: orderService.createOrder,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["orders"] });
-    },
-  });
-}
+export function useOrders(){return useQuery<Order[]>({queryKey:["orders"],queryFn:orderService.getOrders,staleTime:60000});}

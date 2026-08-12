@@ -1,27 +1,41 @@
 "use client";
 
 import { useEffect } from "react";
-import { useAppSelector } from "@/features/product/hooks/redux";
-import { useUpdateCart } from "@/services/cart";
-import { useUpdateWishlist } from "@/services/wishlist";
+import { useAppDispatch, useAppSelector } from "@/features/product/hooks/redux";
+import { replaceCart } from "@/features/product/store/cartSlice";
+import { replaceWishlist } from "@/features/product/store/wishlistSlice";
+import { useCart, useUpdateCart } from "@/services/cart";
+import { useWishlist, useUpdateWishlist } from "@/services/wishlist";
 
-/** Keeps the legacy Redux UI cache mirrored through the service/mock API seam. */
 export default function CommerceStateSync() {
+  const dispatch = useAppDispatch();
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   const cartItems = useAppSelector((state) => state.cart.items);
   const wishlistIds = useAppSelector((state) => state.wishlist.ids);
+  const cartQuery = useCart(isAuthenticated);
+  const wishlistQuery = useWishlist(isAuthenticated);
   const updateCart = useUpdateCart();
   const updateWishlist = useUpdateWishlist();
 
   useEffect(() => {
-    updateCart.mutate(cartItems);
-    // Mutation instances are stable; state changes are the synchronization trigger.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cartItems]);
+    if (cartQuery.data?.items) {
+      dispatch(replaceCart(cartQuery.data.items));
+    }
+  }, [cartQuery.data, dispatch]);
 
   useEffect(() => {
-    updateWishlist.mutate(wishlistIds);
+    if (wishlistQuery.data) dispatch(replaceWishlist(wishlistQuery.data));
+  }, [wishlistQuery.data, dispatch]);
+
+  useEffect(() => {
+    if (isAuthenticated && cartQuery.isFetched) updateCart.mutate(cartItems);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wishlistIds]);
+  }, [cartItems, isAuthenticated, cartQuery.isFetched]);
+
+  useEffect(() => {
+    if (isAuthenticated && wishlistQuery.isFetched) updateWishlist.mutate(wishlistIds);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wishlistIds, isAuthenticated, wishlistQuery.isFetched]);
 
   return null;
 }

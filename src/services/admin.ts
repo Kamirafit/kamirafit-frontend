@@ -1,223 +1,38 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { mockApi, unwrapMockResponse } from "@/api/mockApi";
+import { apiClient, unwrapApiResponse } from "@/api/client";
 import { adaptProduct, type AdminCategory, type AdminOrder as Order, type AdminUser, type Product } from "@/types/entities";
-import type {
-  AdminStatsDto, CreateAdminCategoryRequestDto, CreateAdminCategoryResponseDto,
-  CreateAdminProductRequestDto, GetAdminCategoriesResponseDto,
-  GetAdminOrdersResponseDto, GetAdminStatsResponseDto,
-  GetAdminUsersResponseDto, UpdateAdminCategoryRequestDto, UpdateAdminCategoryResponseDto,
-  UpdateAdminOrderRequestDto, UpdateAdminOrderResponseDto, UpdateAdminProductRequestDto,
-  UpdateAdminUserRequestDto, UpdateAdminUserResponseDto,
-} from "@/types/api/admin";
-
-export type AdminStats = AdminStatsDto;
-
+import type { AdminStatsDto } from "@/types/api/admin";
+const admin = <T>(path:string, config?:any)=>unwrapApiResponse<T>(apiClient.get("/admin"+path,config));
 export const adminService = {
-  getStats: async (): Promise<GetAdminStatsResponseDto["data"]> => {
-    return unwrapMockResponse(await mockApi.admin.getStats());
-  },
-
-  getCategories: async (): Promise<GetAdminCategoriesResponseDto["data"]> => {
-    return unwrapMockResponse(await mockApi.admin.categories.getAll());
-  },
-
-  createCategory: async (category: CreateAdminCategoryRequestDto): Promise<CreateAdminCategoryResponseDto["data"]> => {
-    return unwrapMockResponse(await mockApi.admin.categories.create(category));
-  },
-
-  updateCategory: async (id: string, patch: UpdateAdminCategoryRequestDto["data"]): Promise<UpdateAdminCategoryResponseDto["data"]> => {
-    return unwrapMockResponse(await mockApi.admin.categories.update(id, patch));
-  },
-
-  deleteCategory: async (id: string): Promise<string> => {
-    return unwrapMockResponse(await mockApi.admin.categories.delete(id));
-  },
-
-  getProducts: async (): Promise<Product[]> => {
-    const res = unwrapMockResponse(await mockApi.admin.products.getAll());
-    return res.map(adaptProduct);
-  },
-
-  createProduct: async (product: CreateAdminProductRequestDto): Promise<Product> => {
-    const res = unwrapMockResponse(await mockApi.admin.products.create(product));
-    return adaptProduct(res);
-  },
-
-  updateProduct: async (id: string, patch: UpdateAdminProductRequestDto["data"]): Promise<Product> => {
-    const res = unwrapMockResponse(await mockApi.admin.products.update(id, patch));
-    return adaptProduct(res);
-  },
-
-  toggleProductStatus: async (id: string): Promise<Product> => {
-    const res = unwrapMockResponse(await mockApi.admin.products.toggleStatus(id));
-    return adaptProduct(res);
-  },
-
-  deleteProduct: async (id: string): Promise<string> => {
-    return unwrapMockResponse(await mockApi.admin.products.delete(id));
-  },
-
-  getUsers: async (): Promise<GetAdminUsersResponseDto["data"]> => {
-    return unwrapMockResponse(await mockApi.admin.users.getAll());
-  },
-
-  updateUser: async (id: string, patch: UpdateAdminUserRequestDto["data"]): Promise<UpdateAdminUserResponseDto["data"]> => {
-    return unwrapMockResponse(await mockApi.admin.users.update(id, patch));
-  },
-
-  getOrders: async (): Promise<GetAdminOrdersResponseDto["data"]> => {
-    return unwrapMockResponse(await mockApi.admin.orders.getAll());
-  },
-
-  updateOrder: async (id: string, patch: UpdateAdminOrderRequestDto["data"]): Promise<UpdateAdminOrderResponseDto["data"]> => {
-    return unwrapMockResponse(await mockApi.admin.orders.update(id, patch));
-  },
-
-  deleteOrder: async (id: string): Promise<string> => {
-    return unwrapMockResponse(await mockApi.admin.orders.delete(id));
-  },
+ getStats:()=>admin<AdminStatsDto>("/stats"),
+ getCategories:()=>admin<AdminCategory[]>("/categories"),
+ createCategory:(x:any)=>unwrapApiResponse<AdminCategory>(apiClient.post("/admin/categories",x)),
+ updateCategory:(id:string,x:any)=>unwrapApiResponse<AdminCategory>(apiClient.put("/admin/categories/"+id,x)),
+ deleteCategory:(id:string)=>unwrapApiResponse<{id:string}>(apiClient.delete("/admin/categories/"+id)).then(x=>x.id),
+ getProducts:()=>admin<any>("/products").then(r=>(Array.isArray(r)?r:r.data||[]).map(adaptProduct)),
+ createProduct:(x:any)=>unwrapApiResponse<any>(apiClient.post("/admin/products",x)).then(adaptProduct),
+ updateProduct:(id:string,x:any)=>unwrapApiResponse<any>(apiClient.put("/admin/products/"+id,x)).then(adaptProduct),
+ toggleProductStatus:(id:string)=>unwrapApiResponse<any>(apiClient.patch("/admin/products/"+id+"/toggle")).then(adaptProduct),
+ deleteProduct:(id:string)=>unwrapApiResponse<{id:string}>(apiClient.delete("/admin/products/"+id)).then(x=>x.id),
+ getUsers:()=>admin<AdminUser[]>("/users"),
+ updateUser:(id:string,x:any)=>unwrapApiResponse<AdminUser>(apiClient.put("/admin/users/"+id,x)),
+ getOrders:()=>admin<any>("/orders").then(r=>Array.isArray(r)?r:r.data||[]),
+ updateOrder:(id:string,x:any)=>unwrapApiResponse<Order>(apiClient.put("/admin/orders/"+id,x)),
+ deleteOrder:(id:string)=>unwrapApiResponse<{id:string}>(apiClient.delete("/admin/orders/"+id)).then(x=>x.id),
 };
-
-// React Query Hooks
-
-export function useAdminStats() {
-  return useQuery<AdminStats>({
-    queryKey: ["admin", "stats"],
-    queryFn: adminService.getStats,
-    staleTime: 1 * 60 * 1000,
-  });
-}
-
-export function useAdminCategories() {
-  return useQuery<AdminCategory[]>({
-    queryKey: ["admin", "categories"],
-    queryFn: adminService.getCategories,
-    staleTime: 5 * 60 * 1000,
-  });
-}
-
-export function useCreateAdminCategory() {
-  const queryClient = useQueryClient();
-  return useMutation<AdminCategory, Error, Omit<AdminCategory, "id">>({
-    mutationFn: adminService.createCategory,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin", "categories"] });
-    },
-  });
-}
-
-export function useUpdateAdminCategory() {
-  const queryClient = useQueryClient();
-  return useMutation<AdminCategory, Error, { id: string; patch: Partial<Omit<AdminCategory, "id">> }>({
-    mutationFn: ({ id, patch }) => adminService.updateCategory(id, patch),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin", "categories"] });
-    },
-  });
-}
-
-export function useDeleteAdminCategory() {
-  const queryClient = useQueryClient();
-  return useMutation<string, Error, string>({
-    mutationFn: adminService.deleteCategory,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin", "categories"] });
-    },
-  });
-}
-
-export function useAdminProducts() {
-  return useQuery<Product[]>({
-    queryKey: ["admin", "products"],
-    queryFn: adminService.getProducts,
-    staleTime: 5 * 60 * 1000,
-  });
-}
-
-export function useCreateAdminProduct() {
-  const queryClient = useQueryClient();
-  return useMutation<Product, Error, CreateAdminProductRequestDto>({
-    mutationFn: adminService.createProduct,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
-      queryClient.invalidateQueries({ queryKey: ["admin", "stats"] });
-    },
-  });
-}
-
-export function useUpdateAdminProduct() {
-  const queryClient = useQueryClient();
-  return useMutation<Product, Error, { id: string; patch: UpdateAdminProductRequestDto["data"] }>({
-    mutationFn: ({ id, patch }) => adminService.updateProduct(id, patch),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
-    },
-  });
-}
-
-export function useToggleAdminProductStatus() {
-  const queryClient = useQueryClient();
-  return useMutation<Product, Error, string>({
-    mutationFn: adminService.toggleProductStatus,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
-    },
-  });
-}
-
-export function useDeleteAdminProduct() {
-  const queryClient = useQueryClient();
-  return useMutation<string, Error, string>({
-    mutationFn: adminService.deleteProduct,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
-      queryClient.invalidateQueries({ queryKey: ["admin", "stats"] });
-    },
-  });
-}
-
-export function useAdminUsers() {
-  return useQuery<AdminUser[]>({
-    queryKey: ["admin", "users"],
-    queryFn: adminService.getUsers,
-    staleTime: 5 * 60 * 1000,
-  });
-}
-
-export function useUpdateAdminUser() {
-  const queryClient = useQueryClient();
-  return useMutation<AdminUser, Error, { id: string; patch: Partial<Omit<AdminUser, "id">> }>({
-    mutationFn: ({ id, patch }) => adminService.updateUser(id, patch),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
-    },
-  });
-}
-
-export function useAdminOrders() {
-  return useQuery<Order[]>({
-    queryKey: ["admin", "orders"],
-    queryFn: adminService.getOrders,
-    staleTime: 5 * 60 * 1000,
-  });
-}
-
-export function useUpdateAdminOrder() {
-  const queryClient = useQueryClient();
-  return useMutation<Order, Error, { id: string; patch: Partial<Order> }>({
-    mutationFn: ({ id, patch }) => adminService.updateOrder(id, patch),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin", "orders"] });
-    },
-  });
-}
-
-export function useDeleteAdminOrder() {
-  const queryClient = useQueryClient();
-  return useMutation<string, Error, string>({
-    mutationFn: adminService.deleteOrder,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin", "orders"] });
-    },
-  });
-}
+export function useAdminStats(){return useQuery({queryKey:["admin","stats"],queryFn:adminService.getStats});}
+export function useAdminCategories(){return useQuery({queryKey:["admin","categories"],queryFn:adminService.getCategories});}
+export function useCreateAdminCategory(){const q=useQueryClient();return useMutation({mutationFn:adminService.createCategory,onSuccess:()=>q.invalidateQueries({queryKey:["admin","categories"]})});}
+export function useUpdateAdminCategory(){const q=useQueryClient();return useMutation({mutationFn:({id,patch}:{id:string;patch:any})=>adminService.updateCategory(id,patch),onSuccess:()=>q.invalidateQueries({queryKey:["admin","categories"]})});}
+export function useDeleteAdminCategory(){const q=useQueryClient();return useMutation({mutationFn:adminService.deleteCategory,onSuccess:()=>q.invalidateQueries({queryKey:["admin","categories"]})});}
+export function useAdminProducts(){return useQuery<Product[]>({queryKey:["admin","products"],queryFn:adminService.getProducts});}
+export function useCreateAdminProduct(){const q=useQueryClient();return useMutation({mutationFn:adminService.createProduct,onSuccess:()=>q.invalidateQueries({queryKey:["admin","products"]})});}
+export function useUpdateAdminProduct(){const q=useQueryClient();return useMutation({mutationFn:({id,patch}:{id:string;patch:any})=>adminService.updateProduct(id,patch),onSuccess:()=>q.invalidateQueries({queryKey:["admin","products"]})});}
+export function useToggleAdminProductStatus(){const q=useQueryClient();return useMutation({mutationFn:adminService.toggleProductStatus,onSuccess:()=>q.invalidateQueries({queryKey:["admin","products"]})});}
+export function useDeleteAdminProduct(){const q=useQueryClient();return useMutation({mutationFn:adminService.deleteProduct,onSuccess:()=>q.invalidateQueries({queryKey:["admin","products"]})});}
+export function useAdminUsers(){return useQuery({queryKey:["admin","users"],queryFn:adminService.getUsers});}
+export function useUpdateAdminUser(){const q=useQueryClient();return useMutation({mutationFn:({id,patch}:{id:string;patch:any})=>adminService.updateUser(id,patch),onSuccess:()=>q.invalidateQueries({queryKey:["admin","users"]})});}
+export function useAdminOrders(){return useQuery<Order[]>({queryKey:["admin","orders"],queryFn:adminService.getOrders});}
+export function useUpdateAdminOrder(){const q=useQueryClient();return useMutation({mutationFn:({id,patch}:{id:string;patch:any})=>adminService.updateOrder(id,patch),onSuccess:()=>q.invalidateQueries({queryKey:["admin","orders"]})});}
+export function useDeleteAdminOrder(){const q=useQueryClient();return useMutation({mutationFn:adminService.deleteOrder,onSuccess:()=>q.invalidateQueries({queryKey:["admin","orders"]})});}
