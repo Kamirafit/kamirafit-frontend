@@ -8,6 +8,17 @@ const productImageHosts = (
   .map((host) => host.trim().toLowerCase())
   .filter(Boolean);
 
+let apiConnectHost = "";
+if (process.env.NEXT_PUBLIC_API_URL) {
+  try {
+    apiConnectHost = new URL(process.env.NEXT_PUBLIC_API_URL).origin;
+  } catch {
+    apiConnectHost = "";
+  }
+}
+
+const connectSources = ["'self'", "https://kamirafit-backend.onrender.com", apiConnectHost].filter(Boolean).join(" ");
+
 const contentSecurityPolicy = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
@@ -16,7 +27,7 @@ const contentSecurityPolicy = [
     .map((host) => `https://${host}`)
     .join(" ")}`,
   "font-src 'self' data:",
-  "connect-src 'self'",
+  `connect-src ${connectSources}`,
   "media-src 'self'",
   "object-src 'none'",
   "base-uri 'self'",
