@@ -3,12 +3,16 @@ import { EntityIdSchema, ISODateTimeStringSchema } from "./common.schema";
 import { CategoryNameSchema } from "./category.schema";
 import { ReviewSchema } from "./review.schema";
 
-export const PRODUCT_SIZES = ["S", "M", "L", "XL"] as const;
-export const PRODUCT_COLORS = ["Black", "White", "Blue", "Red"] as const;
+export const PRODUCT_SIZES = [
+  "XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL", "6XL", "Free Size"
+] as const;
+export const PRODUCT_COLORS = [
+  "Black", "White", "Blue", "Red", "Green", "Yellow", "Pink", "Beige", "Navy", "Maroon", "Grey"
+] as const;
 export const PRODUCT_STATUSES = ["active", "inactive"] as const;
 
-export const SizeSchema = z.enum(PRODUCT_SIZES);
-export const ColorSchema = z.enum(PRODUCT_COLORS);
+export const SizeSchema = z.string();
+export const ColorSchema = z.string();
 export const ProductStatusSchema = z.enum(PRODUCT_STATUSES);
 
 export const InventorySchema = z.object({
@@ -25,8 +29,10 @@ export const VariantSchema = z.object({
   inventory: InventorySchema,
   price: z.number(),
   salePrice: z.number().optional(),
-  images: z.array(z.string()),
-  isAvailable: z.boolean(),
+  mrp: z.number().optional(),
+  stock: z.number().optional(),
+  images: z.array(z.string()).optional(),
+  isAvailable: z.boolean().optional(),
 });
 
 export const ProductMetadataSchema = z.object({
@@ -49,14 +55,26 @@ export const ProductEntitySchema = z.object({
 });
 
 export const ProductSchema = ProductEntitySchema.extend({
-  // Legacy UI fields
+  _id: z.string().optional(),
   name: z.string(),
+  categoryName: z.string().optional(),
+  subcategory: z.string().optional(),
+  isActive: z.boolean().optional(),
+  isAvailable: z.boolean().optional(),
+  isFeatured: z.boolean().optional(),
+  costPrice: z.number().optional(),
   price: z.number(),
-  size: z.array(SizeSchema),
-  color: z.array(ColorSchema),
-  rating: z.number(),
+  salePrice: z.number().optional(),
+  mrp: z.number().optional(),
+  basePrice: z.number().optional(),
+  baseMrp: z.number().optional(),
   image: z.string(),
   images: z.array(z.string()),
+  size: z.array(SizeSchema),
+  sizes: z.array(SizeSchema).optional(),
+  color: z.array(ColorSchema),
+  colors: z.array(ColorSchema).optional(),
+  rating: z.number(),
   reviews: z.array(ReviewSchema),
   createdAt: ISODateTimeStringSchema,
   popularity: z.number(),

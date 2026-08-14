@@ -13,7 +13,7 @@ type Props = {
   initial: AdminCategory | null;
 };
 
-const EMPTY: Omit<AdminCategory, "id"> = { name: "", subcategories: [] };
+const EMPTY: Omit<AdminCategory, "id"> = { name: "", description: "", subcategories: [] };
 
 export default function CategoryFormModal({
   open,
@@ -28,7 +28,7 @@ export default function CategoryFormModal({
   useEffect(() => {
     if (!open) return;
     if (initial) {
-      setValues({ name: initial.name, subcategories: initial.subcategories });
+      setValues({ name: initial.name, description: initial.description || "", subcategories: initial.subcategories });
     } else {
       setValues(EMPTY);
     }
@@ -67,7 +67,11 @@ export default function CategoryFormModal({
       setErrors(nextErrors);
       return;
     }
-    onSubmit(values);
+    onSubmit({
+      ...values,
+      name: values.name.trim(),
+      description: values.description?.trim() || undefined,
+    });
   };
 
   return (
@@ -86,7 +90,19 @@ export default function CategoryFormModal({
               setValues((prev) => ({ ...prev, name: e.target.value }))
             }
             className={inputClass}
-            placeholder="Unisex T-Shirts"
+            placeholder="Indian Wear"
+          />
+        </FormField>
+
+        <FormField label="Description (Optional)">
+          <input
+            type="text"
+            value={values.description || ""}
+            onChange={(e) =>
+              setValues((prev) => ({ ...prev, description: e.target.value }))
+            }
+            className={inputClass}
+            placeholder="Traditional & Festive Collection"
           />
         </FormField>
 

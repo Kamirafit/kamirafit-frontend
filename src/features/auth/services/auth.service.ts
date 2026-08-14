@@ -31,6 +31,15 @@ export const authService = {
     await unwrapApiResponse(apiClient.post("/auth/logout"));
     AuthStorage.clearAll();
   },
+  async logoutAdmin(): Promise<void> {
+    try {
+      await unwrapApiResponse(apiClient.post("/auth/logout"));
+    } catch {
+      // Ignore network errors so client session is always cleared
+    } finally {
+      AuthStorage.clearAdminAuth();
+    }
+  },
   async getProfile(): Promise<GetProfileResponseDto["data"]> {
     return unwrapApiResponse(apiClient.get("/auth/profile"));
   },

@@ -12,6 +12,8 @@ import {
   type ProductStatus,
   type Size,
 } from "@/features/product/types";
+import { useAdminCategories } from "@/services/admin";
+import type { AdminCategory } from "@/types/entities";
 import Button from "@/components/ui/Button";
 import FormField, { inputClass, selectClass, textareaClass } from "./FormField";
 import Modal from "./Modal";
@@ -28,6 +30,7 @@ type Props = {
   onSubmit: (values: FormValues) => void;
   initial?: Product | null;
   categoryOptions?: string[];
+  categories?: AdminCategory[];
   duplicate?: boolean;
 };
 
@@ -35,8 +38,10 @@ export type FormValues = {
   name: string;
   price: number;
   costPrice: number;
+  mrp: number;
   description: string;
   category: Category;
+  subcategory: string;
   size: Size[];
   color: Color[];
   images: string[];
@@ -51,6 +56,7 @@ export type FormValues = {
   slug: string;
   seoTitle: string;
   seoDescription: string;
+  isFeatured: boolean;
   showOnStorefront: boolean;
   taxEnabled: boolean;
   gstRate: number;
@@ -61,12 +67,23 @@ const COLLECTIONS = ["New Arrivals", "Best Sellers", "Summer Collection", "Overs
 const ADJUSTMENT_REASONS = ["Stock received", "Damaged", "Returned", "Manual adjustment", "Lost", "Order cancellation", "Stock correction"];
 const MAX_IMAGES = 8;
 
+const SUBCATEGORY_MAP: Record<string, string[]> = {
+  "T-Shirts": ["Oversized T-Shirts", "Regular Fit", "Graphic Print", "Polo T-Shirts"],
+  "Oversized T-Shirts": ["Heavyweight", "Vintage Wash", "Drop Shoulder", "Printed"],
+  "Kurti": ["Straight Kurti", "Anarkali", "Short Kurti", "A-Line"],
+  "Co-ords Sets": ["Printed Sets", "Casual Co-ords", "Lounge Sets"],
+  "Dresses": ["Maxi Dress", "Midi Dress", "Bodycon", "A-Line"],
+  "Hoodies": ["Pullover", "Zip-Up", "Oversized"],
+};
+
 const EMPTY: FormValues = {
   name: "",
   price: 0,
   costPrice: 0,
+  mrp: 0,
   description: "",
   category: "T-Shirts",
+  subcategory: "",
   size: [],
   color: [],
   images: [],
@@ -74,6 +91,7 @@ const EMPTY: FormValues = {
   status: "inactive",
   tags: [],
   collections: [],
+  isFeatured: false,
   weight: 0,
   length: 0,
   width: 0,
@@ -137,13 +155,13 @@ function Toggle({ label, checked, onChange, disabled = false }: { label: string;
   </button>;
 }
 
-export default function ProductFormModal({ open, onClose, onSubmit, initial, categoryOptions, duplicate = false }: Props) {
-  const effectiveCategories = useMemo(
-    () => categoryOptions && categoryOptions.length ? categoryOptions.filter((item): item is Category => (CATEGORY_OPTIONS as readonly string[]).includes(item)) : [...CATEGORY_OPTIONS],
-    [categoryOptions],
-  );
+export default function ProductFormModal({ open, onClose, onSubmit, initial, categories: categoriesProp, duplicate = false }: Props) {
+  const categoriesQuery = useAdminCategories();
+  const apiCategories = categoriesQuery.data ?? [];
+
   const [values, setValues] = useState<FormValues>(EMPTY);
   const [productState, setProductState] = useState<ProductState>("draft");
+  const [customColorInput, setCustomColorInput] = useState("");
   const [variants, setVariants] = useState<VariantDraft[]>([]);
   const [images, setImages] = useState<ImageDraft[]>([]);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
@@ -159,6 +177,36 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
   const [draggedImage, setDraggedImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const objectUrlsRef = useRef<string[]>([]);
+
+  const categoriesList = useMemo(() => {
+    if (categoriesProp && categoriesProp.length > 0) return categoriesProp;
+    if (apiCategories && apiCategories.length > 0) return apiCategories;
+    return (CATEGORY_OPTIONS as readonly string[]).map((name) => ({
+      id: name,
+      name,
+      subcategories: SUBCATEGORY_MAP[name] || ["General", "Regular", "Printed"],
+    }));
+  }, [categoriesProp, apiCategories]);
+
+  const selectedCategoryObj = useMemo(
+    () => categoriesList.find((c) => c.name === values.category),
+    [categoriesList, values.category]
+  );
+
+  const availableSubcategories = useMemo(
+    () => selectedCategoryObj?.subcategories ?? (values.category ? (SUBCATEGORY_MAP[values.category] || []) : []),
+    [selectedCategoryObj, values.category]
+  );
+
+  const handleAddCustomColor = () => {
+    const trimmed = customColorInput.trim();
+    if (!trimmed) return;
+    const formatted = trimmed.replace(/\b\w/g, (char) => char.toUpperCase());
+    if (!values.color.includes(formatted)) {
+      set("color", [...values.color, formatted]);
+    }
+    setCustomColorInput("");
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -183,7 +231,7 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
       setVariants(duplicate ? [] : seededVariants);
       setHistory([]);
     } else {
-      setValues({ ...EMPTY, category: effectiveCategories[0] || "T-Shirts" });
+      setValues({ ...EMPTY, category: "" as Category, subcategory: "" });
       setProductState("draft");
       setImages([]);
       setVariants([]);
@@ -191,13 +239,13 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
     }
     setErrors({});
     setAdvancedOpen(false);
-  }, [open, initial, duplicate, effectiveCategories]);
+  }, [open, initial, duplicate]);
 
   useEffect(() => () => objectUrlsRef.current.forEach((url) => URL.revokeObjectURL(url)), []);
 
   const set = <K extends keyof FormValues>(key: K, value: FormValues[K]) => setValues((previous) => ({ ...previous, [key]: value }));
 
-  const setNumber = (key: "costPrice" | "price" | "weight" | "length" | "width" | "height", raw: string) => set(key, numeric(raw));
+  const setNumber = (key: "costPrice" | "mrp" | "price" | "weight" | "length" | "width" | "height", raw: string) => set(key, numeric(raw));
 
   const profit = Math.max(0, values.price - values.costPrice);
   const margin = values.price > 0 ? (profit / values.price) * 100 : 0;
@@ -323,22 +371,65 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
     <Modal open={open} onClose={onClose} title={duplicate ? "Duplicate product" : initial ? "Edit product" : "Add product"} maxWidth="xl">
       <form onSubmit={handleSubmit} className="flex flex-col gap-8">
         <Section title="Product">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <FormField label="Name" error={errors.name}><input value={values.name} onChange={(event) => handleNameChange(event.target.value)} maxLength={80} className={inputClass} placeholder="Ivory Oversized Tee" /></FormField>
-            <FormField label="Category" error={errors.category}><select value={values.category} onChange={(event) => isCategory(event.target.value, effectiveCategories) && set("category", event.target.value)} className={selectClass}>{effectiveCategories.map((category) => <option key={category} value={category}>{category}</option>)}</select></FormField>
+            <FormField label="Category" error={errors.category}>
+              <select
+                value={values.category}
+                onChange={(event) => {
+                  const selectedCat = event.target.value;
+                  setValues((prev) => ({ ...prev, category: selectedCat as Category, subcategory: "" }));
+                }}
+                className={selectClass}
+              >
+                <option value="" disabled hidden>Select Category</option>
+                {categoriesList.map((category) => (
+                  <option key={category.id || category.name} value={category.name}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Subcategory" error={errors.subcategory}>
+              <select
+                disabled={!values.category || availableSubcategories.length === 0}
+                value={values.subcategory}
+                onChange={(event) => set("subcategory", event.target.value)}
+                className={!values.category ? selectClass + " cursor-not-allowed bg-ink-3 text-paper-muted opacity-60" : selectClass}
+              >
+                <option value="" disabled hidden>Select Subcategory</option>
+                {availableSubcategories.map((sub) => (
+                  <option key={sub} value={sub}>
+                    {sub}
+                  </option>
+                ))}
+              </select>
+            </FormField>
           </div>
           <FormField label="Description" error={errors.description}><textarea value={values.description} onChange={(event) => set("description", event.target.value)} maxLength={600} className={textareaClass} placeholder="Fabric, fit, feel — in a sentence or two." /></FormField>
           <div className="rounded-2xl border border-line bg-ink-2/40 p-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1.3fr_1fr]">
-              <FormField label="Product lifecycle" hint="Draft and archived products are always hidden. Active products can be shown on the storefront."><div className="grid grid-cols-3 gap-2">{(["draft", "active", "archived"] as ProductState[]).map((state) => <button key={state} type="button" onClick={() => setProductState(state)} className={productState === state ? "rounded-full border border-gold bg-gold/10 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-gold" : "rounded-full border border-line px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-paper-muted"}>{state}</button>)}</div></FormField>
-              <div className="flex flex-col gap-2"><Toggle label="Show on storefront" checked={values.showOnStorefront} onChange={(value) => set("showOnStorefront", value)} disabled={productState !== "active"} /><p className="text-[11px] leading-relaxed text-paper-muted">{productState === "active" ? "Turn this off to keep an active product out of the storefront." : "Visibility becomes available when the product is Active."}</p></div>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <FormField label="Product lifecycle" hint="Draft and archived products are hidden. Active products are published to the storefront.">
+                <div className="grid grid-cols-3 gap-2 sm:w-80">
+                  {(["draft", "active", "archived"] as ProductState[]).map((state) => (
+                    <button key={state} type="button" onClick={() => setProductState(state)} className={productState === state ? "rounded-full border border-gold bg-gold/10 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-gold" : "rounded-full border border-line px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-paper-muted"}>
+                      {state}
+                    </button>
+                  ))}
+                </div>
+              </FormField>
+
+              <div className="w-44 pt-1 sm:pt-0">
+                <Toggle label="Featured" checked={values.isFeatured} onChange={(value) => set("isFeatured", value)} />
+              </div>
             </div>
           </div>
         </Section>
 
         <Section title="Pricing">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <FormField label="Cost price (₹)" error={errors.costPrice}><input type="number" min={0} value={values.costPrice || ""} placeholder="Enter cost price" onKeyDown={preventInvalidNumberKeys} onChange={(event) => setNumber("costPrice", event.target.value)} className={inputClass} /></FormField>
+            <FormField label="MRP (₹)" error={errors.mrp}><input type="number" min={0} value={values.mrp || ""} placeholder="Enter MRP" onKeyDown={preventInvalidNumberKeys} onChange={(event) => setNumber("mrp", event.target.value)} className={inputClass} /></FormField>
             <FormField label="Selling price (₹)" error={errors.price}><input type="number" min={0} value={values.price || ""} placeholder="Enter selling price" onKeyDown={preventInvalidNumberKeys} onChange={(event) => setNumber("price", event.target.value)} className={inputClass} /></FormField>
           </div>
           <div className="grid grid-cols-2 gap-4 rounded-2xl border border-line bg-ink-2/50 p-4">
@@ -346,16 +437,55 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
             <div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-paper-muted">Margin</p><p className="mt-1 text-lg font-semibold text-gold">{margin.toFixed(2)}%</p></div>
           </div>
           {values.price < values.costPrice ? <p className="rounded-xl border border-[#B3261E]/40 bg-[#B3261E]/10 px-3 py-2 text-[12px] text-[#B3261E]">Selling price is lower than cost price.</p> : null}
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <Toggle label="Tax enabled" checked={values.taxEnabled} onChange={(value) => set("taxEnabled", value)} />
-            <FormField label="GST rate"><select disabled={!values.taxEnabled} value={values.gstRate} onChange={(event) => set("gstRate", numeric(event.target.value))} className={values.taxEnabled ? selectClass : selectClass + " cursor-not-allowed bg-ink-3 text-paper-muted"}><option value={0}>Select GST rate</option><option value={5}>5%</option><option value={12}>12%</option><option value={18}>18%</option><option value={28}>28%</option></select></FormField>
-            <Toggle label="Price includes GST" checked={values.priceIncludesTax} onChange={(value) => set("priceIncludesTax", value)} />
-          </div>
         </Section>
 
         <Section title="Variants & inventory">
           <FormField label="Sizes" error={errors.variants}><MultiSelectChips options={SIZE_OPTIONS} value={values.size} onChange={(value) => set("size", value)} /></FormField>
-          <FormField label="Colors"><MultiSelectChips options={COLOR_OPTIONS} value={values.color} onChange={(value) => set("color", value)} /></FormField>
+          <FormField label="Colors">
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-wrap gap-2">
+                {Array.from(new Set([...COLOR_OPTIONS, ...values.color])).map((col) => {
+                  const active = values.color.includes(col);
+                  return (
+                    <button
+                      key={col}
+                      type="button"
+                      onClick={() => set("color", active ? values.color.filter((c) => c !== col) : [...values.color, col])}
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[11.5px] font-semibold uppercase tracking-[0.14em] transition-all duration-200 ${
+                        active
+                          ? "border-gold bg-gold text-ink shadow-[0_6px_18px_-8px_rgba(139,30,45,0.5)]"
+                          : "border-line bg-transparent text-paper-muted hover:border-gold hover:text-gold"
+                      }`}
+                    >
+                      <span>{col}</span>
+                      {active && !(COLOR_OPTIONS as readonly string[]).includes(col) && (
+                        <span className="text-[10px] font-bold ml-1">×</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="flex gap-2 max-w-md">
+                <input
+                  type="text"
+                  value={customColorInput}
+                  onChange={(e) => setCustomColorInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddCustomColor();
+                    }
+                  }}
+                  className={inputClass}
+                  placeholder="Add any custom color (e.g. Olive, Lavender, Mustard)..."
+                />
+                <Button type="button" size="sm" variant="dark" onClick={handleAddCustomColor}>
+                  Add
+                </Button>
+              </div>
+            </div>
+          </FormField>
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-ink-2/50 p-4">
             <p className="text-[13px] text-paper-muted">Create all selected color and size combinations automatically.</p>
             <Button type="button" size="sm" variant="primary" onClick={generateVariants}>Generate variants</Button>
@@ -384,20 +514,6 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
           </div>
           {errors.images ? <p className="text-[12px] text-[#B3261E]">{errors.images}</p> : null}
           {images.length ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{images.map((image, index) => <div key={image.id} draggable onDragStart={() => setDraggedImage(image.id)} onDragOver={(event) => event.preventDefault()} onDrop={() => { if (draggedImage) moveImage(draggedImage, image.id); setDraggedImage(null); }} className="group relative aspect-square overflow-hidden rounded-2xl border border-line bg-ink-2"><Image src={image.src} alt={"Product image " + (index + 1)} fill sizes="160px" className="object-cover" unoptimized={image.src.startsWith("blob:")} /><div className="absolute inset-x-1 bottom-1 flex gap-1"><select aria-label="Assign image color" value={image.color} onChange={(event) => setImages((previous) => previous.map((item) => item.id === image.id ? { ...item, color: event.target.value as Color | "" } : item))} className="min-w-0 flex-1 rounded-lg bg-ink/85 px-1 py-1 text-[10px] text-paper"><option value="">All colors</option>{values.color.map((color) => <option key={color}>{color}</option>)}</select></div>{index === 0 ? <span className="absolute left-1 top-1 rounded-full bg-gold px-2 py-1 text-[9px] font-semibold uppercase text-white">Primary</span> : <button type="button" onClick={() => moveImage(image.id, images[0].id)} className="absolute left-1 top-1 rounded-full bg-ink/80 px-2 py-1 text-[9px] font-semibold uppercase text-paper">Set primary</button>}<button type="button" onClick={() => removeImage(image.id)} className="absolute right-1 top-1 h-7 w-7 rounded-full bg-ink/85 text-paper hover:text-[#B3261E]" aria-label="Remove image">×</button></div>)}</div> : null}
-        </Section>
-
-        <Section title="Organization">
-          <div className="rounded-2xl border border-line bg-ink-2/40 p-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-paper-muted">Collections</p>
-            <p className="mt-1 text-[12px] text-paper-muted">Choose one or more collections for this product.</p>
-            <div className="mt-3 flex flex-wrap gap-2">{COLLECTIONS.map((collection) => <button key={collection} type="button" onClick={() => set("collections", values.collections.includes(collection) ? values.collections.filter((item) => item !== collection) : [...values.collections, collection])} className={values.collections.includes(collection) ? "rounded-full border border-gold bg-gold/10 px-3.5 py-2 text-[11px] font-semibold text-gold" : "rounded-full border border-line bg-ink px-3.5 py-2 text-[11px] font-semibold text-paper-muted hover:border-gold hover:text-gold"}>{collection}</button>)}</div>
-          </div>
-          <div className="rounded-2xl border border-line bg-ink-2/40 p-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-paper-muted">Tags</p>
-            <div className="mt-3 flex gap-2"><input value={tagInput} onChange={(event) => setTagInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addTag(); } }} className={inputClass} placeholder="Add a tag, then press Enter" /><Button type="button" size="sm" variant="dark" onClick={addTag}>Add</Button></div>
-            {errors.tags ? <p className="mt-2 text-[12px] text-[#B3261E]">{errors.tags}</p> : null}
-            <div className="mt-3 flex min-h-7 flex-wrap gap-2">{values.tags.length ? values.tags.map((tag) => <button key={tag} type="button" onClick={() => set("tags", values.tags.filter((item) => item !== tag))} className="rounded-full border border-gold/50 bg-gold/10 px-3 py-1.5 text-[11px] font-semibold text-gold">{tag} ×</button>) : <span className="text-[12px] text-paper-muted">No tags added yet.</span>}</div>
-          </div>
         </Section>
 
         <Section title="Shipping">

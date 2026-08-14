@@ -33,5 +33,6 @@ export const CategorySchema = z.object({
 export const AdminCategorySchema = z.object({
   id: EntityIdSchema,
   name: z.string(),
+  description: z.string().optional(),
   subcategories: z.array(z.string()),
 });

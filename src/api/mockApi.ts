@@ -196,7 +196,7 @@ const productApi = {
             size,
             inventory: { quantity: 50, reserved: 0, available: 50 },
             price,
-            images,
+            images: images.filter((img): img is string => Boolean(img)),
             isAvailable: true
           });
         });
@@ -292,7 +292,7 @@ export const mockApi = {
         ) || product.variants[0];
 
         const price = variant?.price ?? 0;
-        const image = variant?.images[0] || "";
+        const image = variant?.images?.[0] || "";
 
         return [{
           productId: product.id,
@@ -379,7 +379,8 @@ export const mockApi = {
   },
   reviews: {
     getAll: (productId: string) => respond(() => {
-      const reviews = products.find((item) => item.id === productId)?.metadata.reviews ?? [];
+      const prod = products.find((item) => item.id === productId);
+      const reviews = prod?.metadata?.reviews || [];
       safeValidate(z.array(ReviewSchema), reviews, "reviews.getAll (response)");
       return ok(reviews);
     }),
@@ -390,11 +391,12 @@ export const mockApi = {
       const review: Review = { ...input, id: `rev-${Math.random().toString(36).slice(2, 11)}`, customerName: "Anonymous", createdAt: new Date().toISOString() };
       const index = products.findIndex((item) => item.id === input.productId);
       if (index < 0) return fail("PRODUCT_NOT_FOUND", "Product not found");
+      const currentReviews = products[index].metadata?.reviews || [];
       products[index] = {
         ...products[index],
         metadata: {
           ...products[index].metadata,
-          reviews: [...products[index].metadata.reviews, review],
+          reviews: [...currentReviews, review],
         },
       };
       safeValidate(ReviewSchema, review, "reviews.create (response)");

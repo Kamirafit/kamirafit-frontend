@@ -62,10 +62,24 @@ export function useLogout() {
       await authService.logout();
     },
     onSuccess: () => {
+      queryClient.cancelQueries();
       dispatch(logoutSuccess());
-      queryClient.setQueryData(["currentUser"], null);
-      queryClient.setQueryData(["profile"], null);
-      queryClient.invalidateQueries();
+      queryClient.clear();
+    },
+  });
+}
+
+export function useLogoutAdmin() {
+  const queryClient = useQueryClient();
+  const dispatch = useDispatch();
+  return useMutation({
+    mutationFn: async () => {
+      await authService.logoutAdmin();
+    },
+    onSuccess: () => {
+      queryClient.cancelQueries();
+      dispatch(logoutSuccess());
+      queryClient.clear();
     },
   });
 }

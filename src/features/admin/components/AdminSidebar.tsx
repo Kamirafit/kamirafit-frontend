@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useLogoutAdmin } from "@/features/auth/hooks";
 
 type Item = {
   label: string;
@@ -60,6 +62,16 @@ function OrdersIcon() {
   );
 }
 
+function LogoutIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" y1="12" x2="9" y2="12" />
+    </svg>
+  );
+}
+
 const ITEMS: Item[] = [
   { label: "Dashboard", href: "/dedicated-admin", icon: <DashboardIcon /> },
   { label: "Products", href: "/dedicated-admin/products", icon: <BoxIcon /> },
@@ -70,68 +82,155 @@ const ITEMS: Item[] = [
 
 export default function AdminSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const logoutAdmin = useLogoutAdmin();
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await logoutAdmin.mutateAsync();
+    } catch {
+      // Ignore network errors on logout cleanup
+    } finally {
+      window.location.href = "/";
+    }
+  };
 
   return (
-    <aside className="hidden w-64 shrink-0 border-r border-line bg-ink lg:block">
-      <div className="sticky top-0 flex h-screen flex-col gap-8 px-5 py-8">
-        <Link
-          href="/dedicated-admin"
-          className="flex items-center gap-3 px-1"
-        >
-          <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-gold text-[13px] font-semibold text-ink shadow-[0_8px_20px_-10px_rgba(139,30,45,0.5)]">
-            K
-          </span>
-          <span className="flex flex-col leading-tight">
-            <span className="font-display text-[16px] font-semibold tracking-tight text-paper">
-              KamiraFit
+    <>
+      {/* Mobile Top Header (lg:hidden) */}
+      <div className="border-b border-line bg-ink p-4 lg:hidden">
+        <div className="flex items-center justify-between">
+          <Link href="/dedicated-admin" className="flex items-center gap-2.5">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gold text-[12px] font-semibold text-ink">
+              K
             </span>
-            <span className="text-[10px] font-semibold uppercase tracking-[0.28em] text-gold">
-              Admin
+            <span className="font-display text-[15px] font-semibold text-paper">
+              KamiraFit <span className="text-[10px] uppercase text-gold">Admin</span>
             </span>
-          </span>
-        </Link>
-
-        <nav className="flex flex-col gap-1">
-          <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.24em] text-paper-muted">
-            Workspace
-          </p>
-          {ITEMS.map((item) => {
-            const active =
-              item.href === "/dedicated-admin"
-                ? pathname === item.href
-                : pathname?.startsWith(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center gap-3 rounded-full px-3 py-2 text-[12.5px] font-semibold uppercase tracking-[0.12em] transition-colors ${
-                  active
-                    ? "bg-gold/10 text-gold"
-                    : "text-paper-muted hover:bg-ink-2 hover:text-paper"
-                }`}
-              >
-                <span
-                  className={active ? "text-gold" : "text-paper-muted"}
-                >
-                  {item.icon}
-                </span>
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
-
-        <div className="mt-auto rounded-2xl border border-line bg-ink-2 p-4 text-[11.5px] leading-relaxed text-paper-muted">
-          <p className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.28em] text-gold">
-            <span aria-hidden className="h-px w-6 bg-gold/60" />
-            Heads up
-          </p>
-          <p className="mt-2 font-medium text-paper">Dedicated admin</p>
-          <p className="mt-1">
-            Not linked from the storefront. Bookmark this URL to return.
-          </p>
+          </Link>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleLogout}
+              disabled={loggingOut}
+              className="inline-flex items-center gap-1.5 rounded-full border border-red-500/20 bg-red-500/5 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-red-400 hover:bg-red-500/10"
+            >
+              <LogoutIcon />
+              {loggingOut ? "..." : "Logout"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="rounded-lg border border-line bg-ink-2 p-2 text-paper-muted hover:text-paper"
+              aria-label="Toggle Navigation"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d={mobileMenuOpen ? "M18 6L6 18M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
+              </svg>
+            </button>
+          </div>
         </div>
+
+        {mobileMenuOpen && (
+          <nav className="mt-4 flex flex-col gap-1 border-t border-line pt-3">
+            {ITEMS.map((item) => {
+              const active =
+                item.href === "/dedicated-admin"
+                  ? pathname === item.href
+                  : pathname?.startsWith(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`flex items-center gap-3 rounded-full px-3 py-2 text-[12.5px] font-semibold uppercase tracking-[0.12em] transition-colors ${
+                    active
+                      ? "bg-gold/10 text-gold"
+                      : "text-paper-muted hover:bg-ink-2 hover:text-paper"
+                  }`}
+                >
+                  <span className={active ? "text-gold" : "text-paper-muted"}>
+                    {item.icon}
+                  </span>
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+        )}
       </div>
-    </aside>
+
+      {/* Desktop Sidebar (lg:block) */}
+      <aside className="hidden w-64 shrink-0 border-r border-line bg-ink lg:block">
+        <div className="sticky top-0 flex h-screen flex-col justify-between px-5 py-6">
+          <div className="flex flex-col gap-6">
+            <Link
+              href="/dedicated-admin"
+              className="flex items-center gap-3 px-1"
+            >
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-gold text-[13px] font-semibold text-ink shadow-[0_8px_20px_-10px_rgba(139,30,45,0.5)]">
+                K
+              </span>
+              <span className="flex flex-col leading-tight">
+                <span className="font-display text-[16px] font-semibold tracking-tight text-paper">
+                  KamiraFit
+                </span>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.28em] text-gold">
+                  Admin
+                </span>
+              </span>
+            </Link>
+
+            <nav className="flex flex-col gap-1">
+              <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.24em] text-paper-muted">
+                Workspace
+              </p>
+              {ITEMS.map((item) => {
+                const active =
+                  item.href === "/dedicated-admin"
+                    ? pathname === item.href
+                    : pathname?.startsWith(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`flex items-center gap-3 rounded-full px-3 py-2 text-[12.5px] font-semibold uppercase tracking-[0.12em] transition-colors ${
+                      active
+                        ? "bg-gold/10 text-gold"
+                        : "text-paper-muted hover:bg-ink-2 hover:text-paper"
+                    }`}
+                  >
+                    <span
+                      className={active ? "text-gold" : "text-paper-muted"}
+                    >
+                      {item.icon}
+                    </span>
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
+
+          <div className="mt-auto pt-4">
+            {/* Admin Logout Option - Bottom Left */}
+            <button
+              type="button"
+              onClick={handleLogout}
+              disabled={loggingOut}
+              className="flex w-full items-center gap-3 rounded-full border border-red-500/30 bg-red-500/10 px-4 py-2.5 text-[12.5px] font-semibold uppercase tracking-[0.12em] text-red-400 transition-colors hover:border-red-500/60 hover:bg-red-500/20 hover:text-red-300 disabled:opacity-50 shadow-sm"
+            >
+              <span className="text-red-400">
+                <LogoutIcon />
+              </span>
+              <span>{loggingOut ? "Logging out..." : "Logout"}</span>
+            </button>
+          </div>
+        </div>
+      </aside>
+    </>
   );
 }

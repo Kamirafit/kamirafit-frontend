@@ -274,7 +274,7 @@ export default function ProductsPage() {
         onSubmit={handleSubmit}
         initial={duplicating ?? editing}
         duplicate={Boolean(duplicating)}
-        categoryOptions={categoryOptions}
+        categories={categories}
       />
 
       <ConfirmDialog

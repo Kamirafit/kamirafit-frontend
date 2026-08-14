@@ -49,7 +49,7 @@ export default function CategoriesPage() {
       render: (c) => (
         <div className="flex flex-col">
           <span className="font-medium text-paper">{c.name}</span>
-          <span className="text-[11.5px] text-paper-muted">{c.id}</span>
+          {c.description && <span className="text-[11.5px] text-paper-muted">{c.description}</span>}
         </div>
       ),
     },
