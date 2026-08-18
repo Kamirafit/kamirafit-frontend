@@ -2,6 +2,7 @@
 
 import { useId, type FormEvent } from "react";
 import { buttonClasses } from "@/components/ui/Button";
+import { lookupPincode } from "@/lib/pincode";
 
 export type ShippingDetails = {
   name: string;
@@ -63,8 +64,15 @@ export default function ShippingForm({
     set("phone", value.replace(/[^\d+\s-]/g, "").slice(0, 16));
   };
 
-  const setPincode = (value: string) => {
-    set("pincode", value.replace(/\D/g, "").slice(0, 6));
+  const setPincode = async (value: string) => {
+    const clean = value.replace(/\D/g, "").slice(0, 6);
+    set("pincode", clean);
+    if (clean.length === 6) {
+      const result = await lookupPincode(clean);
+      if (result?.city) {
+        set("city", result.city);
+      }
+    }
   };
 
   const inputClass = (hasError?: boolean) =>
@@ -145,16 +153,16 @@ export default function ShippingForm({
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
-          <FieldLabel htmlFor={fieldId("city")}>City</FieldLabel>
+          <FieldLabel htmlFor={fieldId("city")}>City <span className="text-[10px] font-normal lowercase text-paper-muted">(auto-detected)</span></FieldLabel>
           <input
+            disabled
             id={fieldId("city")}
             type="text"
             autoComplete="address-level2"
             maxLength={80}
             value={values.city}
-            onChange={(e) => set("city", e.target.value)}
-            placeholder="Kolkata"
-            className={inputClass(Boolean(errors.city))}
+            placeholder="Auto-detected from Pincode"
+            className="w-full rounded-xl border border-line bg-ink-3/50 px-4 py-3 text-sm text-paper cursor-not-allowed opacity-80 select-none outline-none"
             aria-invalid={Boolean(errors.city)}
             aria-describedby={errors.city ? `${fieldId("city")}-err` : undefined}
           />

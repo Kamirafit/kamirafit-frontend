@@ -14,13 +14,21 @@ export const AuthSessionSchema = z.object({
 });
 
 export const LoginRequestDtoSchema = z.object({
-  email: z.string().email(),
-  password: z.string(),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(1, "Password is required"),
 });
 
+export const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\/`~]).{8,}$/;
+
 export const RegisterRequestDtoSchema = z.object({
-  email: z.string().email(),
-  password: z.string(),
-  firstName: z.string(),
-  lastName: z.string(),
+  email: z.string().email("Please enter a valid email address"),
+  password: z.string().regex(
+    PASSWORD_REGEX,
+    "Password must be at least 8 characters and include at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character"
+  ),
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  countryCode: z.string().min(1, "Country code is required"),
+  phoneNumber: z.string().min(1, "Phone number is required"),
+  gender: z.string().min(1, "Gender is required"),
 });

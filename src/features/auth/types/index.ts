@@ -24,7 +24,9 @@ export interface RegisterRequestDto {
   password?: string;
   firstName?: string;
   lastName?: string;
-  mobileNumber?: string;
+  countryCode: string;
+  phoneNumber: string;
+  gender: string;
 }
 
 export type RegisterResponseDto = ApiResponseDto<{

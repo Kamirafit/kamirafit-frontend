@@ -24,18 +24,27 @@ const DEFAULT_CATEGORY_IMAGES: Record<string, string> = {
 };
 
 export default async function Categories() {
-  const categories: Category[] = (await categoryService.getCategories()).map(
+  const rawCategories = await categoryService.getCategories();
+  const categories: Category[] = (rawCategories || []).map(
     (category) => {
+      const slug = category.slug || category.name.toLowerCase().replace(/[\s_]+/g, "-");
       const fallbackImage =
-        DEFAULT_CATEGORY_IMAGES[category.slug] ?? DEFAULT_CATEGORY_IMAGE;
+        DEFAULT_CATEGORY_IMAGES[slug] ?? DEFAULT_CATEGORY_IMAGE;
       const image = getValidImageSrc(category.image, fallbackImage);
 
+      const subPreview =
+        Array.isArray(category.subcategories) && category.subcategories.length > 0
+          ? category.subcategories
+              .map((s) => (typeof s === "string" ? s : s.name || s.title || ""))
+              .join(", ")
+          : PARENT_CATEGORY[slug] ?? category.name;
+
       return {
-        id: category.slug,
+        id: category.id || slug,
         title: category.name,
         description: category.description ?? "Explore the latest KamiraFit styles.",
-        subcategoryPreview: PARENT_CATEGORY[category.slug] ?? category.name,
-        href: `/shop?category=${category.slug}`,
+        subcategoryPreview: subPreview,
+        href: `/shop?category=${slug}`,
         image,
       };
     },

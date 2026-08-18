@@ -18,6 +18,7 @@ export default function AddressesPage() {
 
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
   const [isAdding, setIsAdding] = useState(false);
+  const [addressToDelete, setAddressToDelete] = useState<string | null>(null);
 
   const handleSave = async (address: Address) => {
     if (isAdding) {
@@ -41,18 +42,29 @@ export default function AddressesPage() {
     setEditingAddress(null);
   };
 
-  const handleDelete = (id: string) => {
-    deleteMutation.mutate(id);
+  const confirmDelete = async () => {
+    if (!addressToDelete) return;
+    await deleteMutation.mutateAsync(addressToDelete);
+    setAddressToDelete(null);
   };
 
-  const handleSetDefault = (id: string) => {
-    const addressToUpdate = addresses.find(a => a.id === id);
-    if (addressToUpdate) {
-      updateMutation.mutate({
-        id,
-        data: { ...addressToUpdate, isDefault: true }
-      });
-    }
+  const handleSetDefault = (address: Address) => {
+    updateMutation.mutate({
+      id: address.id,
+      data: {
+        id: address.id,
+        type: address.type,
+        fullName: address.fullName,
+        phoneNumber: address.phoneNumber,
+        addressLine1: address.addressLine1,
+        addressLine2: address.addressLine2 || "",
+        landmark: address.landmark || "",
+        city: address.city,
+        state: address.state,
+        pincode: address.pincode,
+        isDefault: true,
+      },
+    });
   };
 
   return (
@@ -90,7 +102,7 @@ export default function AddressesPage() {
               key={address.id}
               address={address}
               onEdit={setEditingAddress}
-              onDelete={handleDelete}
+              onDelete={(id) => setAddressToDelete(id)}
               onSetDefault={handleSetDefault}
             />
           ))}
@@ -106,6 +118,41 @@ export default function AddressesPage() {
           }}
           onSave={handleSave}
         />
+      )}
+
+      {/* Delete Address Confirmation Modal */}
+      {addressToDelete && (
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setAddressToDelete(null)}
+          />
+          <div className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-line bg-ink p-6 shadow-2xl backdrop-blur-xl modal-scrollbar-hidden">
+            <h3 className="font-display text-xl font-bold text-paper">
+              Delete Address
+            </h3>
+            <p className="mt-2 text-sm text-paper-muted">
+              Are you sure you want to remove this delivery address? This action cannot be undone.
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setAddressToDelete(null)}
+                className="rounded-full px-5 py-2 text-[12px] font-semibold uppercase tracking-wider text-paper-muted hover:bg-ink-3 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={deleteMutation.isPending}
+                onClick={confirmDelete}
+                className="rounded-full bg-[#DC2626] px-5 py-2 text-[12px] font-semibold uppercase tracking-wider text-white shadow-md transition-colors hover:bg-[#B91C1C] disabled:opacity-50"
+              >
+                {deleteMutation.isPending ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

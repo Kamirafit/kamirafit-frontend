@@ -1,7 +1,8 @@
 import Image from "next/image";
 import { DEFAULT_PRODUCT_IMAGE, getValidImageSrc } from "@/lib/format";
-import { Order, OrderStatus, OrderItem } from "../types";
+import { Order, OrderItem } from "../types";
 import { formatPrice } from "@/lib/format";
+import OrderStatusBadge from "./OrderStatusBadge";
 
 type Props = {
   order: Order;
@@ -9,38 +10,17 @@ type Props = {
   onReviewProduct: (orderId: string, item: OrderItem) => void;
 };
 
-const getStatusColor = (status: OrderStatus) => {
-  switch (status) {
-    case "Pending":
-    case "Processing":
-      return "bg-[#EAB308]/10 text-[#EAB308]";
-    case "Confirmed":
-    case "Shipped":
-    case "In Transit":
-      return "bg-blue-500/10 text-blue-500";
-    case "Delivered":
-      return "bg-[#22C55E]/10 text-[#22C55E]";
-    case "Refund Initiated":
-    case "Refund Completed":
-      return "bg-orange-500/10 text-orange-500";
-    case "Return Requested":
-    case "Return Approved":
-    case "Return In Progress":
-    case "Return Completed":
-      return "bg-purple-500/10 text-purple-500";
-    case "Cancelled":
-      return "bg-[#DC2626]/10 text-[#DC2626]";
-    default:
-      return "bg-paper-muted/10 text-paper-muted";
-  }
-};
-
 export default function OrderCard({ order, onViewDetails, onReviewProduct }: Props) {
-  const dateStr = new Date(order.date).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+  const dateValue = (order as any).createdAt || order.date;
+  const dateStr = dateValue
+    ? new Date(dateValue).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })
+    : "Recent";
+
+  const orderNum = (order as any).orderNumber || order.id;
 
   return (
     <div className="flex flex-col overflow-hidden rounded-2xl border border-line bg-ink shadow-sm transition-all duration-300 hover:border-gold/40 hover:shadow-md">
@@ -56,7 +36,7 @@ export default function OrderCard({ order, onViewDetails, onReviewProduct }: Pro
           </div>
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-wider text-paper-muted">Order ID</p>
-            <p className="mt-0.5 font-medium text-paper">{order.id}</p>
+            <p className="mt-0.5 font-medium text-paper">{orderNum}</p>
           </div>
         </div>
         <button
@@ -72,9 +52,7 @@ export default function OrderCard({ order, onViewDetails, onReviewProduct }: Pro
           <h3 className="font-display text-lg font-bold text-paper">
             Status
           </h3>
-          <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${getStatusColor(order.status)}`}>
-            {order.status}
-          </span>
+          <OrderStatusBadge status={order.status} />
         </div>
 
         <div className="flex flex-col gap-5">

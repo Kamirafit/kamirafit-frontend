@@ -24,16 +24,17 @@ export function getValidImageSrc(
  * something else (e.g. the marketing homepage uses USD placeholders).
  */
 export function formatPrice(
-  value: number,
+  value: number | string | null | undefined,
   {
     currency = "INR",
     locale = "en-IN",
   }: { currency?: string; locale?: string } = {},
 ): string {
+  const numeric = typeof value === "number" ? value : Number(value) || 0;
   return new Intl.NumberFormat(locale, {
     style: "currency",
     currency,
     maximumFractionDigits: 0,
-  }).format(value);
+  }).format(numeric);
 }
 

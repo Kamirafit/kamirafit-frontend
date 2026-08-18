@@ -4,7 +4,7 @@ type Props = {
   address: Address;
   onEdit: (address: Address) => void;
   onDelete: (id: string) => void;
-  onSetDefault: (id: string) => void;
+  onSetDefault: (address: Address) => void;
 };
 
 export default function AddressCard({ address, onEdit, onDelete, onSetDefault }: Props) {
@@ -56,7 +56,7 @@ export default function AddressCard({ address, onEdit, onDelete, onSetDefault }:
           <>
             <span className="text-line">|</span>
             <button
-              onClick={() => onSetDefault(address.id)}
+              onClick={() => onSetDefault(address)}
               className="text-[12px] font-semibold uppercase tracking-wider text-paper-muted transition-colors hover:text-paper"
             >
               Set as Default

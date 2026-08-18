@@ -42,7 +42,7 @@ export function useLoginAdmin() {
   const queryClient = useQueryClient();
   const dispatch = useDispatch();
   return useMutation({
-    mutationFn: async ({ email, password }: LoginRequestDto) => {
+    mutationFn: async ({ email, password }: { email: string; password?: string }) => {
       return await authService.loginAdmin(email, password || "");
     },
     onSuccess: (data) => {

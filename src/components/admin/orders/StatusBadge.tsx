@@ -116,11 +116,18 @@ type Props =
  * and details modal. Palette is centralized here so any new status only
  * needs a tone entry added.
  */
+const DEFAULT_TONE: Tone = {
+  border: "border-paper-muted/30",
+  bg: "bg-paper-muted/10",
+  text: "text-paper-muted",
+  dot: "bg-paper-muted",
+};
+
 export default function StatusBadge(props: Props) {
   const tone =
-    props.kind === "order"
+    (props.kind === "order"
       ? ORDER_STATUS_TONE[props.status]
-      : PAYMENT_STATUS_TONE[props.status];
+      : PAYMENT_STATUS_TONE[props.status]) || DEFAULT_TONE;
 
   return (
     <span

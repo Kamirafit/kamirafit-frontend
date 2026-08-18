@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, useRef } from "react";
-import { CATEGORY_COLUMNS } from "./categories-data";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { useCategories } from "@/services/category";
 
-export { CATEGORY_COLUMNS } from "./categories-data";
-export type { MegaMenuColumn } from "./categories-data";
+export type MegaMenuColumn = {
+  title: string;
+  items: { label: string; href: string }[];
+};
 
 function Chevron({ open }: { open: boolean }) {
   return (
@@ -28,14 +30,46 @@ function Chevron({ open }: { open: boolean }) {
   );
 }
 
+function useDynamicCategoryColumns(): MegaMenuColumn[] {
+  const { data: serverCategories } = useCategories();
+
+  return useMemo(() => {
+    if (serverCategories && Array.isArray(serverCategories)) {
+      return serverCategories
+        .filter((cat) => Boolean(cat && cat.name))
+        .map((cat) => {
+          const subItems = (cat.subcategories || [])
+            .map((sub) => {
+              const label = typeof sub === "string" ? sub : sub.name || sub.title || "";
+              const slug =
+                typeof sub === "string"
+                  ? sub.toLowerCase().replace(/[\s_]+/g, "-")
+                  : sub.slug || (sub.name || "").toLowerCase().replace(/[\s_]+/g, "-");
+              return {
+                label,
+                href: `/shop?category=${encodeURIComponent(slug)}`,
+              };
+            })
+            .filter((item) => Boolean(item.label));
+
+          return {
+            title: cat.name,
+            items: subItems,
+          };
+        });
+    }
+    return [];
+  }, [serverCategories]);
+}
+
 /**
  * Desktop-only mega menu: trigger + hover-opened multi-column panel.
- * Hover logic is pure CSS (group-hover) — no JS, no external libs.
- * Fade + slide animation via opacity/translate-y transitions.
+ * Dynamically populated strictly from backend categories & subcategories.
  */
 export function DesktopCategoriesMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const columns = useDynamicCategoryColumns();
 
   useEffect(() => {
     const handleOutsideAction = (e: MouseEvent | TouchEvent) => {
@@ -50,6 +84,17 @@ export function DesktopCategoriesMenu() {
       document.removeEventListener("touchstart", handleOutsideAction);
     };
   }, []);
+
+  if (columns.length === 0) {
+    return (
+      <Link
+        href="/shop"
+        className="relative inline-flex items-center text-[12px] font-medium uppercase tracking-[0.22em] text-paper transition-colors hover:text-gold"
+      >
+        Categories
+      </Link>
+    );
+  }
 
   return (
     <div
@@ -77,11 +122,6 @@ export function DesktopCategoriesMenu() {
         />
       </button>
 
-      {/*
-        Positioning: top-full places the panel flush with the header bottom.
-        We change mt-2 to pt-2 (on this absolute wrapper) so there is no dead-zone gap.
-        The wrapper is always rendered, but transitions opacity and visibility.
-      */}
       <div
         role="menu"
         aria-label="Categories"
@@ -94,33 +134,35 @@ export function DesktopCategoriesMenu() {
             aria-hidden
             className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-gold/50 to-transparent"
           />
-          <div className="grid grid-cols-1 gap-8 p-8 sm:grid-cols-2 lg:grid-cols-4">
-            {CATEGORY_COLUMNS.map((col) => (
+          <div className="grid grid-cols-1 gap-x-8 gap-y-7 p-8 sm:grid-cols-2 lg:grid-cols-4">
+            {columns.map((col) => (
               <div key={col.title} className="flex flex-col">
-                <p className="font-display text-[15px] font-bold tracking-tight text-paper">
+                <Link
+                  href={`/shop?category=${encodeURIComponent(col.title.toLowerCase().replace(/[\s_]+/g, "-"))}`}
+                  onClick={() => setIsOpen(false)}
+                  className="font-display text-[15px] font-bold tracking-tight text-paper transition-colors hover:text-gold"
+                >
                   {col.title}
-                </p>
+                </Link>
                 <span
                   aria-hidden
                   className="mt-2 h-px w-8 bg-gold/70"
                 />
-                <ul className="mt-4 flex flex-col gap-2.5">
-                  {col.items.map((item) => (
-                    <li key={item.label}>
-                      <Link
-                        href={item.href}
-                        onClick={() => setIsOpen(false)}
-                        className="group/it inline-flex items-center gap-2 text-[13.5px] text-paper-muted transition-all duration-300 ease-in-out hover:text-gold"
-                      >
-                        <span
-                          aria-hidden
-                          className="h-px w-3 bg-white/25 transition-all duration-300 group-hover/it:w-5 group-hover/it:bg-gold"
-                        />
-                        {item.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
+                {col.items.length > 0 && (
+                  <ul className="mt-3.5 flex flex-col gap-2">
+                    {col.items.map((item) => (
+                      <li key={item.label}>
+                        <Link
+                          href={item.href}
+                          onClick={() => setIsOpen(false)}
+                          className="block text-[13.5px] text-paper-muted transition-colors duration-200 hover:text-gold"
+                        >
+                          {item.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             ))}
           </div>
@@ -144,8 +186,7 @@ export function DesktopCategoriesMenu() {
 }
 
 /**
- * Mobile-only expandable categories block. Replaces desktop hover with a
- * click-to-expand pattern; intended for use inside the Navbar's mobile drawer.
+ * Mobile-only expandable categories block.
  */
 export function MobileCategoriesMenu({
   onItemClick,
@@ -153,6 +194,19 @@ export function MobileCategoriesMenu({
   onItemClick?: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const columns = useDynamicCategoryColumns();
+
+  if (columns.length === 0) {
+    return (
+      <Link
+        href="/shop"
+        onClick={onItemClick}
+        className="block px-3 py-2.5 text-sm font-medium uppercase tracking-[0.2em] text-paper transition-colors hover:bg-ink-3 hover:text-gold"
+      >
+        Categories
+      </Link>
+    );
+  }
 
   return (
     <div className="flex flex-col">
@@ -175,28 +229,34 @@ export function MobileCategoriesMenu({
       >
         <div className="min-h-0">
           <div className="mb-2 space-y-5 rounded-xl border border-white/10 bg-ink/60 px-4 py-4 backdrop-blur-xl supports-[backdrop-filter]:bg-ink/45">
-            {CATEGORY_COLUMNS.map((col) => (
+            {columns.map((col) => (
               <div key={col.title}>
-                <p className="font-display text-[13px] font-bold tracking-tight text-paper">
+                <Link
+                  href={`/shop?category=${encodeURIComponent(col.title.toLowerCase().replace(/[\s_]+/g, "-"))}`}
+                  onClick={onItemClick}
+                  className="font-display text-[13px] font-bold tracking-tight text-paper block transition-colors hover:text-gold"
+                >
                   {col.title}
-                </p>
+                </Link>
                 <span
                   aria-hidden
                   className="mt-1.5 block h-px w-6 bg-gold/70"
                 />
-                <ul className="mt-3 flex flex-col gap-1.5">
-                  {col.items.map((item) => (
-                    <li key={item.label}>
-                      <Link
-                        href={item.href}
-                        onClick={onItemClick}
-                        className="block py-1 text-[13.5px] text-paper-muted transition-colors duration-300 hover:text-gold"
-                      >
-                        {item.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
+                {col.items.length > 0 && (
+                  <ul className="mt-2.5 flex flex-col gap-1.5">
+                    {col.items.map((item) => (
+                      <li key={item.label}>
+                        <Link
+                          href={item.href}
+                          onClick={onItemClick}
+                          className="block py-1 text-[13.5px] text-paper-muted transition-colors duration-200 hover:text-gold"
+                        >
+                          {item.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             ))}
           </div>

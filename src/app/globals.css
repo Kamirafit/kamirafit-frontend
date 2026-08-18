@@ -91,23 +91,31 @@ input[type="number"] {
   button, a { -webkit-tap-highlight-color: transparent; }
 }
 
-/* Keep admin modal scrolling functional without showing a browser scrollbar. */
-.modal-scrollbar-hidden {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.modal-scrollbar-hidden::-webkit-scrollbar {
-  display: none;
-}
-/* Hide both the outer and nested scrollbars in every modal while preserving scrolling. */
+/* Complete scrollbar suppression across all modals, dialogs, and popups */
 .modal-scrollbar-hidden,
-.modal-scrollbar-hidden * {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+.no-scrollbar,
+[role="dialog"],
+[aria-modal="true"],
+dialog,
+.modal-scrollbar-hidden *,
+.no-scrollbar *,
+[role="dialog"] *,
+[aria-modal="true"] * {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
 }
 
 .modal-scrollbar-hidden::-webkit-scrollbar,
-.modal-scrollbar-hidden *::-webkit-scrollbar {
-  display: none;
+.no-scrollbar::-webkit-scrollbar,
+[role="dialog"]::-webkit-scrollbar,
+[aria-modal="true"]::-webkit-scrollbar,
+dialog::-webkit-scrollbar,
+.modal-scrollbar-hidden *::-webkit-scrollbar,
+.no-scrollbar *::-webkit-scrollbar,
+[role="dialog"] *::-webkit-scrollbar,
+[aria-modal="true"] *::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
 }

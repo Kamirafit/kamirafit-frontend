@@ -244,21 +244,59 @@ export const mockApi = {
     login: (input: LoginRequestDto) => respond<{ user: User }>(() => {
       const valReq = safeValidate(LoginRequestDtoSchema, input, "auth.login (request)");
       if (!valReq.success) return fail("VALIDATION_ERROR", valReq.error.message);
-      return ok({ user: { email: input.email, firstName: "Kamira", lastName: "User" } });
+      return ok({
+        user: {
+          email: input.email,
+          firstName: "Kamira",
+          lastName: "User",
+        },
+      });
     }),
-    loginCustomer: (email: string) => respond(() => ok({ role: "customer" as const, user: { email, firstName: "Kamira", lastName: "User" } })),
+    loginCustomer: (input: { email: string; password?: string }) => respond(() => {
+      const valReq = safeValidate(LoginRequestDtoSchema, input, "auth.loginCustomer (request)");
+      if (!valReq.success) return fail("VALIDATION_ERROR", valReq.error.message);
+      return ok({
+        role: "customer" as const,
+        user: {
+          email: input.email,
+          firstName: "Kamira",
+          lastName: "User",
+        },
+      });
+    }),
     loginAdmin: (email: string, password: string) => respond(() => email === "admin@kamirafit.com" && password === "admin"
       ? ok({ role: "admin" as const, user: { email, firstName: "Super", lastName: "Admin" } })
       : fail("INVALID_CREDENTIALS", "Invalid admin credentials.")),
     register: (input: RegisterRequestDto) => respond<{ user: User }>(() => {
       const valReq = safeValidate(RegisterRequestDtoSchema, input, "auth.register (request)");
       if (!valReq.success) return fail("VALIDATION_ERROR", valReq.error.message);
-      return ok({ user: { email: input.email, firstName: input.firstName, lastName: input.lastName } });
+      return ok({
+        user: {
+          email: input.email,
+          firstName: input.firstName,
+          lastName: input.lastName,
+          countryCode: input.countryCode,
+          phoneNumber: input.phoneNumber,
+          gender: input.gender,
+          mobileNumber: `${input.countryCode} ${input.phoneNumber}`,
+        },
+      });
     }),
     registerCustomer: (input: RegisterRequestDto) => respond(() => {
       const valReq = safeValidate(RegisterRequestDtoSchema, input, "auth.registerCustomer (request)");
       if (!valReq.success) return fail("VALIDATION_ERROR", valReq.error.message);
-      return ok({ role: "customer" as const, user: { email: input.email, firstName: input.firstName, lastName: input.lastName } });
+      return ok({
+        role: "customer" as const,
+        user: {
+          email: input.email,
+          firstName: input.firstName,
+          lastName: input.lastName,
+          countryCode: input.countryCode,
+          phoneNumber: input.phoneNumber,
+          gender: input.gender,
+          mobileNumber: `${input.countryCode} ${input.phoneNumber}`,
+        },
+      });
     }),
     refresh: () => respond(() => ok({ accessToken: "mock-new-access-token" })),
     logout: () => respond(() => ok(undefined)),

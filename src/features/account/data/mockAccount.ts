@@ -1,11 +1,15 @@
 import { Address, Order, Profile } from "../types";
 
 export const MOCK_PROFILE: Profile = {
-  firstName: "Ayesha",
-  lastName: "Sharma",
-  email: "ayesha.sharma@example.com",
-  mobileNumber: "+91 9876543210",
-  gender: "Female",
+  id: "51f7cb88-b17f-4e08-b2e8-818557da01d9",
+  firstName: "Krishnendu",
+  lastName: "Ganguly",
+  email: "krishnendug88@gmail.com",
+  countryCode: "+91",
+  phoneNumber: "9163461252",
+  mobileNumber: "+91 9163461252",
+  gender: "male",
+  role: "CUSTOMER",
 };
 
 export const MOCK_ADDRESSES: Address[] = [

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CATEGORY_COLUMNS } from "@/components/navbar/categories-data";
+import { categoryService } from "@/services/category";
 import { FacebookIcon, InstagramIcon } from "./icons";
 
 const SUPPORT_LINKS = [
@@ -14,8 +14,23 @@ const SOCIALS = [
   { label: "Facebook", href: "#", Icon: FacebookIcon },
 ];
 
-export default function Footer() {
+export default async function Footer() {
   const year = new Date().getFullYear();
+  const rawCategories = await categoryService.getCategories();
+  const categories = (rawCategories || []).map((cat) => ({
+    title: cat.name,
+    items: (cat.subcategories || []).map((sub) => {
+      const label = typeof sub === "string" ? sub : sub.name || sub.title || "";
+      const slug =
+        typeof sub === "string"
+          ? sub.toLowerCase().replace(/[\s_]+/g, "-")
+          : sub.slug || (sub.name || "").toLowerCase().replace(/[\s_]+/g, "-");
+      return {
+        label,
+        href: `/shop?category=${encodeURIComponent(slug)}`,
+      };
+    }).filter((item) => Boolean(item.label)),
+  }));
 
   return (
     <footer
@@ -57,23 +72,28 @@ export default function Footer() {
               Shop
             </h3>
             <div className="mt-5 grid grid-cols-2 gap-x-8 gap-y-6 sm:grid-cols-4">
-              {CATEGORY_COLUMNS.map((col) => (
+              {categories.map((col) => (
                 <div key={col.title}>
-                  <p className="font-display text-[13px] font-semibold text-paper">
+                  <Link
+                    href={`/shop?category=${encodeURIComponent(col.title.toLowerCase().replace(/[\s_]+/g, "-"))}`}
+                    className="font-display text-[13px] font-semibold text-paper transition-colors hover:text-gold"
+                  >
                     {col.title}
-                  </p>
-                  <ul className="mt-3 space-y-2">
-                    {col.items.map((item) => (
-                      <li key={item.label}>
-                        <Link
-                          href={item.href}
-                          className="text-[13px] text-paper-muted transition-colors duration-300 hover:text-gold"
-                        >
-                          {item.label}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
+                  </Link>
+                  {col.items.length > 0 && (
+                    <ul className="mt-3 space-y-2">
+                      {col.items.map((item) => (
+                        <li key={item.label}>
+                          <Link
+                            href={item.href}
+                            className="text-[13px] text-paper-muted transition-colors duration-300 hover:text-gold"
+                          >
+                            {item.label}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               ))}
             </div>

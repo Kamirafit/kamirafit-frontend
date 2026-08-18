@@ -28,8 +28,17 @@ export const authService = {
     return unwrapApiResponse(apiClient.post("/auth/refresh"));
   },
   async logout(): Promise<void> {
-    await unwrapApiResponse(apiClient.post("/auth/logout"));
-    AuthStorage.clearAll();
+    try {
+      await unwrapApiResponse(apiClient.post("/auth/logout-customer", {}));
+    } catch {
+      try {
+        await unwrapApiResponse(apiClient.post("/auth/logout", {}));
+      } catch {
+        // Clear local storage regardless of backend error
+      }
+    } finally {
+      AuthStorage.clearAll();
+    }
   },
   async logoutAdmin(): Promise<void> {
     try {

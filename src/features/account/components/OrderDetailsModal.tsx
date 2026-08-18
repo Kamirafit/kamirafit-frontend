@@ -2,57 +2,37 @@
 
 import Image from "next/image";
 import { DEFAULT_PRODUCT_IMAGE, getValidImageSrc } from "@/lib/format";
-import { Order, OrderStatus } from "../types";
+import { Order } from "../types";
 import { formatPrice } from "@/lib/format";
+import OrderStatusBadge from "./OrderStatusBadge";
 
 type Props = {
   order: Order;
   onClose: () => void;
 };
 
-const getStatusColor = (status: OrderStatus) => {
-  switch (status) {
-    case "Pending":
-    case "Processing":
-      return "bg-[#EAB308]/10 text-[#EAB308]";
-    case "Confirmed":
-    case "Shipped":
-    case "In Transit":
-      return "bg-blue-500/10 text-blue-500";
-    case "Delivered":
-      return "bg-[#22C55E]/10 text-[#22C55E]";
-    case "Refund Initiated":
-    case "Refund Completed":
-      return "bg-orange-500/10 text-orange-500";
-    case "Return Requested":
-    case "Return Approved":
-    case "Return In Progress":
-    case "Return Completed":
-      return "bg-purple-500/10 text-purple-500";
-    case "Cancelled":
-      return "bg-[#DC2626]/10 text-[#DC2626]";
-    default:
-      return "bg-paper-muted/10 text-paper-muted";
-  }
-};
-
 export default function OrderDetailsModal({ order, onClose }: Props) {
-  const dateStr = new Date(order.date).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  const dateValue = (order as any).createdAt || order.date;
+  const dateStr = dateValue
+    ? new Date(dateValue).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : "Recent";
+
+  const orderNum = (order as any).orderNumber || order.id;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div role="dialog" aria-modal="true" className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-line bg-ink shadow-2xl backdrop-blur-xl">
+      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto modal-scrollbar-hidden rounded-2xl border border-line bg-ink shadow-2xl backdrop-blur-xl">
         <div className="sticky top-0 z-10 border-b border-line bg-ink/95 px-6 py-4 backdrop-blur-md flex justify-between items-center">
           <div>
             <h2 className="font-display text-lg font-bold text-paper">
               Order Details
             </h2>
-            <p className="text-sm text-paper-muted">{order.id} • {dateStr}</p>
+            <p className="text-sm text-paper-muted">{orderNum} • {dateStr}</p>
           </div>
           <button onClick={onClose} className="text-paper-muted hover:text-paper">
             <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -67,9 +47,7 @@ export default function OrderDetailsModal({ order, onClose }: Props) {
               <h3 className="text-[12px] font-semibold uppercase tracking-wider text-paper-muted">
                 Order Status
               </h3>
-              <span className={`inline-flex rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wider ${getStatusColor(order.status)}`}>
-                {order.status}
-              </span>
+              <OrderStatusBadge status={order.status} size="lg" />
             </div>
             {order.trackingNumber && (
               <p className="text-sm text-paper">
@@ -142,6 +120,19 @@ export default function OrderDetailsModal({ order, onClose }: Props) {
                 <p className="pt-2 text-paper-muted text-[12px]">
                   Paid via {order.paymentMethod}
                 </p>
+                <div className="pt-3">
+                  <a
+                    href={`/api/orders/${order.id}/invoice`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 w-full rounded-xl border border-line bg-ink-2 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-paper transition-colors hover:border-gold hover:text-gold"
+                  >
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Download Tax Invoice (PDF)
+                  </a>
+                </div>
               </div>
             </div>
           </div>

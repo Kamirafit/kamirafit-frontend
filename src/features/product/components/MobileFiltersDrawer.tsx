@@ -68,7 +68,7 @@ export default function MobileFiltersDrawer({
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 py-6">
+        <div className="flex-1 overflow-y-auto modal-scrollbar-hidden px-5 py-6">
           <FiltersSidebar
             filters={filters}
             counts={counts}

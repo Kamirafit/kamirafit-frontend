@@ -11,7 +11,6 @@ const NAV_ITEMS = [
   { label: "My Orders", href: "/account/orders" },
   { label: "Profile Information", href: "/account/profile" },
   { label: "Manage Addresses", href: "/account/addresses" },
-  { label: "PAN Card Information", href: "/account/pan" },
 ];
 
 export default function AccountSidebar() {
@@ -66,7 +65,7 @@ export default function AccountSidebar() {
       </aside>
 
       {showLogoutModal ? (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-[100] flex items-center justify-center px-4">
           <div
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => setShowLogoutModal(false)}

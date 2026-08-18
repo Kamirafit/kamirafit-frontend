@@ -13,29 +13,65 @@ export default function ProfileForm() {
   const updateMutation = useUpdateProfile();
 
   const [isEditing, setIsEditing] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
   const [formData, setFormData] = useState<Profile>({
     firstName: "",
     lastName: "",
     email: "",
-    mobileNumber: "",
-    gender: "",
+    countryCode: "+91",
+    phoneNumber: "",
+    gender: "male",
   });
 
   useEffect(() => {
     if (serverProfile) {
-      setFormData(serverProfile);
+      setFormData({
+        ...serverProfile,
+        countryCode: serverProfile.countryCode || "+91",
+        phoneNumber: serverProfile.phoneNumber || serverProfile.mobileNumber?.replace(/^\+\d+\s*/, "") || "",
+        gender: (serverProfile.gender || "male").toLowerCase(),
+      });
     }
   }, [serverProfile]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleStartEdit = (e: React.MouseEvent) => {
     e.preventDefault();
-    await updateMutation.mutateAsync(formData);
-    setIsEditing(false);
+    e.stopPropagation();
+    setSaveSuccess(false);
+    setIsEditing(true);
   };
 
-  const handleCancel = () => {
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isEditing) return;
+
+    try {
+      await updateMutation.mutateAsync({
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        email: formData.email.trim(),
+        countryCode: formData.countryCode || "+91",
+        phoneNumber: formData.phoneNumber || "",
+        gender: formData.gender?.toLowerCase() || "male",
+      });
+      setIsEditing(false);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 4000);
+    } catch {
+      // Error handled by mutation state
+    }
+  };
+
+  const handleCancel = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (serverProfile) {
-      setFormData(serverProfile);
+      setFormData({
+        ...serverProfile,
+        countryCode: serverProfile.countryCode || "+91",
+        phoneNumber: serverProfile.phoneNumber || serverProfile.mobileNumber?.replace(/^\+\d+\s*/, "") || "",
+        gender: (serverProfile.gender || "male").toLowerCase(),
+      });
     }
     setIsEditing(false);
   };
@@ -53,8 +89,20 @@ export default function ProfileForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
-      {updateMutation.isError ? <ErrorState className="min-h-0 py-6" title="Changes weren’t saved" message="Please check your connection and try saving again." /> : null}
+    <form onSubmit={handleSave} className="space-y-6 max-w-2xl">
+      {saveSuccess && (
+        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-400">
+          Profile updated successfully.
+        </div>
+      )}
+      {updateMutation.isError ? (
+        <ErrorState
+          className="min-h-0 py-6"
+          title="Changes weren’t saved"
+          message="Please check your connection and try saving again."
+        />
+      ) : null}
+
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
           <label className="text-[12px] font-medium text-paper-muted uppercase tracking-wider">
@@ -66,7 +114,11 @@ export default function ProfileForm() {
             disabled={!isEditing}
             value={formData.firstName}
             onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-            className="rounded-lg border border-line bg-transparent px-4 py-3 text-[14px] text-paper outline-none transition-colors focus:border-gold disabled:opacity-70 disabled:bg-ink-3"
+            className={`rounded-lg border px-4 py-3 text-[14px] text-paper outline-none transition-colors ${
+              isEditing
+                ? "border-gold/60 bg-ink-2 focus:border-gold focus:ring-1 focus:ring-gold/30"
+                : "border-line bg-ink-3/40 opacity-75 cursor-default"
+            }`}
           />
         </div>
 
@@ -80,7 +132,11 @@ export default function ProfileForm() {
             disabled={!isEditing}
             value={formData.lastName}
             onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-            className="rounded-lg border border-line bg-transparent px-4 py-3 text-[14px] text-paper outline-none transition-colors focus:border-gold disabled:opacity-70 disabled:bg-ink-3"
+            className={`rounded-lg border px-4 py-3 text-[14px] text-paper outline-none transition-colors ${
+              isEditing
+                ? "border-gold/60 bg-ink-2 focus:border-gold focus:ring-1 focus:ring-gold/30"
+                : "border-line bg-ink-3/40 opacity-75 cursor-default"
+            }`}
           />
         </div>
 
@@ -94,22 +150,43 @@ export default function ProfileForm() {
             disabled={!isEditing}
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            className="rounded-lg border border-line bg-transparent px-4 py-3 text-[14px] text-paper outline-none transition-colors focus:border-gold disabled:opacity-70 disabled:bg-ink-3"
+            className={`rounded-lg border px-4 py-3 text-[14px] text-paper outline-none transition-colors ${
+              isEditing
+                ? "border-gold/60 bg-ink-2 focus:border-gold focus:ring-1 focus:ring-gold/30"
+                : "border-line bg-ink-3/40 opacity-75 cursor-default"
+            }`}
           />
         </div>
 
         <div className="flex flex-col gap-1.5">
           <label className="text-[12px] font-medium text-paper-muted uppercase tracking-wider">
-            Mobile Number
+            Phone Number
           </label>
-          <input
-            type="tel"
-            required
-            disabled={!isEditing}
-            value={formData.mobileNumber}
-            onChange={(e) => setFormData({ ...formData, mobileNumber: e.target.value })}
-            className="rounded-lg border border-line bg-transparent px-4 py-3 text-[14px] text-paper outline-none transition-colors focus:border-gold disabled:opacity-70 disabled:bg-ink-3"
-          />
+          <div className="flex gap-2">
+            <input
+              type="text"
+              disabled={!isEditing}
+              value={formData.countryCode || "+91"}
+              onChange={(e) => setFormData({ ...formData, countryCode: e.target.value })}
+              className={`w-20 rounded-lg border px-3 py-3 text-[14px] text-paper outline-none transition-colors ${
+                isEditing
+                  ? "border-gold/60 bg-ink-2 focus:border-gold focus:ring-1 focus:ring-gold/30"
+                  : "border-line bg-ink-3/40 opacity-75 cursor-default"
+              }`}
+            />
+            <input
+              type="tel"
+              required
+              disabled={!isEditing}
+              value={formData.phoneNumber || ""}
+              onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+              className={`flex-1 rounded-lg border px-4 py-3 text-[14px] text-paper outline-none transition-colors ${
+                isEditing
+                  ? "border-gold/60 bg-ink-2 focus:border-gold focus:ring-1 focus:ring-gold/30"
+                  : "border-line bg-ink-3/40 opacity-75 cursor-default"
+              }`}
+            />
+          </div>
         </div>
       </div>
 
@@ -118,18 +195,27 @@ export default function ProfileForm() {
           Gender
         </label>
         <div className="flex gap-4">
-          {["Male", "Female", "Other"].map((g) => (
-            <label key={g} className={`flex items-center gap-2 cursor-pointer ${!isEditing ? "opacity-70 cursor-not-allowed" : ""}`}>
+          {[
+            { label: "Male", value: "male" },
+            { label: "Female", value: "female" },
+            { label: "Other", value: "other" },
+          ].map(({ label, value }) => (
+            <label
+              key={value}
+              className={`flex items-center gap-2 cursor-pointer ${
+                !isEditing ? "opacity-75 cursor-default" : ""
+              }`}
+            >
               <input
                 type="radio"
                 name="gender"
-                value={g}
+                value={value}
                 disabled={!isEditing}
-                checked={formData.gender === g}
-                onChange={(e) => setFormData({ ...formData, gender: e.target.value as "Male" | "Female" | "Other" })}
+                checked={(formData.gender || "").toLowerCase() === value}
+                onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
                 className="h-4 w-4 text-gold focus:ring-gold accent-gold"
               />
-              <span className="text-[14px] text-paper">{g}</span>
+              <span className="text-[14px] text-paper">{label}</span>
             </label>
           ))}
         </div>
@@ -139,8 +225,8 @@ export default function ProfileForm() {
         {!isEditing ? (
           <button
             type="button"
-            onClick={() => setIsEditing(true)}
-            className="rounded-full bg-gold px-8 py-3 text-[12px] font-semibold uppercase tracking-wider text-white shadow-md transition-colors hover:bg-gold-bright"
+            onClick={handleStartEdit}
+            className="rounded-full bg-gold px-8 py-3 text-[12px] font-semibold uppercase tracking-wider text-white shadow-md transition-all duration-300 hover:bg-gold-bright hover:-translate-y-px"
           >
             Edit Profile
           </button>
@@ -148,9 +234,10 @@ export default function ProfileForm() {
           <>
             <button
               type="submit"
-              className="rounded-full bg-gold px-8 py-3 text-[12px] font-semibold uppercase tracking-wider text-white shadow-md transition-colors hover:bg-gold-bright"
+              disabled={updateMutation.isPending}
+              className="rounded-full bg-gold px-8 py-3 text-[12px] font-semibold uppercase tracking-wider text-white shadow-md transition-all duration-300 hover:bg-gold-bright hover:-translate-y-px disabled:opacity-50"
             >
-              Save Changes
+              {updateMutation.isPending ? "Saving Changes..." : "Save Changes"}
             </button>
             <button
               type="button"
