@@ -11,7 +11,8 @@ type Props = {
 };
 
 export default function OrderCard({ order, onViewDetails, onReviewProduct }: Props) {
-  const dateValue = (order as any).createdAt || order.date;
+  const customOrder = order as { createdAt?: string; orderNumber?: string } & Order;
+  const dateValue = customOrder.createdAt || order.date;
   const dateStr = dateValue
     ? new Date(dateValue).toLocaleDateString("en-US", {
         year: "numeric",
@@ -20,7 +21,7 @@ export default function OrderCard({ order, onViewDetails, onReviewProduct }: Pro
       })
     : "Recent";
 
-  const orderNum = (order as any).orderNumber || order.id;
+  const orderNum = customOrder.orderNumber || order.id;
 
   return (
     <div className="flex flex-col overflow-hidden rounded-2xl border border-line bg-ink shadow-sm transition-all duration-300 hover:border-gold/40 hover:shadow-md">

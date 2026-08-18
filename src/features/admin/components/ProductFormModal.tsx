@@ -189,7 +189,7 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
   }, [categoriesProp, apiCategories]);
 
   const selectedCategoryObj = useMemo(
-    () => categoriesList.find((c) => c.name === values.category),
+    () => categoriesList.find((c: AdminCategory) => c.name === values.category),
     [categoriesList, values.category]
   );
 
@@ -383,7 +383,7 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
                 className={selectClass}
               >
                 <option value="" disabled hidden>Select Category</option>
-                {categoriesList.map((category) => (
+                {categoriesList.map((category: AdminCategory) => (
                   <option key={category.id || category.name} value={category.name}>
                     {category.name}
                   </option>
@@ -398,7 +398,7 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
                 className={!values.category ? selectClass + " cursor-not-allowed bg-ink-3 text-paper-muted opacity-60" : selectClass}
               >
                 <option value="" disabled hidden>Select Subcategory</option>
-                {availableSubcategories.map((sub) => (
+                {availableSubcategories.map((sub: string) => (
                   <option key={sub} value={sub}>
                     {sub}
                   </option>

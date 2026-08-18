@@ -12,7 +12,8 @@ type Props = {
 };
 
 export default function OrderDetailsModal({ order, onClose }: Props) {
-  const dateValue = (order as any).createdAt || order.date;
+  const customOrder = order as { createdAt?: string; orderNumber?: string } & Order;
+  const dateValue = customOrder.createdAt || order.date;
   const dateStr = dateValue
     ? new Date(dateValue).toLocaleDateString("en-US", {
         year: "numeric",
@@ -21,7 +22,7 @@ export default function OrderDetailsModal({ order, onClose }: Props) {
       })
     : "Recent";
 
-  const orderNum = (order as any).orderNumber || order.id;
+  const orderNum = customOrder.orderNumber || order.id;
 
   return (
     <div role="dialog" aria-modal="true" className="fixed inset-0 z-[100] flex items-center justify-center p-4">

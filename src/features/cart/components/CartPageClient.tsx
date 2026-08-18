@@ -9,7 +9,7 @@ import CartLineItem from "./CartLineItem";
 import { useProducts } from "@/services/product";
 import CartSummary from "./CartSummary";
 import EmptyCart from "./EmptyCart";
-import { ErrorState, LoadingState, OfflineState } from "@/components/states";
+import { ErrorState, OfflineState } from "@/components/states";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 
 export default function CartPageClient() {

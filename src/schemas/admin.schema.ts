@@ -17,6 +17,10 @@ export const AdminUserSchema = z.object({
   email: z.string().email(),
   phone: z.string(),
   address: z.string(),
+  isActive: z.boolean().optional(),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  phoneNumber: z.string().optional(),
 });
 
 export const AdminOrderItemSchema = z.object({
@@ -42,7 +46,12 @@ export const AdminOrderSchema = z.object({
   subtotal: z.number(),
   deliveryFee: z.number(),
   total: z.number(),
+  totalAmount: z.number().optional(),
   paymentStatus: PaymentStatusSchema,
   orderStatus: AdminOrderStatusSchema,
   createdAt: ISODateStringSchema,
+  courierName: z.string().optional(),
+  trackingCode: z.string().optional(),
+  trackingUrl: z.string().optional(),
+  notes: z.string().optional(),
 });

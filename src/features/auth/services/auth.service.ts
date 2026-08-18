@@ -16,7 +16,24 @@ export const authService = {
     return unwrapApiResponse(apiClient.post("/auth/register-customer", data));
   },
   async loginAdmin(email: string, password: string): Promise<AuthResult> {
-    return unwrapApiResponse(apiClient.post("/auth/login-admin", { email, password }));
+    const raw = await unwrapApiResponse<{
+      user?: User;
+      token?: string;
+      accessToken?: string;
+      role?: UserRole;
+    }>(
+      apiClient
+        .post("/v1/auth/login-admin", { email, password })
+        .catch(() => apiClient.post("/auth/login-admin", { email, password }))
+    );
+    const token = raw.token || raw.accessToken || "";
+    const user = raw.user || (raw as unknown as User);
+    const role = (user.role || raw.role || "ADMIN") as UserRole;
+    return {
+      user,
+      role,
+      accessToken: token,
+    };
   },
   async login(credentials: LoginRequestDto): Promise<LoginResponseDto["data"]> {
     return unwrapApiResponse(apiClient.post("/auth/login", credentials));
@@ -42,7 +59,12 @@ export const authService = {
   },
   async logoutAdmin(): Promise<void> {
     try {
-      await unwrapApiResponse(apiClient.post("/auth/logout"));
+      await unwrapApiResponse(
+        apiClient
+          .post("/v1/admin/logout", {})
+          .catch(() => apiClient.post("/v1/auth/logout-admin", {}))
+          .catch(() => apiClient.post("/auth/logout", {}))
+      );
     } catch {
       // Ignore network errors so client session is always cleared
     } finally {

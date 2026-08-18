@@ -2,7 +2,18 @@ import type { AdminCategory, AdminOrder, AdminUser, EntityId, ProductEntity, Siz
 import type { ApiErrorDto, ApiResponseDto, DeleteResponseData, EmptyRequestDto } from "./common";
 import type { CreateProductRequestDto } from "./catalog";
 
-export interface AdminStatsDto { salesTotal: number; ordersCount: number; productsCount: number; usersCount: number; }
+export interface AdminStatsDto {
+  salesTotal?: number;
+  totalRevenue?: number;
+  ordersCount?: number;
+  totalOrders?: number;
+  productsCount?: number;
+  totalProducts?: number;
+  usersCount?: number;
+  totalUsers?: number;
+  recentOrders?: Record<string, unknown>[];
+  orderStatusCounts?: Record<string, number>;
+}
 export type GetAdminStatsRequestDto = EmptyRequestDto;
 export type GetAdminStatsResponseDto = ApiResponseDto<AdminStatsDto>;
 export type GetAdminStatsErrorDto = ApiErrorDto;

@@ -15,7 +15,7 @@ import ShippingForm, {
   type ShippingDetails,
   type ShippingErrors,
 } from "./ShippingForm";
-import { ErrorState, LoadingState, OfflineState } from "@/components/states";
+import { ErrorState, OfflineState } from "@/components/states";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 
 const INITIAL_VALUES: ShippingDetails = {

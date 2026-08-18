@@ -18,7 +18,11 @@ import FormField, {
   textareaClass,
 } from "@/features/admin/components/FormField";
 import Modal from "@/features/admin/components/Modal";
-import { useUpdateAdminOrder, useDeleteAdminOrder } from "@/services/admin";
+import {
+  useUpdateAdminOrder,
+  useDeleteAdminOrder,
+  useFulfillAdminOrder,
+} from "@/services/admin";
 import { COLOR_OPTIONS, SIZE_OPTIONS } from "@/features/product/types";
 import StatusBadge from "./StatusBadge";
 import ErrorState from "@/components/states/ErrorState";
@@ -45,6 +49,10 @@ type Draft = {
   items: DraftItem[];
   paymentStatus: PaymentStatus;
   orderStatus: OrderStatus;
+  courierName?: string;
+  trackingCode?: string;
+  trackingUrl?: string;
+  notes?: string;
 };
 
 function buildDraft(order: Order): Draft {
@@ -53,6 +61,10 @@ function buildDraft(order: Order): Draft {
     items: order.items.map((it) => ({ ...it })),
     paymentStatus: order.paymentStatus,
     orderStatus: order.orderStatus,
+    courierName: order.courierName || "",
+    trackingCode: order.trackingCode || "",
+    trackingUrl: order.trackingUrl || "",
+    notes: order.notes || "",
   };
 }
 
@@ -109,23 +121,22 @@ type Props = {
   order: Order | null;
 };
 
-/**
- * Full-fidelity order editor. A single `Draft` is edited locally and saved
- * atomically via `updateOrder`. Delete routes through the shared
- * `ConfirmDialog` so it matches every other admin destructive action.
- */
 export default function OrderDetailsModal({ open, onClose, order }: Props) {
   const updateMutation = useUpdateAdminOrder();
+  const fulfillMutation = useFulfillAdminOrder();
   const deleteMutation = useDeleteAdminOrder();
   const [draft, setDraft] = useState<Draft | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [showFulfillSection, setShowFulfillSection] = useState(false);
 
   useEffect(() => {
     if (open && order) {
       setDraft(buildDraft(order));
+      setShowFulfillSection(Boolean(order.trackingCode || order.courierName));
     } else if (!open) {
       setDraft(null);
       setConfirmDelete(false);
+      setShowFulfillSection(false);
     }
   }, [open, order]);
 
@@ -305,6 +316,93 @@ export default function OrderDetailsModal({ open, onClose, order }: Props) {
                 className={textareaClass}
               />
             </FormField>
+          </section>
+
+          <section className="flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <SectionTitle>Fulfillment & Tracking</SectionTitle>
+              {!showFulfillSection && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setShowFulfillSection(true)}
+                >
+                  Attach Tracking
+                </Button>
+              )}
+            </div>
+
+            {showFulfillSection && (
+              <div className="rounded-2xl border border-line bg-ink-2/40 p-4 space-y-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <FormField label="Courier / Logistics Partner">
+                    <input
+                      type="text"
+                      placeholder="e.g. BlueDart Express, Delhivery"
+                      value={draft.courierName || ""}
+                      onChange={(e) =>
+                        setDraft((d) => (d ? { ...d, courierName: e.target.value } : d))
+                      }
+                      className={inputClass}
+                    />
+                  </FormField>
+                  <FormField label="Tracking Code / AWB">
+                    <input
+                      type="text"
+                      placeholder="e.g. BD849204910IN"
+                      value={draft.trackingCode || ""}
+                      onChange={(e) =>
+                        setDraft((d) => (d ? { ...d, trackingCode: e.target.value } : d))
+                      }
+                      className={inputClass}
+                    />
+                  </FormField>
+                </div>
+                <FormField label="Tracking URL (Optional)">
+                  <input
+                    type="url"
+                    placeholder="https://track.courier.com/..."
+                    value={draft.trackingUrl || ""}
+                    onChange={(e) =>
+                      setDraft((d) => (d ? { ...d, trackingUrl: e.target.value } : d))
+                    }
+                    className={inputClass}
+                  />
+                </FormField>
+                <FormField label="Fulfillment Notes (Optional)">
+                  <input
+                    type="text"
+                    placeholder="Handed over to logistics partner"
+                    value={draft.notes || ""}
+                    onChange={(e) =>
+                      setDraft((d) => (d ? { ...d, notes: e.target.value } : d))
+                    }
+                    className={inputClass}
+                  />
+                </FormField>
+                <div className="flex justify-end">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    disabled={!draft.courierName || !draft.trackingCode || fulfillMutation.isPending}
+                    onClick={() => {
+                      if (!draft || !draft.courierName || !draft.trackingCode) return;
+                      fulfillMutation.mutate({
+                        id: order.id,
+                        data: {
+                          courierName: draft.courierName,
+                          trackingCode: draft.trackingCode,
+                          trackingUrl: draft.trackingUrl,
+                          notes: draft.notes,
+                        },
+                      });
+                    }}
+                  >
+                    {fulfillMutation.isPending ? "Updating..." : "Dispatch / Fulfill Order"}
+                  </Button>
+                </div>
+              </div>
+            )}
           </section>
 
           <section className="flex flex-col gap-4">

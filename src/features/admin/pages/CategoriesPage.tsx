@@ -39,7 +39,7 @@ export default function CategoriesPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const deletingCategory = deletingId
-    ? categories.find((c) => c.id === deletingId) ?? null
+    ? categories.find((c: AdminCategory) => c.id === deletingId) ?? null
     : null;
 
   const columns: Column<AdminCategory>[] = [

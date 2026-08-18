@@ -93,7 +93,7 @@ export default function AddressFormModal({ address, onClose, onSave }: Props) {
     setErrors(validateFields(updatedData));
   };
 
-  const handleFieldChange = (field: keyof Address, value: any) => {
+  const handleFieldChange = (field: keyof Address, value: string | boolean) => {
     const updated = { ...formData, [field]: value };
     setFormData(updated);
     if (touched[field]) {
