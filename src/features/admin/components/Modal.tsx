@@ -45,7 +45,7 @@ export default function Modal({
       role="dialog"
       aria-modal="true"
       aria-label={title}
-      className="fixed inset-0 z-[110] flex items-start justify-center px-4 pt-[8vh] sm:pt-[10vh]"
+      className="fixed inset-0 z-[110] flex items-start justify-center p-3 sm:p-4 pt-[4vh] sm:pt-[8vh]"
     >
       <button
         type="button"
@@ -54,15 +54,15 @@ export default function Modal({
         className="absolute inset-0 h-full w-full bg-black/50 backdrop-blur-md"
       />
       <div
-        className={`relative z-10 w-full ${WIDTH[maxWidth]} max-h-[85vh] overflow-y-auto modal-scrollbar-hidden rounded-2xl border border-white/15 bg-ink/85 shadow-[0_40px_120px_-40px_rgba(0,0,0,0.6)] backdrop-blur-xl supports-[backdrop-filter]:bg-ink/70`}
+        className={`relative z-10 w-full ${WIDTH[maxWidth]} max-h-[92vh] sm:max-h-[85vh] overflow-y-auto modal-scrollbar-hidden rounded-2xl border border-white/15 bg-ink/90 shadow-[0_40px_120px_-40px_rgba(0,0,0,0.6)] backdrop-blur-xl supports-[backdrop-filter]:bg-ink/75`}
       >
-        <div className="flex items-center justify-between gap-4 border-b border-line px-6 py-5">
-          <div className="flex flex-col gap-1.5">
+        <div className="sticky top-0 z-20 flex items-center justify-between gap-4 border-b border-line bg-ink/95 px-4 py-3.5 sm:px-6 sm:py-5 backdrop-blur-md">
+          <div className="flex flex-col gap-1">
             <span className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.28em] text-gold">
-              <span aria-hidden className="h-px w-6 bg-gold/60" />
+              <span aria-hidden className="h-px w-5 sm:w-6 bg-gold/60" />
               KamiraFit admin
             </span>
-            <h2 className="font-display text-[20px] font-semibold leading-tight text-paper">
+            <h2 className="font-display text-[17px] sm:text-[20px] font-semibold leading-tight text-paper">
               {title}
             </h2>
           </div>
@@ -70,14 +70,14 @@ export default function Modal({
             type="button"
             aria-label="Close modal"
             onClick={onClose}
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-line text-paper-muted transition-colors hover:border-gold hover:text-gold"
+            className="inline-flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full border border-line text-paper-muted transition-colors hover:border-gold hover:text-gold"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden>
               <path d="m6 6 12 12M6 18 18 6" />
             </svg>
           </button>
         </div>
-        <div className="px-6 py-6">{children}</div>
+        <div className="px-4 py-4 sm:px-6 sm:py-6">{children}</div>
       </div>
     </div>
   );

@@ -32,15 +32,15 @@ export default function DataTable<Row>({
   emptyLabel = "Nothing to show.",
 }: Props<Row>) {
   return (
-    <AdminCard>
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-line text-left text-[13px]">
+    <AdminCard className="overflow-hidden">
+      <div className="overflow-x-auto scrollbar-thin">
+        <table className="min-w-[620px] lg:min-w-full divide-y divide-line text-left text-[13px]">
           <thead className="bg-ink-2/60 text-[11px] font-semibold uppercase tracking-[0.14em] text-paper-muted">
             <tr>
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  className={`px-4 py-3 ${col.align === "right" ? "text-right" : ""} ${col.width ?? ""}`.trim()}
+                  className={`px-4 py-3.5 whitespace-nowrap ${col.align === "right" ? "text-right" : ""} ${col.width ?? ""}`.trim()}
                   scope="col"
                 >
                   {col.label}
@@ -57,7 +57,7 @@ export default function DataTable<Row>({
                 {columns.map((col) => (
                   <td
                     key={col.key}
-                    className={`px-4 py-3 ${col.align === "right" ? "text-right" : ""}`.trim()}
+                    className={`px-4 py-3.5 ${col.align === "right" ? "text-right" : ""}`.trim()}
                   >
                     {col.render(row)}
                   </td>

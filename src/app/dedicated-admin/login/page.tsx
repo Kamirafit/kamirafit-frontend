@@ -60,22 +60,22 @@ function AdminLoginContent() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-8 sm:py-16">
+    <div className="mx-auto w-full max-w-xl px-4 py-6 sm:py-14">
       <div className="overflow-hidden rounded-3xl border border-line bg-ink shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)]">
         {/* Title Header */}
-        <div className="border-b border-line bg-ink-2/90 px-8 py-7 text-center sm:px-10">
-          <p className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-gold">
-            <span aria-hidden className="h-px w-5 bg-gold/60" />
+        <div className="border-b border-line bg-ink-2/90 px-6 py-6 text-center sm:px-10 sm:py-7">
+          <p className="inline-flex items-center gap-2 text-[10.5px] sm:text-[11px] font-semibold uppercase tracking-[0.24em] sm:tracking-[0.28em] text-gold">
+            <span aria-hidden className="h-px w-4 sm:w-5 bg-gold/60" />
             KamiraFit Administration
-            <span aria-hidden className="h-px w-5 bg-gold/60" />
+            <span aria-hidden className="h-px w-4 sm:w-5 bg-gold/60" />
           </p>
-          <h2 className="mt-2 font-display text-2xl font-bold tracking-tight text-paper sm:text-3xl">
+          <h2 className="mt-2 font-display text-xl font-bold tracking-tight text-paper sm:text-3xl">
             Admin Portal Sign In
           </h2>
         </div>
 
         {/* Content Form */}
-        <div className="p-8 sm:p-12">
+        <div className="p-6 sm:p-10">
           {error && (
             <div className="mb-6 rounded-2xl border border-red-500/30 bg-red-500/10 px-5 py-4 text-xs font-medium text-red-400">
               {error}

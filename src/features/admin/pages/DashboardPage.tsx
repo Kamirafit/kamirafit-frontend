@@ -106,13 +106,13 @@ export default function DashboardPage() {
         description="At-a-glance health of the KamiraFit catalog, community, and taxonomy."
       />
 
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <section className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 lg:grid-cols-4">
         {kpis.map((k) => (
           <AdminCard key={k.label} padding="md">
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-paper-muted">
               {k.label}
             </p>
-            <p className="mt-3 font-display text-[28px] font-semibold leading-none text-paper">
+            <p className="mt-2 font-display text-[26px] sm:text-[28px] font-semibold leading-none text-paper">
               {k.value}
             </p>
             <p className="mt-2 text-[11.5px] text-paper-muted">{k.hint}</p>
@@ -120,7 +120,7 @@ export default function DashboardPage() {
         ))}
       </section>
 
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+      <section className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         <AdminCard className="lg:col-span-2">
           <PanelHeader
             title="Recent products"
@@ -137,7 +137,7 @@ export default function DashboardPage() {
             {recent.map((p) => (
               <li
                 key={p.id}
-                className="flex items-center justify-between px-5 py-3 transition-colors hover:bg-ink-2/60"
+                className="flex items-center justify-between px-4 py-3 sm:px-5 transition-colors hover:bg-ink-2/60"
               >
                 <div className="flex flex-col">
                   <span className="text-[13px] font-medium text-paper">

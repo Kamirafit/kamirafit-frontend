@@ -101,14 +101,14 @@ export default function AdminSidebar() {
   return (
     <>
       {/* Mobile Top Header (lg:hidden) */}
-      <div className="border-b border-line bg-ink p-4 lg:hidden">
+      <div className="sticky top-0 z-40 border-b border-line bg-ink/95 px-4 py-3.5 backdrop-blur-md lg:hidden">
         <div className="flex items-center justify-between">
           <Link href="/dedicated-admin" className="flex items-center gap-2.5">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gold text-[12px] font-semibold text-ink">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gold text-[12px] font-semibold text-ink shadow-sm">
               K
             </span>
             <span className="font-display text-[15px] font-semibold text-paper">
-              KamiraFit <span className="text-[10px] uppercase text-gold">Admin</span>
+              KamiraFit <span className="text-[10px] uppercase font-bold text-gold tracking-wider">Admin</span>
             </span>
           </Link>
           <div className="flex items-center gap-2">
@@ -116,7 +116,7 @@ export default function AdminSidebar() {
               type="button"
               onClick={handleLogout}
               disabled={loggingOut}
-              className="inline-flex items-center gap-1.5 rounded-full border border-red-500/20 bg-red-500/5 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-red-400 hover:bg-red-500/10"
+              className="inline-flex items-center gap-1.5 rounded-full border border-red-500/20 bg-red-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-red-400 hover:bg-red-500/20 transition-colors"
             >
               <LogoutIcon />
               {loggingOut ? "..." : "Logout"}
@@ -124,43 +124,49 @@ export default function AdminSidebar() {
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="rounded-lg border border-line bg-ink-2 p-2 text-paper-muted hover:text-paper"
+              className="rounded-lg border border-line bg-ink-2 p-2 text-paper-muted hover:text-paper transition-colors"
               aria-label="Toggle Navigation"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d={mobileMenuOpen ? "M18 6L6 18M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
+                <path strokeLinecap="round" strokeLinejoin="round" d={mobileMenuOpen ? "M18 6L6 18M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
               </svg>
             </button>
           </div>
         </div>
 
-        {mobileMenuOpen && (
-          <nav className="mt-4 flex flex-col gap-1 border-t border-line pt-3">
-            {ITEMS.map((item) => {
-              const active =
-                item.href === "/dedicated-admin"
-                  ? pathname === item.href
-                  : pathname?.startsWith(item.href);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 rounded-full px-3 py-2 text-[12.5px] font-semibold uppercase tracking-[0.12em] transition-colors ${
-                    active
-                      ? "bg-gold/10 text-gold"
-                      : "text-paper-muted hover:bg-ink-2 hover:text-paper"
-                  }`}
-                >
-                  <span className={active ? "text-gold" : "text-paper-muted"}>
-                    {item.icon}
-                  </span>
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
-        )}
+        <div
+          className={`grid overflow-hidden transition-all duration-300 ease-in-out ${
+            mobileMenuOpen ? "mt-3 grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0 pointer-events-none"
+          }`}
+        >
+          <div className="min-h-0">
+            <nav className="flex flex-col gap-1 border-t border-line pt-3 pb-1">
+              {ITEMS.map((item) => {
+                const active =
+                  item.href === "/dedicated-admin"
+                    ? pathname === item.href
+                    : pathname?.startsWith(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-[13px] font-semibold uppercase tracking-[0.12em] transition-colors ${
+                      active
+                        ? "bg-gold/15 text-gold"
+                        : "text-paper-muted hover:bg-ink-2 hover:text-paper"
+                    }`}
+                  >
+                    <span className={active ? "text-gold" : "text-paper-muted"}>
+                      {item.icon}
+                    </span>
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
+        </div>
       </div>
 
       {/* Desktop Sidebar (lg:block) */}
