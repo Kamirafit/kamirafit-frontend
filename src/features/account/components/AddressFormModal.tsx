@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Address, AddressType } from "../types";
 import { lookupPincode } from "@/lib/pincode";
+import Button from "@/components/ui/Button";
 
 type Props = {
   address?: Address; // If provided, we're editing. If not, adding.
@@ -309,19 +310,21 @@ export default function AddressFormModal({ address, onClose, onSave }: Props) {
           </div>
 
           <div className="mt-6 flex justify-end gap-3 border-t border-line pt-6">
-            <button
+            <Button
               type="button"
+              variant="secondary"
+              size="sm"
               onClick={onClose}
-              className="rounded-full px-5 py-2.5 text-[12px] font-semibold uppercase tracking-wider text-paper-muted hover:bg-ink-3 transition-colors"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
-              className="rounded-full bg-gold px-6 py-2.5 text-[12px] font-semibold uppercase tracking-wider text-white shadow-md hover:bg-gold-bright transition-colors"
+              variant="primary"
+              size="sm"
             >
               Save Address
-            </button>
+            </Button>
           </div>
         </form>
       </div>

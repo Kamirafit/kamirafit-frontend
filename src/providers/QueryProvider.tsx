@@ -9,9 +9,26 @@ export default function QueryProvider({ children }: { children: ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 5 * 60 * 1000, // 5 minutes default
+            staleTime: 5 * 60 * 1000, // 5 minutes default fresh cache
+            gcTime: 10 * 60 * 1000, // 10 minutes garbage collection
             refetchOnWindowFocus: false,
-            retry: 1,
+            refetchOnMount: false,
+            refetchOnReconnect: false,
+            retry: (failureCount, error: unknown) => {
+              // Never retry on 429 (Rate limited) or client errors (400, 401, 403, 404)
+              if (failureCount >= 2) return false;
+              if (typeof error === "object" && error !== null) {
+                const err = error as { code?: string | number; response?: { status?: number } };
+                const status = err.response?.status || err.code;
+                if (status === 429 || status === "429" || status === 401 || status === 403 || status === 404) {
+                  return false;
+                }
+              }
+              return true;
+            },
+          },
+          mutations: {
+            retry: false,
           },
         },
       })

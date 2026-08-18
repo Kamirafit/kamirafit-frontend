@@ -134,10 +134,11 @@ function AdminLoginContent() {
                 type="submit"
                 variant="primary"
                 fullWidth
-                disabled={loading}
+                loading={loading}
+                loadingText="Verifying credentials..."
                 className="py-3.5 text-sm font-semibold tracking-wider uppercase"
               >
-                {loading ? "Verifying..." : "Sign In to Dashboard"}
+                Sign In to Dashboard
               </Button>
             </div>
           </form>

@@ -554,14 +554,11 @@ function LoginContent() {
                 type="submit"
                 variant="primary"
                 fullWidth
-                disabled={loading}
+                loading={loading}
+                loadingText="Processing..."
                 className="py-2.5 text-xs font-semibold tracking-wider uppercase"
               >
-                {loading
-                  ? "Processing..."
-                  : mode === "signin"
-                    ? "Sign In"
-                    : "Create Account"}
+                {mode === "signin" ? "Sign In" : "Create Account"}
               </Button>
             </div>
           </form>

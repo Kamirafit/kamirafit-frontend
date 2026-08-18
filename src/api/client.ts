@@ -51,13 +51,18 @@ apiClient.interceptors.response.use(
 
     if (error.response?.status === 401) {
       if (typeof window !== "undefined") {
-        const isAdminRequest = window.location.pathname.startsWith("/dedicated-admin");
+        const pathname = window.location.pathname;
+        const isAdminRequest = pathname.startsWith("/dedicated-admin");
         if (isAdminRequest) {
           AuthStorage.clearAdminAuth();
-          window.location.href = `/dedicated-admin/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+          if (!pathname.startsWith("/dedicated-admin/login")) {
+            window.location.href = `/dedicated-admin/login?redirect=${encodeURIComponent(pathname)}`;
+          }
         } else {
           AuthStorage.clearCustomerAuth();
-          window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
+          if (!pathname.startsWith("/login")) {
+            window.location.href = `/login?redirect=${encodeURIComponent(pathname)}`;
+          }
         }
       }
     }

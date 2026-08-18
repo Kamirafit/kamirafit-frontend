@@ -6,6 +6,7 @@ import { useProfile, useUpdateProfile } from "@/features/auth/hooks";
 import ProfileSkeleton from "@/components/skeleton/ProfileSkeleton";
 import { ErrorState, OfflineState } from "@/components/states";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import Button from "@/components/ui/Button";
 
 export default function ProfileForm() {
   const { data: serverProfile, isLoading, isError, refetch } = useProfile();
@@ -223,29 +224,31 @@ export default function ProfileForm() {
 
       <div className="pt-4 flex gap-4 border-t border-line">
         {!isEditing ? (
-          <button
+          <Button
             type="button"
+            variant="primary"
             onClick={handleStartEdit}
-            className="rounded-full bg-gold px-8 py-3 text-[12px] font-semibold uppercase tracking-wider text-white shadow-md transition-all duration-300 hover:bg-gold-bright hover:-translate-y-px"
           >
             Edit Profile
-          </button>
+          </Button>
         ) : (
           <>
-            <button
+            <Button
               type="submit"
-              disabled={updateMutation.isPending}
-              className="rounded-full bg-gold px-8 py-3 text-[12px] font-semibold uppercase tracking-wider text-white shadow-md transition-all duration-300 hover:bg-gold-bright hover:-translate-y-px disabled:opacity-50"
+              variant="primary"
+              loading={updateMutation.isPending}
+              loadingText="Saving Changes..."
             >
-              {updateMutation.isPending ? "Saving Changes..." : "Save Changes"}
-            </button>
-            <button
+              Save Changes
+            </Button>
+            <Button
               type="button"
+              variant="secondary"
+              disabled={updateMutation.isPending}
               onClick={handleCancel}
-              className="rounded-full border border-line px-8 py-3 text-[12px] font-semibold uppercase tracking-wider text-paper-muted transition-colors hover:border-paper hover:text-paper"
             >
               Cancel
-            </button>
+            </Button>
           </>
         )}
       </div>

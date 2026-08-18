@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
-import { categoryService } from "@/services/category";
+import { useMemo } from "react";
+import { useCategories } from "@/services/category";
 import { FacebookIcon, InstagramIcon } from "./icons";
 
 const SUPPORT_LINKS = [
@@ -14,23 +17,30 @@ const SOCIALS = [
   { label: "Facebook", href: "#", Icon: FacebookIcon },
 ];
 
-export default async function Footer() {
+export default function Footer() {
   const year = new Date().getFullYear();
-  const rawCategories = await categoryService.getCategories();
-  const categories = (rawCategories || []).map((cat) => ({
-    title: cat.name,
-    items: (cat.subcategories || []).map((sub) => {
-      const label = typeof sub === "string" ? sub : sub.name || sub.title || "";
-      const slug =
-        typeof sub === "string"
-          ? sub.toLowerCase().replace(/[\s_]+/g, "-")
-          : sub.slug || (sub.name || "").toLowerCase().replace(/[\s_]+/g, "-");
-      return {
-        label,
-        href: `/shop?category=${encodeURIComponent(slug)}`,
-      };
-    }).filter((item) => Boolean(item.label)),
-  }));
+  const { data: rawCategories } = useCategories();
+
+  const categories = useMemo(() => {
+    return (rawCategories || [])
+      .filter((cat) => Boolean(cat && cat.name))
+      .map((cat) => ({
+        title: cat.name,
+        items: (cat.subcategories || [])
+          .map((sub) => {
+            const label = typeof sub === "string" ? sub : sub.name || sub.title || "";
+            const slug =
+              typeof sub === "string"
+                ? sub.toLowerCase().replace(/[\s_]+/g, "-")
+                : sub.slug || (sub.name || "").toLowerCase().replace(/[\s_]+/g, "-");
+            return {
+              label,
+              href: `/shop?category=${encodeURIComponent(slug)}`,
+            };
+          })
+          .filter((item) => Boolean(item.label)),
+      }));
+  }, [rawCategories]);
 
   return (
     <footer
