@@ -34,19 +34,11 @@ export const categoryService = {
 
     categoryPromise = (async () => {
       try {
-        const data = await unwrapApiResponse<BackendCategory[]>(apiClient.get("/categories"));
+        const data = await unwrapApiResponse<BackendCategory[]>(apiClient.get("/products/categories"));
         categoryCache = { data: Array.isArray(data) ? data : [], timestamp: Date.now() };
         return categoryCache.data;
-      } catch (e: unknown) {
-        // If /categories fails, try /products/categories once
-        try {
-          const fallbackData = await unwrapApiResponse<BackendCategory[]>(apiClient.get("/products/categories"));
-          categoryCache = { data: Array.isArray(fallbackData) ? fallbackData : [], timestamp: Date.now() };
-          return categoryCache.data;
-        } catch {
-          // If both fail or rate limited, return cached data if available or empty array
-          return categoryCache?.data || [];
-        }
+      } catch {
+        return categoryCache?.data || [];
       } finally {
         categoryPromise = null;
       }

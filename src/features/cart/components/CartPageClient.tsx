@@ -33,7 +33,21 @@ export default function CartPageClient() {
       {!isOnline && products.length === 0 && items.length > 0 ? (
         <OfflineState onRetry={() => void refetch()} />
       ) : isLoading && products.length === 0 ? (
-        <LoadingState label="Loading your cart…" />
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_380px] lg:gap-12 animate-pulse">
+          <div className="space-y-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="flex gap-4 border-b border-line pb-4">
+                <div className="h-24 w-20 rounded-xl bg-ink-3" />
+                <div className="flex-1 space-y-2 py-1">
+                  <div className="h-4 w-1/3 rounded bg-ink-4" />
+                  <div className="h-3 w-1/4 rounded bg-ink-3" />
+                  <div className="h-4 w-16 rounded bg-ink-4 mt-2" />
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="h-64 rounded-2xl border border-line bg-ink p-6" />
+        </div>
       ) : isError && products.length === 0 && items.length > 0 ? (
         <ErrorState message="We couldn’t load the products in your cart." onRetry={() => void refetch()} />
       ) : resolved.length === 0 ? (

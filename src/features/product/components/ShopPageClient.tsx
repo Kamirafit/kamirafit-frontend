@@ -22,7 +22,8 @@ import ProductGrid from "./ProductGrid";
 import SortBar from "./SortBar";
 import { useProducts } from "@/services/product";
 import type { Product } from "@/types/entities";
-import { ErrorState, LoadingState, OfflineState } from "@/components/states";
+import { ErrorState, OfflineState } from "@/components/states";
+import ProductGridSkeleton from "@/components/skeleton/ProductGridSkeleton";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 
 const CATEGORY_BY_SLUG: Record<string, Category> = {
@@ -137,7 +138,7 @@ export default function ShopPageClient({ initialCategorySlug, initialProducts = 
             {!isOnline && !hasInitialData && latestProducts.length === 0 ? (
               <OfflineState onRetry={() => void refetch()} />
             ) : isLoading && !hasInitialData ? (
-              <LoadingState label="Loading products…" />
+              <ProductGridSkeleton count={8} />
             ) : isError && !hasInitialData && latestProducts.length === 0 ? (
               <ErrorState message="We couldn’t load the shop right now." onRetry={() => void refetch()} />
             ) : (

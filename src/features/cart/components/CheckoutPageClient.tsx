@@ -142,7 +142,17 @@ export default function CheckoutPageClient() {
   }
 
   if (isLoading && products.length === 0) {
-    return <Container width="narrow" className="py-20"><LoadingState label="Preparing checkout…" /></Container>;
+    return (
+      <Container width="narrow" className="py-20 animate-pulse space-y-6">
+        <div className="h-8 w-48 rounded bg-ink-4" />
+        <div className="h-4 w-64 rounded bg-ink-3" />
+        <div className="space-y-4 pt-6">
+          <div className="h-20 w-full rounded-2xl border border-line bg-ink p-4" />
+          <div className="h-20 w-full rounded-2xl border border-line bg-ink p-4" />
+          <div className="h-12 w-full rounded-full bg-ink-4" />
+        </div>
+      </Container>
+    );
   }
 
   if (isError && products.length === 0 && items.length > 0) {
