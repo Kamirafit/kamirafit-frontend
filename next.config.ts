@@ -17,17 +17,34 @@ if (process.env.NEXT_PUBLIC_API_URL) {
   }
 }
 
-const connectSources = ["'self'", "http://localhost:10000", "https://kamirafit-backend.onrender.com", apiConnectHost].filter(Boolean).join(" ");
+const connectSources = [
+  "'self'",
+  "http://localhost:10000",
+  "https://kamirafit-backend.onrender.com",
+  "https://identitytoolkit.googleapis.com",
+  "https://securetoken.googleapis.com",
+  "https://www.googleapis.com",
+  "https://*.firebaseio.com",
+  "https://*.firebase.com",
+  "https://*.googleapis.com",
+  "https://www.google.com",
+  apiConnectHost,
+]
+  .filter(Boolean)
+  .join(" ");
 
 const contentSecurityPolicy = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
-  "style-src 'self' 'unsafe-inline'",
-  `img-src 'self' data: blob: ${productImageHosts
+  `script-src 'self' 'unsafe-inline' https://www.google.com https://www.gstatic.com https://apis.google.com https://www.gstatic.com/recaptcha/${
+    isDev ? " 'unsafe-eval'" : ""
+  }`,
+  "style-src 'self' 'unsafe-inline' https://www.gstatic.com",
+  `img-src 'self' data: blob: https://www.google.com https://www.gstatic.com ${productImageHosts
     .map((host) => `https://${host}`)
     .join(" ")}`,
-  "font-src 'self' data:",
+  "font-src 'self' data: https://fonts.gstatic.com",
   `connect-src ${connectSources}`,
+  "frame-src 'self' https://www.google.com https://recaptcha.google.com https://kamirafit.firebaseapp.com https://*.firebaseapp.com",
   "media-src 'self'",
   "object-src 'none'",
   "base-uri 'self'",

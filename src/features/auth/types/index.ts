@@ -27,6 +27,8 @@ export interface RegisterRequestDto {
   countryCode: string;
   phoneNumber: string;
   gender: string;
+  emailVerificationToken?: string;
+  phoneVerificationToken?: string;
 }
 
 export type RegisterResponseDto = ApiResponseDto<{

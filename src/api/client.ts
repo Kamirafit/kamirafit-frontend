@@ -4,10 +4,15 @@ import { AuthStorage } from "@/features/auth/services/authStorage";
 
 export type ApiErrorResponse = ApiErrorDto;
 
-export async function unwrapApiResponse<T>(request: Promise<{ data: { success: boolean; data?: T; message?: string } }>): Promise<T> {
+export async function unwrapApiResponse<T>(
+  request: Promise<{ data: { success: boolean; data?: T; message?: string } & Record<string, unknown> }>
+): Promise<T> {
   const response = await request;
   if (!response.data.success) throw new Error(response.data.message || "API request failed");
-  return response.data.data as T;
+  if (response.data.data !== undefined) {
+    return response.data.data as T;
+  }
+  return response.data as unknown as T;
 }
 
 function isErrorPayload(value: unknown): value is { message?: string; code?: string } {
