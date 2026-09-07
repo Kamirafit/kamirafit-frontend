@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useSelector } from "react-redux";
+import { AdminRootState } from "@/features/admin/store";
 import { useLoginAdmin } from "@/features/auth/hooks";
 import { getUserFriendlyError } from "@/lib/errors";
 import Button from "@/components/ui/Button";
@@ -28,6 +30,7 @@ function AdminLoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const loginAdmin = useLoginAdmin();
+  const { isAuthenticated, role } = useSelector((state: AdminRootState) => state.auth);
 
   const redirectPath = searchParams.get("redirect") || "/dedicated-admin";
 
@@ -36,6 +39,12 @@ function AdminLoginContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (isAuthenticated && String(role || "").toLowerCase() === "admin") {
+      router.replace(redirectPath);
+    }
+  }, [isAuthenticated, role, redirectPath, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,8 +59,12 @@ function AdminLoginContent() {
       // Execute Admin Login
       await loginAdmin.mutateAsync({ email, password });
 
-      // Redirect back to dashboard or target
-      router.push(redirectPath);
+      // Clean redirect to target dashboard
+      if (typeof window !== "undefined") {
+        window.location.href = redirectPath;
+      } else {
+        router.replace(redirectPath);
+      }
     } catch (err: unknown) {
       setError(getUserFriendlyError(err, "We couldn’t sign you in. Check your details and try again."));
     } finally {

@@ -176,7 +176,7 @@ export const ORDERS: Order[] = [
       },
     ],
     "Paid",
-    "Refund Initiated",
+    "Refunded",
     "2026-04-08",
   ),
   makeOrder(
@@ -232,7 +232,7 @@ export const ORDERS: Order[] = [
       },
     ],
     "Paid",
-    "Pending",
+    "New",
     "2026-04-18",
   ),
   makeOrder(
@@ -255,7 +255,7 @@ export const ORDERS: Order[] = [
       },
     ],
     "Paid",
-    "Return In Progress",
+    "RTO Initiated",
     "2026-04-02",
   ),
   makeOrder(
@@ -278,7 +278,7 @@ export const ORDERS: Order[] = [
       },
     ],
     "Paid",
-    "Return Completed",
+    "Returned",
     "2026-03-30",
   ),
   makeOrder(
@@ -301,7 +301,7 @@ export const ORDERS: Order[] = [
       },
     ],
     "Paid",
-    "Refund Completed",
+    "Refunded",
     "2026-03-24",
   ),
 ];

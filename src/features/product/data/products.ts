@@ -33,8 +33,8 @@ type Seed = {
   name: string;
   price: number;
   category: "Oversized T-Shirts" | "Hoodies" | "T-Shirts" | "Kurti" | "Co-ords Sets" | "Dresses";
-  size: ("S" | "M" | "L" | "XL")[];
-  color: ("Black" | "White" | "Blue" | "Red")[];
+  size: ("XS" | "S" | "M" | "L" | "XL" | "2XL")[];
+  color: ("Black" | "White" | "Blue" | "Red" | "Green" | "Pink" | "Beige" | "Maroon" | "Navy" | "Yellow" | "Grey")[];
   rating: number;
   image: string;
   createdAt: string;
@@ -252,6 +252,96 @@ const SEED: Seed[] = [
     popularity: 78,
     description:
       "A washed-azure oversized tee with a breezy drape. Dropped shoulders, longer body and a smooth handfeel — our answer to effortless summer layering.",
+  },
+  {
+    id: "p-15",
+    name: "Gulabi Chanderi Embroidered Kurti",
+    price: 1499,
+    category: "Kurti",
+    size: ["S", "M", "L", "XL"],
+    color: ["Pink", "Red"],
+    rating: 4.8,
+    image:
+      "https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=800&q=80",
+    createdAt: "2026-04-12",
+    popularity: 96,
+    description:
+      "A pure Chanderi silk kurti with delicate gold zari embroidery on the yoke and sleeve cuffs. Breathable cotton lining, side slits and a graceful straight cut suited for festive gatherings and workwear alike.",
+  },
+  {
+    id: "p-16",
+    name: "Kashmiri Chikankari Straight Kurti",
+    price: 1299,
+    category: "Kurti",
+    size: ["S", "M", "L", "XL"],
+    color: ["White", "Blue"],
+    rating: 4.7,
+    image:
+      "https://images.unsplash.com/photo-1583391733956-6c78276477e2?auto=format&fit=crop&w=800&q=80",
+    createdAt: "2026-04-05",
+    popularity: 91,
+    description:
+      "Handcrafted fine Chikankari needlework across airy modal cotton. Features an intricate floral jaal pattern, round notched neck and comfortable calf-length silhouette.",
+  },
+  {
+    id: "p-17",
+    name: "Earthy Linen Relaxed Co-ord Set",
+    price: 2199,
+    category: "Co-ords Sets",
+    size: ["S", "M", "L", "XL"],
+    color: ["Beige", "Green"],
+    rating: 4.9,
+    image:
+      "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?auto=format&fit=crop&w=800&q=80",
+    createdAt: "2026-04-15",
+    popularity: 97,
+    description:
+      "A two-piece tailored co-ord set made from washed natural linen. Includes a relaxed button-front shirt with drop shoulders and matching high-waisted wide-leg trousers with an elasticated back waistband.",
+  },
+  {
+    id: "p-18",
+    name: "Boho Resort Printed Co-ord Set",
+    price: 1899,
+    category: "Co-ords Sets",
+    size: ["S", "M", "L", "XL"],
+    color: ["Blue", "Red"],
+    rating: 4.6,
+    image:
+      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=800&q=80",
+    createdAt: "2026-03-29",
+    popularity: 88,
+    description:
+      "A vibrant printed resort-wear co-ord set featuring a cropped wrap top and tiered palazzo pants in fluid viscose fabric. Lightweight, breezy, and effortlessly chic for casual outings and vacations.",
+  },
+  {
+    id: "p-19",
+    name: "Aura Tiered Floral Midi Dress",
+    price: 1699,
+    category: "Dresses",
+    size: ["XS", "S", "M", "L", "XL"],
+    color: ["Red", "Pink"],
+    rating: 4.7,
+    image:
+      "https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=800&q=80",
+    createdAt: "2026-04-14",
+    popularity: 93,
+    description:
+      "A romantic tiered midi dress with subtle sweetheart neckline and flutter sleeves. Cut from breathable georgette with an all-over floral print and a soft inner lining for effortless day-to-evening style.",
+  },
+  {
+    id: "p-20",
+    name: "Satin Drape Evening Dress",
+    price: 1999,
+    category: "Dresses",
+    size: ["S", "M", "L", "XL"],
+    color: ["Black", "Blue"],
+    rating: 4.8,
+    image:
+      "https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=800&q=80",
+    createdAt: "2026-04-09",
+    popularity: 94,
+    description:
+      "A sleek cowl-neck midi dress crafted from heavy liquid-satin fabric. Features adjustable spaghetti straps, an asymmetrical side slit and a bias cut that contours naturally over the body.",
   },
 ];
 

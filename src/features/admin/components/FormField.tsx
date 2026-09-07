@@ -37,7 +37,7 @@ export default function FormField({
 
 /**
  * Shared input/select style. Pill-shaped to echo the storefront's rounded-full
- * CTAs and the header search / newsletter input.
+ * CTAs and the header search input.
  */
 export const inputClass =
   "w-full rounded-full border border-line bg-ink-2 px-4 py-2.5 text-[13.5px] text-paper placeholder:text-paper-muted/70 transition-colors focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold";

@@ -5,7 +5,7 @@ import { PRODUCTS } from "@/data/products";
 import { USERS } from "@/data/users";
 import { MOCK_ADDRESSES, MOCK_ORDERS, MOCK_PROFILE } from "@/features/account/data/mockAccount";
 import type {
-  Address, AdminCategory, AdminOrder, AdminUser, Cart, CartItem, Order,
+  Address, AdminCategory, AdminOrder, AdminUser, Cart, CartItem, ContactQuery, Order,
   ProductEntity, Variant, Profile, Review, User, Wishlist,
 } from "@/types/entities";
 import type { CheckoutRequestDto, CheckoutResponseDto, CreateOrderRequestDto } from "@/types/api/commerce";
@@ -68,6 +68,44 @@ const adminUsers: AdminUser[] = [...USERS];
 let adminOrders: AdminOrder[] = [...ORDERS];
 let addresses: Address[] = [...MOCK_ADDRESSES];
 let customerOrders: Order[] = [...MOCK_ORDERS];
+let mockQueries: ContactQuery[] = [
+  {
+    id: "query-1",
+    firstName: "Rohan",
+    lastName: "Mehta",
+    countryCode: "+91",
+    phone: "9876543210",
+    email: "rohan.mehta@example.com",
+    message: "Hi, I wanted to inquire about bulk ordering custom oversized tees for our fitness studio in Mumbai. Do you provide custom embroidery or branding?",
+    status: "PENDING",
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
+    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(),
+  },
+  {
+    id: "query-2",
+    firstName: "Priya",
+    lastName: "Sharma",
+    countryCode: "+91",
+    phone: "9823456781",
+    email: "priya.sharma@example.com",
+    message: "I love the new Western Wear collection! Could you let me know if the relaxed linen trousers will be restocked in size S next week?",
+    status: "RESOLVED",
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
+  },
+  {
+    id: "query-3",
+    firstName: "Aman",
+    lastName: "Verma",
+    countryCode: "+91",
+    phone: "9988776655",
+    email: "aman.v@example.com",
+    message: "Can you help me with the sizing on the Heavyweight Boxy Tee? I'm 6ft tall, would you recommend L or XL for an oversized drape?",
+    status: "PENDING",
+    createdAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
+    updatedAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
+  },
+];
 let profile: Profile = { ...MOCK_PROFILE };
 let wishlist: Wishlist = { productIds: [] };
 let cart: Cart = {
@@ -497,6 +535,38 @@ export const mockApi = {
       }),
       delete: (id: string) => respond(() => { if (!adminOrders.some((item) => item.id === id)) return fail("ORDER_NOT_FOUND", "Order not found"); adminOrders = adminOrders.filter((item) => item.id !== id); return ok(id); }),
     },
+    queries: {
+      getAll: () => respond(() => ok([...mockQueries])),
+      update: (id: string, patch: Partial<ContactQuery>) => respond(() => {
+        const index = mockQueries.findIndex((item) => item.id === id);
+        if (index < 0) return fail("QUERY_NOT_FOUND", "Query not found");
+        mockQueries[index] = { ...mockQueries[index], ...patch, updatedAt: new Date().toISOString() };
+        return ok(mockQueries[index]);
+      }),
+      delete: (id: string) => respond(() => {
+        if (!mockQueries.some((item) => item.id === id)) return fail("QUERY_NOT_FOUND", "Query not found");
+        mockQueries = mockQueries.filter((item) => item.id !== id);
+        return ok(id);
+      }),
+    },
+  },
+  contact: {
+    submit: (input: any) => respond(() => {
+      const newQuery: ContactQuery = {
+        id: `query-${Date.now()}`,
+        firstName: input.firstName || "",
+        lastName: input.lastName || "",
+        countryCode: input.countryCode || "+91",
+        phone: input.phone || "",
+        email: input.email || "",
+        message: input.message || "",
+        status: "PENDING",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      mockQueries = [newQuery, ...mockQueries];
+      return ok(newQuery);
+    }),
   },
 };
 

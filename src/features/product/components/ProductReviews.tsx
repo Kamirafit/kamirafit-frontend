@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter, usePathname } from "next/navigation";
 import {
   useEffect,
   useMemo,
@@ -9,6 +10,7 @@ import {
   type ChangeEvent,
   type FormEvent,
 } from "react";
+import { useAppSelector } from "../hooks/redux";
 import type { Review } from "../types";
 import { CloseIcon, StarIcon } from "./icons";
 import StarRating from "./StarRating";
@@ -145,6 +147,10 @@ export default function ProductReviews({
   reviews,
   averageRating,
 }: Props) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const { isAuthenticated, user } = useAppSelector((s) => s.auth);
+
   const [localReviews, setLocalReviews] = useState<Review[]>(reviews);
   const [rating, setRating] = useState(5);
   const [title, setTitle] = useState("");
@@ -188,6 +194,11 @@ export default function ProductReviews({
   }, [localReviews]);
 
   const handleImageUpload = (event: ChangeEvent<HTMLInputElement>) => {
+    if (!isAuthenticated) {
+      const current = pathname || `/product/${productId}`;
+      router.push(`/login?redirect=${encodeURIComponent(current)}`);
+      return;
+    }
     const files = Array.from(event.target.files ?? []);
     if (files.length === 0) return;
 
@@ -220,14 +231,23 @@ export default function ProductReviews({
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!isAuthenticated) {
+      const current = pathname || `/product/${productId}`;
+      router.push(`/login?redirect=${encodeURIComponent(current)}`);
+      return;
+    }
     const trimmedComment = comment.trim();
     const trimmedTitle = title.trim();
     if (!trimmedComment) return;
 
+    const customerName = user?.firstName
+      ? `${user.firstName} ${user.lastName || ""}`.trim()
+      : "Verified Customer";
+
     const nextReview: Review = {
       id: createId("review"),
       productId,
-      customerName: "Guest Customer",
+      customerName,
       rating,
       title: trimmedTitle || undefined,
       comment: trimmedComment,

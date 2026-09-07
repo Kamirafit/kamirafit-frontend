@@ -7,6 +7,7 @@ import ProfileSkeleton from "@/components/skeleton/ProfileSkeleton";
 import { ErrorState, OfflineState } from "@/components/states";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import Button from "@/components/ui/Button";
+import { COUNTRY_CODES } from "@/data/countryCodes";
 
 export default function ProfileForm() {
   const { data: serverProfile, isLoading, isError, refetch } = useProfile();
@@ -164,17 +165,22 @@ export default function ProfileForm() {
             Phone Number
           </label>
           <div className="flex gap-2">
-            <input
-              type="text"
+            <select
               disabled={!isEditing}
               value={formData.countryCode || "+91"}
               onChange={(e) => setFormData({ ...formData, countryCode: e.target.value })}
-              className={`w-20 rounded-lg border px-3 py-3 text-[14px] text-paper outline-none transition-colors ${
+              className={`w-36 sm:w-44 rounded-lg border px-3 py-3 text-[13px] text-paper outline-none transition-colors ${
                 isEditing
-                  ? "border-gold/60 bg-ink-2 focus:border-gold focus:ring-1 focus:ring-gold/30"
+                  ? "border-gold/60 bg-ink-2 focus:border-gold focus:ring-1 focus:ring-gold/30 cursor-pointer"
                   : "border-line bg-ink-3/40 opacity-75 cursor-default"
               }`}
-            />
+            >
+              {COUNTRY_CODES.map((item) => (
+                <option key={`${item.name}-${item.code}`} value={item.code} className="bg-ink text-paper">
+                  {item.label}
+                </option>
+              ))}
+            </select>
             <input
               type="tel"
               required

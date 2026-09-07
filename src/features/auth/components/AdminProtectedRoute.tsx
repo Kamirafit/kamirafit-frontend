@@ -10,14 +10,17 @@ export default function AdminProtectedRoute({ children }: { children: React.Reac
   const pathname = usePathname();
   const { isAuthenticated, role } = useSelector((state: AdminRootState) => state.auth);
 
+  const roleStr = String(role || "").toLowerCase();
+  const isAdmin = Boolean(isAuthenticated && roleStr === "admin");
+
   useEffect(() => {
-    if (!isAuthenticated || role !== "admin") {
+    if (!isAdmin) {
       const redirectParam = pathname ? `?redirect=${encodeURIComponent(pathname)}` : "";
       router.replace(`/dedicated-admin/login${redirectParam}`);
     }
-  }, [isAuthenticated, role, router, pathname]);
+  }, [isAdmin, router, pathname]);
 
-  if (!isAuthenticated || role !== "admin") {
+  if (!isAdmin) {
     return null; // or a loading spinner
   }
 

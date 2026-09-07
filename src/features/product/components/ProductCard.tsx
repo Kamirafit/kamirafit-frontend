@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
 import { DEFAULT_PRODUCT_IMAGE, formatPrice, getValidImageSrc } from "@/lib/format";
 import { useAppDispatch, useAppSelector } from "../hooks/redux";
 import { addToCart } from "../store/cartSlice";
@@ -38,12 +39,26 @@ function ProductCartIcon({ filled = false }: { filled?: boolean }) {
 }
 
 export default function ProductCard({ product }: Props) {
+  const router = useRouter();
+  const pathname = usePathname();
   const dispatch = useAppDispatch();
+  const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
   const isSaved = useAppSelector((s) => s.wishlist.ids.includes(product.id));
   const inCart = useAppSelector((s) =>
     s.cart.items.some((it) => it.id === product.id),
   );
   const imageSrc = getValidImageSrc(product.image, DEFAULT_PRODUCT_IMAGE);
+
+  const handleActionWithAuth = (e: React.MouseEvent, action: () => void) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isAuthenticated) {
+      const current = pathname || "/shop";
+      router.push(`/login?redirect=${encodeURIComponent(current)}`);
+      return;
+    }
+    action();
+  };
 
   return (
     <article className="group flex flex-col overflow-hidden rounded-2xl border border-line bg-ink transition-all duration-300 hover:-translate-y-0.5 hover:border-gold/40 hover:shadow-[0_30px_60px_-30px_rgba(74,14,26,0.25)]">
@@ -81,10 +96,7 @@ export default function ProductCard({ product }: Props) {
               type="button"
               aria-label={isSaved ? "Remove from wishlist" : "Add to wishlist"}
               aria-pressed={isSaved}
-              onClick={(e) => {
-                e.preventDefault();
-                dispatch(toggleWishlist(product.id));
-              }}
+              onClick={(e) => handleActionWithAuth(e, () => dispatch(toggleWishlist(product.id)))}
               className={`inline-flex h-9 w-9 items-center justify-center rounded-full border transition-all ${
                 isSaved
                   ? "border-transparent bg-[#DC2626]/10 text-[#DC2626]"
@@ -97,10 +109,7 @@ export default function ProductCard({ product }: Props) {
               type="button"
               aria-label={inCart ? "Added to cart" : "Add to cart"}
               aria-pressed={inCart}
-              onClick={(e) => {
-                e.preventDefault();
-                dispatch(addToCart({ id: product.id }));
-              }}
+              onClick={(e) => handleActionWithAuth(e, () => dispatch(addToCart({ id: product.id })))}
               className={`inline-flex h-9 w-9 items-center justify-center rounded-full border-2 transition-all duration-300 ease-in-out ${
                 inCart
                   ? "border-gold bg-gold text-white shadow-[0_8px_20px_-8px_rgba(74,14,26,0.55)]"

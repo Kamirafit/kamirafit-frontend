@@ -22,6 +22,7 @@ import {
   useUpdateAdminOrder,
   useDeleteAdminOrder,
   useFulfillAdminOrder,
+  useSyncAdminOrderWithShiprocket,
 } from "@/services/admin";
 import { COLOR_OPTIONS, SIZE_OPTIONS } from "@/features/product/types";
 import StatusBadge from "./StatusBadge";
@@ -125,6 +126,7 @@ export default function OrderDetailsModal({ open, onClose, order }: Props) {
   const updateMutation = useUpdateAdminOrder();
   const fulfillMutation = useFulfillAdminOrder();
   const deleteMutation = useDeleteAdminOrder();
+  const syncMutation = useSyncAdminOrderWithShiprocket();
   const [draft, setDraft] = useState<Draft | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [showFulfillSection, setShowFulfillSection] = useState(false);
@@ -229,6 +231,36 @@ export default function OrderDetailsModal({ open, onClose, order }: Props) {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <SectionTitle>Order info</SectionTitle>
               <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  disabled={syncMutation.isPending}
+                  onClick={() => {
+                    syncMutation.mutate(order.id, {
+                      onSuccess: (updated) => {
+                        if (updated) {
+                          setDraft(buildDraft(updated));
+                        }
+                      },
+                    });
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-gold/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-gold hover:bg-gold hover:text-white transition-all disabled:opacity-50"
+                  title="Fetch real-time tracking status from Shiprocket"
+                >
+                  <svg
+                    className={`h-3 w-3 ${syncMutation.isPending ? "animate-spin" : ""}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2.5"
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    />
+                  </svg>
+                  {syncMutation.isPending ? "Syncing..." : "Sync Shiprocket"}
+                </button>
                 <StatusBadge kind="payment" status={draft.paymentStatus} />
                 <StatusBadge kind="order" status={draft.orderStatus} />
               </div>

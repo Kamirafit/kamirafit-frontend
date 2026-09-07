@@ -6,6 +6,7 @@ import {
   type AdminCategory,
   type AdminOrder as Order,
   type AdminUser,
+  type ContactQuery,
   type Product,
 } from "@/types/entities";
 import type { AdminStatsDto } from "@/types/api/admin";
@@ -222,8 +223,19 @@ export const adminService = {
     x: { courierName: string; trackingCode: string; trackingUrl?: string; notes?: string }
   ) =>
     adminRequest<Order>("patch", "/orders/" + id + "/fulfill", x).then(adaptOrder),
+  syncShiprocket: (id: string) =>
+    adminRequest<Order>("post", "/orders/" + id + "/sync-shiprocket").then(adaptOrder),
   deleteOrder: (id: string) =>
     adminRequest<{ id: string }>("delete", "/orders/" + id).then((x) => x.id),
+  getQueries: (params?: { search?: string; status?: string; page?: number; limit?: number }) =>
+    adminRequest<any>("get", "/queries", undefined, { params }).then((r) => {
+      const items = Array.isArray(r) ? r : r?.items || r?.data || [];
+      return items as ContactQuery[];
+    }),
+  updateQueryStatus: (id: string, status: "PENDING" | "RESOLVED" | "ARCHIVED") =>
+    adminRequest<ContactQuery>("patch", "/queries/" + id + "/status", { status }),
+  deleteQuery: (id: string) =>
+    adminRequest<{ id: string }>("delete", "/queries/" + id).then((x) => x.id || id),
 };
 
 export function useAdminStats() {
@@ -345,6 +357,16 @@ export function useFulfillAdminOrder() {
     },
   });
 }
+export function useSyncAdminOrderWithShiprocket() {
+  const q = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => adminService.syncShiprocket(id),
+    onSuccess: () => {
+      q.invalidateQueries({ queryKey: ["admin", "orders"] });
+      q.invalidateQueries({ queryKey: ["admin", "stats"] });
+    },
+  });
+}
 export function useDeleteAdminOrder() {
   const q = useQueryClient();
   return useMutation({
@@ -355,3 +377,32 @@ export function useDeleteAdminOrder() {
     },
   });
 }
+
+export function useAdminQueries(params?: { search?: string; status?: string; page?: number; limit?: number }) {
+  return useQuery({
+    queryKey: ["admin", "queries", params],
+    queryFn: () => adminService.getQueries(params),
+  });
+}
+
+export function useUpdateAdminQueryStatus() {
+  const q = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: "PENDING" | "RESOLVED" | "ARCHIVED" }) =>
+      adminService.updateQueryStatus(id, status),
+    onSuccess: () => {
+      q.invalidateQueries({ queryKey: ["admin", "queries"] });
+    },
+  });
+}
+
+export function useDeleteAdminQuery() {
+  const q = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => adminService.deleteQuery(id),
+    onSuccess: () => {
+      q.invalidateQueries({ queryKey: ["admin", "queries"] });
+    },
+  });
+}
+

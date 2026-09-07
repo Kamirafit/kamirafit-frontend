@@ -5,12 +5,13 @@ import { useMemo } from "react";
 import { useCategories } from "@/services/category";
 import { CATEGORIES as DEFAULT_CATEGORIES } from "@/data/categories";
 import { FacebookIcon, InstagramIcon } from "./icons";
+import { useContactModal } from "@/components/contact/ContactModalProvider";
 
 const SUPPORT_LINKS = [
-  { label: "Contact", href: "#contact" },
-  { label: "Shipping", href: "#contact" },
-  { label: "Returns", href: "#contact" },
-  { label: "Size Guide", href: "#contact" },
+  { label: "Contact", href: "#" },
+  { label: "Shipping", href: "#" },
+  { label: "Returns", href: "#" },
+  { label: "Size Guide", href: "#" },
 ];
 
 const SOCIALS = [
@@ -29,6 +30,7 @@ const SOCIALS = [
 export default function Footer() {
   const year = new Date().getFullYear();
   const { data: rawCategories } = useCategories();
+  const { openContactModal } = useContactModal();
 
   const categories = useMemo(() => {
     const list =
@@ -58,7 +60,6 @@ export default function Footer() {
 
   return (
     <footer
-      id="contact"
       className="relative border-t border-line bg-ink text-paper"
     >
       <div
@@ -132,12 +133,22 @@ export default function Footer() {
             <ul className="mt-6 space-y-2.5">
               {SUPPORT_LINKS.map((link) => (
                 <li key={link.label}>
-                  <a
-                    href={link.href}
-                    className="text-[13px] text-paper-muted transition-colors duration-200 hover:text-gold"
-                  >
-                    {link.label}
-                  </a>
+                  {link.label === "Contact" ? (
+                    <button
+                      type="button"
+                      onClick={openContactModal}
+                      className="text-[13px] text-paper-muted transition-colors duration-200 hover:text-gold cursor-pointer"
+                    >
+                      {link.label}
+                    </button>
+                  ) : (
+                    <a
+                      href={link.href}
+                      className="text-[13px] text-paper-muted transition-colors duration-200 hover:text-gold"
+                    >
+                      {link.label}
+                    </a>
+                  )}
                 </li>
               ))}
             </ul>

@@ -10,7 +10,18 @@ type AuthResult = Pick<AuthSession, "user" | "role" | "accessToken"> & { user: U
 
 export const authService = {
   async loginCustomer(email: string, password: string): Promise<AuthResult> {
-    return unwrapApiResponse(apiClient.post("/auth/login-customer", { email, password }));
+    const raw = await unwrapApiResponse<any>(apiClient.post("/auth/login-customer", { email, password }));
+    const token = raw.token || raw.accessToken || "";
+    const user = raw.user || raw;
+    const role: UserRole = String(raw.role || user?.role || "customer").toLowerCase() === "admin" ? "admin" : "customer";
+    if (user) {
+      user.role = role;
+    }
+    return {
+      user,
+      role,
+      accessToken: token,
+    };
   },
   async signupCustomer(data: RegisterRequestDto): Promise<AuthResult> {
     return unwrapApiResponse(apiClient.post("/auth/register-customer", data));
@@ -20,7 +31,7 @@ export const authService = {
       user?: User;
       token?: string;
       accessToken?: string;
-      role?: UserRole;
+      role?: string;
     }>(
       apiClient
         .post("/v1/auth/login-admin", { email, password })
@@ -28,7 +39,10 @@ export const authService = {
     );
     const token = raw.token || raw.accessToken || "";
     const user = raw.user || (raw as unknown as User);
-    const role = (user.role || raw.role || "ADMIN") as UserRole;
+    const role: UserRole = "admin";
+    if (user) {
+      user.role = role;
+    }
     return {
       user,
       role,

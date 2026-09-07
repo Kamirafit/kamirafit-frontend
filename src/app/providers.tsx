@@ -4,6 +4,7 @@ import { useRef, type ReactNode } from "react";
 import { Provider } from "react-redux";
 import { makeStore, type AppStore } from "@/features/product/store";
 import SpotlightProvider from "@/components/search/SpotlightProvider";
+import ContactModalProvider from "@/components/contact/ContactModalProvider";
 import AuthHydrator from "@/features/auth/components/AuthHydrator";
 import QueryProvider from "@/providers/QueryProvider";
 import CommerceStateSync from "@/features/product/components/CommerceStateSync";
@@ -20,7 +21,9 @@ export default function Providers({ children }: { children: ReactNode }) {
         <QueryProvider>
           <OfflineBanner />
           <CommerceStateSync />
-          <SpotlightProvider>{children}</SpotlightProvider>
+          <SpotlightProvider>
+            <ContactModalProvider>{children}</ContactModalProvider>
+          </SpotlightProvider>
         </QueryProvider>
       </AuthHydrator>
     </Provider>

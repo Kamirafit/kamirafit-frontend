@@ -52,15 +52,15 @@ export default function Hero() {
                 Crafted in
               </dt>
               <dd className="mt-2 font-display text-lg font-semibold text-paper">
-                Portugal
+                India
               </dd>
             </div>
             <div>
               <dt className="text-[10px] uppercase tracking-[0.28em] text-gold">
-                Fabric
+                Fit
               </dt>
               <dd className="mt-2 font-display text-lg font-semibold text-paper">
-                Organic Cotton
+                Tailored Comfort
               </dd>
             </div>
             <div>

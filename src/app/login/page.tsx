@@ -8,17 +8,7 @@ import { getUserFriendlyError } from "@/lib/errors";
 import PageShell from "@/components/layout/PageShell";
 import Button from "@/components/ui/Button";
 
-const COUNTRY_CODES = [
-  { code: "+91", label: "+91 (India)" },
-  { code: "+1", label: "+1 (USA/Canada)" },
-  { code: "+44", label: "+44 (UK)" },
-  { code: "+971", label: "+971 (UAE)" },
-  { code: "+61", label: "+61 (Australia)" },
-  { code: "+65", label: "+65 (Singapore)" },
-  { code: "+49", label: "+49 (Germany)" },
-  { code: "+33", label: "+33 (France)" },
-  { code: "+966", label: "+966 (Saudi Arabia)" },
-];
+import { COUNTRY_CODES } from "@/data/countryCodes";
 
 function LoginContent() {
   const router = useRouter();
@@ -601,7 +591,7 @@ function LoginContent() {
                           className="w-full rounded-xl border border-line bg-ink-2 px-2 py-2.5 text-xs text-paper focus:border-gold focus:outline-none transition-colors cursor-pointer"
                         >
                           {COUNTRY_CODES.map((item) => (
-                            <option key={item.code} value={item.code} className="bg-ink text-paper">
+                            <option key={`${item.name}-${item.code}`} value={item.code} className="bg-ink text-paper">
                               {item.label}
                             </option>
                           ))}

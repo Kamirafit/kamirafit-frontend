@@ -3,7 +3,7 @@ import type { ComponentPropsWithoutRef, ElementType, ReactNode } from "react";
 type Width = "default" | "narrow" | "wide";
 
 // Full-width by default. `narrow` still caps for long-form text blocks
-// (e.g. testimonials, newsletter lead-in) where edge-to-edge would hurt readability.
+// (e.g. testimonials) where edge-to-edge would hurt readability.
 const WIDTH_CLASS: Record<Width, string> = {
   default: "",
   narrow: "max-w-3xl",

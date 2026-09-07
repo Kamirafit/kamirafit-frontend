@@ -5,13 +5,13 @@ import { usePathname } from "next/navigation";
 import { type ReactNode } from "react";
 import { useAppSelector } from "@/features/product/hooks/redux";
 import { useSpotlight } from "@/components/search/SpotlightProvider";
+import { useContactModal } from "@/components/contact/ContactModalProvider";
 import { DesktopCategoriesMenu } from "@/components/navbar/CategoriesMenu";
 import { CartIcon, HeartIcon, SearchIcon, UserIcon } from "./icons";
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
   { label: "Shop", href: "/shop" },
-  { label: "Contact", href: "/#contact" },
 ];
 
 function formatBadgeCount(n: number): string {
@@ -35,6 +35,7 @@ export default function Navbar() {
   const cartCount = useAppSelector((s) => s.cart.items.reduce((sum, it) => sum + it.quantity, 0));
   const wishlistCount = useAppSelector((s) => s.wishlist.ids.length);
   const { setOpen: setSpotlightOpen } = useSpotlight();
+  const { openContactModal } = useContactModal();
 
   return (
     <header className="sticky top-0 z-50 w-full">
@@ -42,9 +43,16 @@ export default function Navbar() {
       <div className="flex h-14 w-full items-center justify-between px-4 sm:h-16 sm:px-6 lg:px-10">
         <Link href="/" className="font-display text-xl font-semibold tracking-[0.08em] text-paper transition-colors hover:text-gold">Kamira<span className="text-gold">Fit</span></Link>
         <nav className="hidden items-center gap-10 md:flex">
-          {NAV_LINKS.slice(0, 2).map((link) => <NavLink key={link.label} href={link.href} label={link.label} />)}
+          {NAV_LINKS.map((link) => <NavLink key={link.label} href={link.href} label={link.label} />)}
           <DesktopCategoriesMenu />
-          <NavLink href={NAV_LINKS[2].href} label={NAV_LINKS[2].label} />
+          <button
+            type="button"
+            onClick={openContactModal}
+            className="group relative text-[12px] font-medium uppercase tracking-[0.22em] text-paper transition-colors duration-300 hover:text-gold"
+          >
+            Contact
+            <span aria-hidden className="pointer-events-none absolute -bottom-1 left-0 h-px w-0 bg-gold transition-all duration-300 group-hover:w-full" />
+          </button>
         </nav>
         <div className="hidden items-center gap-1 sm:gap-2 md:flex">
           <IconTrigger aria-label="Search (press ⌘K or Ctrl+K)" onClick={() => setSpotlightOpen(true)}><SearchIcon /></IconTrigger>
@@ -86,5 +94,13 @@ function ShopIcon(props: React.ComponentProps<"svg">) {
 }
 
 function NavLink({ label, href }: { label: string; href: string }) {
-  return <Link href={href} className="group relative text-[12px] font-medium uppercase tracking-[0.22em] text-paper transition-colors duration-300 hover:text-gold">{label}<span aria-hidden className="pointer-events-none absolute -bottom-1 left-0 h-px w-0 bg-gold transition-all duration-300 group-hover:w-full" /></Link>;
+  return (
+    <Link
+      href={href}
+      className="group relative text-[12px] font-medium uppercase tracking-[0.22em] text-paper transition-colors duration-300 hover:text-gold"
+    >
+      {label}
+      <span aria-hidden className="pointer-events-none absolute -bottom-1 left-0 h-px w-0 bg-gold transition-all duration-300 group-hover:w-full" />
+    </Link>
+  );
 }

@@ -72,10 +72,19 @@ function LogoutIcon() {
   );
 }
 
+function ChatIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
+  );
+}
+
 const ITEMS: Item[] = [
   { label: "Dashboard", href: "/dedicated-admin", icon: <DashboardIcon /> },
   { label: "Products", href: "/dedicated-admin/products", icon: <BoxIcon /> },
   { label: "Orders", href: "/dedicated-admin/orders", icon: <OrdersIcon /> },
+  { label: "Queries", href: "/dedicated-admin/queries", icon: <ChatIcon /> },
   { label: "Users", href: "/dedicated-admin/users", icon: <UsersIcon /> },
   { label: "Categories", href: "/dedicated-admin/categories", icon: <FolderIcon /> },
 ];

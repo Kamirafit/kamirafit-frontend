@@ -2,25 +2,36 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient, unwrapApiResponse } from "@/api/client";
 import { adaptProduct, type Product } from "@/types/entities";
+import { PRODUCTS, getProductById, getRelatedProducts as getFallbackRelated } from "@/data/products";
 import type { CreateProductRequestDto, DeleteProductResponseDto, UpdateProductRequestDto } from "@/types/api/catalog";
 
 let productsPromise: Promise<Product[]> | null = null;
 let featuredProductsPromise: Promise<Product[]> | null = null;
 
+const fallbackProducts = () => PRODUCTS.map(adaptProduct);
+
 const list = (params?: Record<string, unknown>): Promise<Product[]> => {
   if (!params || Object.keys(params).length === 0) {
     if (productsPromise) return productsPromise;
     productsPromise = unwrapApiResponse<any>(apiClient.get("/products"))
-      .then((r) => (Array.isArray(r) ? r : r.data || []).map(adaptProduct))
-      .catch(() => [])
+      .then((r) => {
+        const items = Array.isArray(r) ? r : r?.data || [];
+        if (items.length > 0) return items.map(adaptProduct);
+        return fallbackProducts();
+      })
+      .catch(() => fallbackProducts())
       .finally(() => {
         setTimeout(() => { productsPromise = null; }, 10000);
       });
     return productsPromise;
   }
   return unwrapApiResponse<any>(apiClient.get("/products", { params }))
-    .then((r) => (Array.isArray(r) ? r : r.data || []).map(adaptProduct))
-    .catch(() => []);
+    .then((r) => {
+      const items = Array.isArray(r) ? r : r?.data || [];
+      if (items.length > 0) return items.map(adaptProduct);
+      return fallbackProducts();
+    })
+    .catch(() => fallbackProducts());
 };
 
 export const productService = {
@@ -28,15 +39,33 @@ export const productService = {
   getFeaturedProducts: () => {
     if (featuredProductsPromise) return featuredProductsPromise;
     featuredProductsPromise = unwrapApiResponse<any[]>(apiClient.get("/products/featured"))
-      .then((x) => (Array.isArray(x) ? x : []).map(adaptProduct))
-      .catch(() => [])
+      .then((x) => {
+        const items = Array.isArray(x) ? x : [];
+        if (items.length > 0) return items.map(adaptProduct);
+        return fallbackProducts().slice(0, 4);
+      })
+      .catch(() => fallbackProducts().slice(0, 4))
       .finally(() => {
         setTimeout(() => { featuredProductsPromise = null; }, 10000);
       });
     return featuredProductsPromise;
   },
-  getProduct: (id: string) => unwrapApiResponse<any>(apiClient.get("/products/" + id)).then(adaptProduct),
-  getRelatedProducts: (id: string, limit = 4) => unwrapApiResponse<any[]>(apiClient.get("/products/" + id + "/related", { params: { limit } })).then((x) => (Array.isArray(x) ? x : []).map(adaptProduct)).catch(() => []),
+  getProduct: (id: string) =>
+    unwrapApiResponse<any>(apiClient.get("/products/" + id))
+      .then(adaptProduct)
+      .catch(() => {
+        const local = getProductById(id);
+        if (local) return adaptProduct(local);
+        throw new Error("Product not found");
+      }),
+  getRelatedProducts: (id: string, limit = 4) =>
+    unwrapApiResponse<any[]>(apiClient.get("/products/" + id + "/related", { params: { limit } }))
+      .then((x) => {
+        const items = Array.isArray(x) ? x : [];
+        if (items.length > 0) return items.map(adaptProduct);
+        return getFallbackRelated(id, limit).map(adaptProduct);
+      })
+      .catch(() => getFallbackRelated(id, limit).map(adaptProduct)),
   createProduct: (product: CreateProductRequestDto) => unwrapApiResponse<any>(apiClient.post("/products", product)).then(adaptProduct),
   updateProduct: (id: string, product: UpdateProductRequestDto["data"]) => unwrapApiResponse<any>(apiClient.put("/products/" + id, product)).then(adaptProduct),
   deleteProduct: (id: string): Promise<DeleteProductResponseDto["data"]["id"]> => unwrapApiResponse<any>(apiClient.delete("/products/" + id)).then((x) => x.id),

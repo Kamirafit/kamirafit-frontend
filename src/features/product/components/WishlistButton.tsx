@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter, usePathname } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "../hooks/redux";
 import { toggleWishlist } from "../store/wishlistSlice";
 import { HeartIcon } from "./icons";
@@ -10,7 +11,10 @@ type Props = {
 };
 
 export default function WishlistButton({ productId, className = "" }: Props) {
+  const router = useRouter();
+  const pathname = usePathname();
   const dispatch = useAppDispatch();
+  const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
   const isSaved = useAppSelector((s) => s.wishlist.ids.includes(productId));
 
   return (
@@ -21,6 +25,11 @@ export default function WishlistButton({ productId, className = "" }: Props) {
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
+        if (!isAuthenticated) {
+          const current = pathname || "/shop";
+          router.push(`/login?redirect=${encodeURIComponent(current)}`);
+          return;
+        }
         dispatch(toggleWishlist(productId));
       }}
       className={`inline-flex h-9 w-9 items-center justify-center rounded-full border backdrop-blur transition-all duration-200 hover:-translate-y-0.5 ${

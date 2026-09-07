@@ -24,7 +24,7 @@ type Tone = {
  * Each palette is wine-friendly and tuned to read on the ink admin surface.
  */
 const ORDER_STATUS_TONE: Record<OrderStatus, Tone> = {
-  Pending: {
+  New: {
     border: "border-[#EAB308]/40",
     bg: "bg-[#EAB308]/10",
     text: "text-[#EAB308]",
@@ -36,11 +36,41 @@ const ORDER_STATUS_TONE: Record<OrderStatus, Tone> = {
     text: "text-[#60A5FA]",
     dot: "bg-[#2563EB]",
   },
+  Processing: {
+    border: "border-[#38BDF8]/40",
+    bg: "bg-[#38BDF8]/10",
+    text: "text-[#38BDF8]",
+    dot: "bg-[#38BDF8]",
+  },
+  "Ready to Ship": {
+    border: "border-[#818CF8]/40",
+    bg: "bg-[#818CF8]/10",
+    text: "text-[#818CF8]",
+    dot: "bg-[#818CF8]",
+  },
+  "Pickup Scheduled": {
+    border: "border-[#A855F7]/40",
+    bg: "bg-[#A855F7]/10",
+    text: "text-[#C084FC]",
+    dot: "bg-[#A855F7]",
+  },
+  "Picked Up": {
+    border: "border-[#8B5CF6]/40",
+    bg: "bg-[#8B5CF6]/10",
+    text: "text-[#A78BFA]",
+    dot: "bg-[#8B5CF6]",
+  },
   "In Transit": {
     border: "border-[#8B5CF6]/40",
     bg: "bg-[#8B5CF6]/10",
     text: "text-[#A78BFA]",
     dot: "bg-[#8B5CF6]",
+  },
+  "Out For Delivery": {
+    border: "border-[#06B6D4]/40",
+    bg: "bg-[#06B6D4]/10",
+    text: "text-[#22D3EE]",
+    dot: "bg-[#06B6D4]",
   },
   Delivered: {
     border: "border-[#16A34A]/40",
@@ -48,41 +78,41 @@ const ORDER_STATUS_TONE: Record<OrderStatus, Tone> = {
     text: "text-[#16A34A]",
     dot: "bg-[#16A34A]",
   },
+  Cancelled: {
+    border: "border-[#B3261E]/40",
+    bg: "bg-[#B3261E]/10",
+    text: "text-[#B3261E]",
+    dot: "bg-[#B3261E]",
+  },
+  "RTO Initiated": {
+    border: "border-[#F97316]/40",
+    bg: "bg-[#F97316]/10",
+    text: "text-[#F97316]",
+    dot: "bg-[#F97316]",
+  },
+  "RTO Delivered": {
+    border: "border-[#EA580C]/40",
+    bg: "bg-[#EA580C]/10",
+    text: "text-[#FB923C]",
+    dot: "bg-[#EA580C]",
+  },
   "Return Requested": {
     border: "border-[#F97316]/40",
     bg: "bg-[#F97316]/10",
     text: "text-[#F97316]",
     dot: "bg-[#F97316]",
   },
-  "Return In Progress": {
-    border: "border-[#F97316]/40",
-    bg: "bg-[#F97316]/10",
-    text: "text-[#F97316]",
-    dot: "bg-[#F97316]",
-  },
-  "Return Completed": {
-    border: "border-[#F97316]/40",
-    bg: "bg-[#F97316]/10",
+  Returned: {
+    border: "border-[#EA580C]/40",
+    bg: "bg-[#EA580C]/10",
     text: "text-[#FB923C]",
-    dot: "bg-[#F97316]",
+    dot: "bg-[#EA580C]",
   },
-  "Refund Initiated": {
+  Refunded: {
     border: "border-[#DC2626]/40",
     bg: "bg-[#DC2626]/10",
     text: "text-[#F87171]",
     dot: "bg-[#DC2626]",
-  },
-  "Refund Completed": {
-    border: "border-[#DC2626]/40",
-    bg: "bg-[#DC2626]/10",
-    text: "text-[#F87171]",
-    dot: "bg-[#DC2626]",
-  },
-  Cancelled: {
-    border: "border-[#B3261E]/40",
-    bg: "bg-[#B3261E]/10",
-    text: "text-[#B3261E]",
-    dot: "bg-[#B3261E]",
   },
 };
 

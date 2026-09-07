@@ -21,6 +21,11 @@ export default function AuthHydrator({
         ? AuthStorage.getAdminAuth()
         : AuthStorage.getCustomerAuth();
       if (authData) {
+        const normalizedRole = String(authData.role || "").toLowerCase() === "admin" ? "admin" : "customer";
+        authData.role = normalizedRole as any;
+        if (authData.user) {
+          authData.user.role = normalizedRole as any;
+        }
         dispatch(setAuthHydrated(authData));
       }
     } catch (error) {

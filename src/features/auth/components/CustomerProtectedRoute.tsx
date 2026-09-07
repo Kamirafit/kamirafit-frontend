@@ -10,14 +10,17 @@ export default function CustomerProtectedRoute({ children }: { children: React.R
   const pathname = usePathname();
   const { isAuthenticated, role } = useSelector((state: RootState) => state.auth);
 
+  const roleStr = String(role || "").toLowerCase();
+  const isCustomer = Boolean(isAuthenticated && (roleStr === "customer" || roleStr === "admin"));
+
   useEffect(() => {
-    if (!isAuthenticated || role !== "customer") {
+    if (!isCustomer) {
       const redirectParam = pathname ? `?redirect=${encodeURIComponent(pathname)}` : "";
       router.replace(`/login${redirectParam}`);
     }
-  }, [isAuthenticated, role, router, pathname]);
+  }, [isCustomer, router, pathname]);
 
-  if (!isAuthenticated || role !== "customer") {
+  if (!isCustomer) {
     return null; // or a loading spinner
   }
 

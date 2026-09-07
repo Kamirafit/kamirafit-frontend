@@ -3,8 +3,21 @@ import { EntityIdSchema, ISODateStringSchema } from "./common.schema";
 import { PaymentStatusSchema } from "./payment.schema";
 
 export const ADMIN_ORDER_STATUSES = [
-  "Pending", "Confirmed", "In Transit", "Delivered", "Return Requested",
-  "Return In Progress", "Return Completed", "Refund Initiated", "Refund Completed", "Cancelled",
+  "New",
+  "Confirmed",
+  "Processing",
+  "Ready to Ship",
+  "Pickup Scheduled",
+  "Picked Up",
+  "In Transit",
+  "Out For Delivery",
+  "Delivered",
+  "Cancelled",
+  "RTO Initiated",
+  "RTO Delivered",
+  "Return Requested",
+  "Returned",
+  "Refunded",
 ] as const;
 
 export const AdminOrderStatusSchema = z.enum(ADMIN_ORDER_STATUSES);

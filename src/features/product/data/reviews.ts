@@ -123,6 +123,73 @@ const REVIEWS_BY_PRODUCT: Record<string, SeedReview[]> = {
       createdAt: "2026-02-26",
     },
   ],
+  "p-15": [
+    {
+      id: "r-15-1",
+      customerName: "Divya N.",
+      rating: 5,
+      title: "Exquisite embroidery",
+      comment: "The gold zari work is so intricate and the fabric feels regal yet lightweight.",
+      createdAt: "2026-04-14",
+    },
+    {
+      id: "r-15-2",
+      customerName: "Pooja S.",
+      rating: 5,
+      comment: "Perfect festive fit. The cotton inner lining makes it super comfortable in heat.",
+      createdAt: "2026-04-06",
+    },
+  ],
+  "p-16": [
+    {
+      id: "r-16-1",
+      customerName: "Sunita M.",
+      rating: 5,
+      title: "Authentic Chikankari",
+      comment: "Authentic Lucknowi needlework. The white on pastel blue is stunning in person.",
+      createdAt: "2026-04-11",
+    },
+  ],
+  "p-17": [
+    {
+      id: "r-17-1",
+      customerName: "Rhea C.",
+      rating: 5,
+      title: "Stunning linen set",
+      comment: "The drape of the linen trousers and tailored top is impeccable. Elevates daily wear.",
+      createdAt: "2026-04-16",
+    },
+  ],
+  "p-18": [
+    {
+      id: "r-18-1",
+      customerName: "Tanvi G.",
+      rating: 5,
+      title: "Vacation favorite",
+      comment: "Packed this for Goa and got endless compliments. Super breathable viscose!",
+      createdAt: "2026-04-03",
+    },
+  ],
+  "p-19": [
+    {
+      id: "r-19-1",
+      customerName: "Natasha P.",
+      rating: 5,
+      title: "Dreamy silhouette",
+      comment: "Tiered cut moves so gracefully. The floral print is subtle and charming.",
+      createdAt: "2026-04-15",
+    },
+  ],
+  "p-20": [
+    {
+      id: "r-20-1",
+      customerName: "Alisha K.",
+      rating: 5,
+      title: "Liquid silk luxury",
+      comment: "The cowl neck and liquid satin feel ultra luxurious for dinners and events.",
+      createdAt: "2026-04-10",
+    },
+  ],
 };
 
 const DEFAULT_REVIEWS: SeedReview[] = [

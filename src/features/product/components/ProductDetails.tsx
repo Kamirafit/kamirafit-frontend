@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import { formatPrice } from "@/lib/format";
 import { useAppDispatch, useAppSelector } from "../hooks/redux";
 import { addToCart } from "../store/cartSlice";
@@ -14,6 +15,15 @@ import SizeSelector from "./SizeSelector";
 type Props = {
   product: Product;
 };
+
+function LocationPinIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+      <circle cx="12" cy="10" r="3" />
+    </svg>
+  );
+}
 
 function TruckIcon() {
   return (
@@ -109,7 +119,10 @@ function Accordion({ title, defaultOpen = false, children }: AccordionProps) {
 }
 
 export default function ProductDetails({ product }: Props) {
+  const router = useRouter();
+  const pathname = usePathname();
   const dispatch = useAppDispatch();
+  const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
   const isSaved = useAppSelector((s) =>
     s.wishlist.ids.includes(product.id),
   );
@@ -123,7 +136,60 @@ export default function ProductDetails({ product }: Props) {
   const [sizeError, setSizeError] = useState(false);
   const [added, setAdded] = useState(false);
 
+  // ---------------- PINCODE DELIVERY ESTIMATOR STATE ----------------
+  const [pincode, setPincode] = useState("");
+  const [pincodeResult, setPincodeResult] = useState<{
+    status: "valid" | "invalid";
+    estimatedDate?: string;
+    message?: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedPin = localStorage.getItem("kamirafit_pincode");
+      if (savedPin && savedPin.length === 6) {
+        setPincode(savedPin);
+        calculateDelivery(savedPin);
+      }
+    }
+  }, []);
+
+  const calculateDelivery = (cleanPin: string) => {
+    const deliveryDate = new Date();
+    deliveryDate.setDate(deliveryDate.getDate() + 3);
+    const options: Intl.DateTimeFormatOptions = { weekday: "long", day: "numeric", month: "short" };
+    const formattedDate = deliveryDate.toLocaleDateString("en-IN", options);
+
+    setPincodeResult({
+      status: "valid",
+      estimatedDate: formattedDate,
+    });
+  };
+
+  const handleCheckPincode = (e: React.FormEvent) => {
+    e.preventDefault();
+    const clean = pincode.trim().replace(/\D/g, "");
+    if (clean.length !== 6) {
+      setPincodeResult({
+        status: "invalid",
+        message: "Please enter a valid 6-digit postal pincode.",
+      });
+      return;
+    }
+
+    calculateDelivery(clean);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("kamirafit_pincode", clean);
+    }
+  };
+
   const handleAddToCart = () => {
+    if (!isAuthenticated) {
+      const current = pathname || `/product/${product.id}`;
+      router.push(`/login?redirect=${encodeURIComponent(current)}`);
+      return;
+    }
+
     if (!selectedSize) {
       setSizeError(true);
       return;
@@ -138,6 +204,15 @@ export default function ProductDetails({ product }: Props) {
     );
     setAdded(true);
     window.setTimeout(() => setAdded(false), 1800);
+  };
+
+  const handleToggleWishlist = () => {
+    if (!isAuthenticated) {
+      const current = pathname || `/product/${product.id}`;
+      router.push(`/login?redirect=${encodeURIComponent(current)}`);
+      return;
+    }
+    dispatch(toggleWishlist(product.id));
   };
 
   return (
@@ -186,6 +261,65 @@ export default function ProductDetails({ product }: Props) {
           </p>
         </div>
 
+        {/* ---------------- PINCODE DELIVERY ESTIMATOR ---------------- */}
+        <div className="rounded-2xl border border-line bg-ink p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-paper-muted flex items-center gap-1.5">
+              <LocationPinIcon />
+              Delivery & Pincode Check
+            </span>
+            {pincodeResult?.status === "valid" && (
+              <span className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider">
+                Serviceable Area
+              </span>
+            )}
+          </div>
+
+          <form onSubmit={handleCheckPincode} className="flex gap-2">
+            <div className="relative flex-1">
+              <input
+                type="text"
+                maxLength={6}
+                value={pincode}
+                onChange={(e) => {
+                  setPincode(e.target.value.replace(/\D/g, ""));
+                  if (pincodeResult) setPincodeResult(null);
+                }}
+                placeholder="Enter 6-digit Pincode"
+                className="w-full rounded-xl border border-line bg-ink-2 px-3.5 py-2.5 text-xs text-paper placeholder-paper-muted/50 focus:border-gold focus:outline-none tracking-widest font-mono transition-colors"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={!pincode || pincode.length < 6}
+              className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wider rounded-xl border border-gold bg-gold/15 text-gold hover:bg-gold hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+            >
+              Check
+            </button>
+          </form>
+
+          {/* Green Response Banner on Successful Check */}
+          {pincodeResult?.status === "valid" && (
+            <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-400 space-y-1 animate-fadeIn">
+              <p className="font-semibold flex items-center gap-1.5 text-emerald-300">
+                <svg className="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                </svg>
+                Estimated Delivery by {pincodeResult.estimatedDate} (3–4 business days)
+              </p>
+              <p className="text-[11px] text-emerald-400/90 pl-5">
+                ✓ Free Express Delivery • Cash on Delivery (COD) Available
+              </p>
+            </div>
+          )}
+
+          {pincodeResult?.status === "invalid" && (
+            <p className="text-xs text-red-400 font-medium">
+              {pincodeResult.message}
+            </p>
+          )}
+        </div>
+
         <div className="flex flex-col gap-6">
           <SizeSelector
             options={product.size}
@@ -215,7 +349,7 @@ export default function ProductDetails({ product }: Props) {
             type="button"
             aria-pressed={isSaved}
             aria-label={isSaved ? "Remove from wishlist" : "Add to wishlist"}
-            onClick={() => dispatch(toggleWishlist(product.id))}
+            onClick={handleToggleWishlist}
             className={`inline-flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full border transition-all ${
               isSaved
                 ? "border-transparent bg-[#DC2626]/10 text-[#DC2626]"
