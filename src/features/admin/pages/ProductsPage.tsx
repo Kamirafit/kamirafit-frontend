@@ -20,6 +20,7 @@ import DataTable, { type Column } from "../components/DataTable";
 import ProductFormModal, {
   type FormValues,
 } from "../components/ProductFormModal";
+import ProductReviewsModal from "../components/ProductReviewsModal";
 import SearchField from "../components/SearchField";
 import StatusPill from "../components/StatusPill";
 import { EmptyState, ErrorState, OfflineState } from "@/components/states";
@@ -61,6 +62,13 @@ export default function ProductsPage() {
   const [editing, setEditing] = useState<Product | null>(null);
   const [duplicating, setDuplicating] = useState<Product | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selectedProductForReviews, setSelectedProductForReviews] = useState<Product | null>(null);
+  const [reviewsModalOpen, setReviewsModalOpen] = useState(false);
+
+  const openReviews = (product: Product) => {
+    setSelectedProductForReviews(product);
+    setReviewsModalOpen(true);
+  };
 
 
   const filtered = useMemo(() => {
@@ -167,12 +175,48 @@ export default function ProductsPage() {
           </div>
         );
       },
-    },    {
+    },
+    {
       key: "price",
       label: "Price",
       render: (p) => (
         <span className="font-semibold text-gold">{formatPrice(p.price)}</span>
       ),
+    },
+    {
+      key: "rating",
+      label: "Rating",
+      render: (p) => {
+        const rating = typeof p.rating === "number" ? p.rating : 0;
+        const count = Array.isArray(p.reviews) ? p.reviews.length : 0;
+        return (
+          <button
+            type="button"
+            onClick={() => openReviews(p)}
+            className="group flex flex-col items-start text-left transition-colors"
+            title="Click to view all reviews"
+          >
+            <div className="flex items-center gap-1.5">
+              <span className="text-amber-400">★</span>
+              <span className="font-semibold text-paper group-hover:text-gold">
+                {count > 0 ? rating.toFixed(1) : "—"}
+              </span>
+              <span className="text-[11px] text-paper-muted">
+                ({count})
+              </span>
+            </div>
+            {count > 0 ? (
+              <span className="text-[10px] text-gold/80 group-hover:underline">
+                View reviews
+              </span>
+            ) : (
+              <span className="text-[10px] text-paper-muted">
+                No reviews
+              </span>
+            )}
+          </button>
+        );
+      },
     },
     {
       key: "category",
@@ -192,6 +236,9 @@ export default function ProductsPage() {
         const active = p.status === "active";
         return (
           <div className="flex items-center justify-end gap-2">
+            <ActionButton onClick={() => openReviews(p)}>
+              Reviews ({Array.isArray(p.reviews) ? p.reviews.length : 0})
+            </ActionButton>
             <ActionButton
               tone={active ? "warning" : "success"}
               onClick={() => toggleStatusMutation.mutate(p.id)}
@@ -283,6 +330,15 @@ export default function ProductsPage() {
         onConfirm={() => {
           if (deletingId) deleteMutation.mutate(deletingId);
           setDeletingId(null);
+        }}
+      />
+
+      <ProductReviewsModal
+        product={selectedProductForReviews}
+        open={reviewsModalOpen}
+        onClose={() => {
+          setReviewsModalOpen(false);
+          setSelectedProductForReviews(null);
         }}
       />
     </div>

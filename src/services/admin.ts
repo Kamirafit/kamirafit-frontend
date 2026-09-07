@@ -8,8 +8,42 @@ import {
   type AdminUser,
   type ContactQuery,
   type Product,
+  type BusinessAnalytics,
 } from "@/types/entities";
 import type { AdminStatsDto } from "@/types/api/admin";
+
+export interface AdminProductReview {
+  id: string;
+  productId: string;
+  userId?: string;
+  rating: number;
+  comment: string;
+  images: string[];
+  createdAt: string;
+  user?: {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+  };
+}
+
+export function adaptAdminProductReview(raw: any): AdminProductReview {
+  const r = raw?.data || raw || {};
+  return {
+    id: r.id || r._id || "",
+    productId: r.productId || "",
+    userId: r.userId || "",
+    rating: typeof r.rating === "number" ? r.rating : 5,
+    comment: r.comment || r.content || "",
+    images: Array.isArray(r.images) ? r.images : [],
+    createdAt: r.createdAt || new Date().toISOString(),
+    user: {
+      firstName: r.user?.firstName || r.customerName || "Customer",
+      lastName: r.user?.lastName || "",
+      email: r.user?.email || "",
+    },
+  };
+}
 
 export function adaptCategory(raw: any): AdminCategory {
   const c = raw?.data || raw || {};
@@ -236,6 +270,21 @@ export const adminService = {
     adminRequest<ContactQuery>("patch", "/queries/" + id + "/status", { status }),
   deleteQuery: (id: string) =>
     adminRequest<{ id: string }>("delete", "/queries/" + id).then((x) => x.id || id),
+  getProductReviews: async (productId: string): Promise<AdminProductReview[]> => {
+    try {
+      const res = await unwrapApiResponse<any[]>(
+        apiClient.get("/v1/orders/reviews", { params: { productId } })
+      );
+      return (Array.isArray(res) ? res : []).map(adaptAdminProductReview);
+    } catch {
+      const res = await unwrapApiResponse<any[]>(
+        apiClient.get("/orders/reviews", { params: { productId } })
+      );
+      return (Array.isArray(res) ? res : []).map(adaptAdminProductReview);
+    }
+  },
+  getAnalytics: (timeframe: string = "30d") =>
+    adminRequest<BusinessAnalytics>("get", "/analytics", undefined, { params: { timeframe } }),
 };
 
 export function useAdminStats() {
@@ -405,4 +454,21 @@ export function useDeleteAdminQuery() {
     },
   });
 }
+
+export function useProductReviews(productId: string) {
+  return useQuery({
+    queryKey: ["admin", "products", productId, "reviews"],
+    queryFn: () => adminService.getProductReviews(productId),
+    enabled: Boolean(productId),
+  });
+}
+
+export function useBusinessAnalytics(timeframe: string = "30d") {
+  return useQuery({
+    queryKey: ["admin", "analytics", timeframe],
+    queryFn: () => adminService.getAnalytics(timeframe),
+    staleTime: 60 * 1000,
+  });
+}
+
 

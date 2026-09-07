@@ -64,8 +64,16 @@ export function adaptProduct(raw: any): Product {
     ...variants.flatMap((v: any) => v.images || []),
   ]));
 
-  const rating = typeof p.rating === "number" ? p.rating : (p.metadata?.rating ?? 5);
   const reviews = Array.isArray(p.reviews) ? p.reviews : (p.metadata?.reviews ?? []);
+  const reviewCount = reviews.length;
+  const rating =
+    reviewCount > 0
+      ? Number((reviews.reduce((sum: number, r: any) => sum + (Number(r.rating) || 0), 0) / reviewCount).toFixed(1))
+      : typeof p.rating === "number" && p.rating !== 5
+      ? p.rating
+      : typeof p.metadata?.rating === "number"
+      ? p.metadata.rating
+      : 0;
   const popularity = typeof p.popularity === "number" ? p.popularity : (p.metadata?.popularity ?? 0);
   const createdAt = p.createdAt || p.metadata?.createdAt || new Date().toISOString();
 
