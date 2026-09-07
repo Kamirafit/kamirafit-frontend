@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useLogoutAdmin } from "@/features/auth/hooks";
 
 type Item = {
@@ -91,7 +91,6 @@ const ITEMS: Item[] = [
 
 export default function AdminSidebar() {
   const pathname = usePathname();
-  const router = useRouter();
   const logoutAdmin = useLogoutAdmin();
   const [loggingOut, setLoggingOut] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

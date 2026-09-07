@@ -12,7 +12,7 @@ import QueryDetailsModal from "../components/QueryDetailsModal";
 import { EmptyState } from "@/components/states";
 
 export default function QueriesPage() {
-  const { data: queries = [], isLoading, refetch } = useAdminQueries();
+  const { data: queries = [], isLoading } = useAdminQueries();
 
   const [queryText, setQueryText] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<"ALL" | "PENDING" | "RESOLVED">("ALL");

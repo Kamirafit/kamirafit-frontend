@@ -149,12 +149,12 @@ export default function ProductDetails({ product }: Props) {
       const savedPin = localStorage.getItem("kamirafit_pincode");
       if (savedPin && savedPin.length === 6) {
         setPincode(savedPin);
-        calculateDelivery(savedPin);
+        calculateDelivery();
       }
     }
   }, []);
 
-  const calculateDelivery = (cleanPin: string) => {
+  const calculateDelivery = () => {
     const deliveryDate = new Date();
     deliveryDate.setDate(deliveryDate.getDate() + 3);
     const options: Intl.DateTimeFormatOptions = { weekday: "long", day: "numeric", month: "short" };
@@ -177,7 +177,7 @@ export default function ProductDetails({ product }: Props) {
       return;
     }
 
-    calculateDelivery(clean);
+    calculateDelivery();
     if (typeof window !== "undefined") {
       localStorage.setItem("kamirafit_pincode", clean);
     }

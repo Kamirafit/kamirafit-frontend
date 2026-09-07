@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { setAuthHydrated } from "../store/authSlice";
 import { AuthStorage } from "../services/authStorage";
+import type { UserRole } from "@/types/entities";
 
 export default function AuthHydrator({
   children,
@@ -21,10 +22,10 @@ export default function AuthHydrator({
         ? AuthStorage.getAdminAuth()
         : AuthStorage.getCustomerAuth();
       if (authData) {
-        const normalizedRole = String(authData.role || "").toLowerCase() === "admin" ? "admin" : "customer";
-        authData.role = normalizedRole as any;
+        const normalizedRole: UserRole = String(authData.role || "").toLowerCase() === "admin" ? "admin" : "customer";
+        authData.role = normalizedRole;
         if (authData.user) {
-          authData.user.role = normalizedRole as any;
+          authData.user.role = normalizedRole;
         }
         dispatch(setAuthHydrated(authData));
       }

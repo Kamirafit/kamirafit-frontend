@@ -5,7 +5,7 @@ import { PRODUCTS } from "@/data/products";
 import { USERS } from "@/data/users";
 import { MOCK_ADDRESSES, MOCK_ORDERS, MOCK_PROFILE } from "@/features/account/data/mockAccount";
 import type {
-  Address, AdminCategory, AdminOrder, AdminUser, Cart, CartItem, ContactQuery, Order,
+  Address, AdminCategory, AdminOrder, AdminUser, Cart, CartItem, ContactQuery, CreateContactQueryInput, Order,
   ProductEntity, Variant, Profile, Review, User, Wishlist,
 } from "@/types/entities";
 import type { CheckoutRequestDto, CheckoutResponseDto, CreateOrderRequestDto } from "@/types/api/commerce";
@@ -551,7 +551,7 @@ export const mockApi = {
     },
   },
   contact: {
-    submit: (input: any) => respond(() => {
+    submit: (input: CreateContactQueryInput) => respond(() => {
       const newQuery: ContactQuery = {
         id: `query-${Date.now()}`,
         firstName: input.firstName || "",

@@ -185,10 +185,14 @@ export default function ContactModal({ open, onClose }: Props) {
       });
       setTouched({});
       setErrors({});
-    } catch (err: any) {
-      setSubmitError(
-        err?.message || "Failed to submit your inquiry. Please try again."
-      );
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : typeof err === "object" && err !== null && "message" in err
+          ? String((err as { message: unknown }).message)
+          : "Failed to submit your inquiry. Please try again.";
+      setSubmitError(message);
     } finally {
       setIsSubmitting(false);
     }

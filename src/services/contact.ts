@@ -9,7 +9,11 @@ export const contactService = {
     } catch (err) {
       // Graceful fallback to mock API if server/network is offline
       console.warn("Real contact endpoint unreachable, using mock fallback:", err);
-      return unwrapApiResponse<ContactQuery>((mockApi as any).contact.submit(input));
+      const res = await mockApi.contact.submit(input);
+      if (res.success) {
+        return res.data;
+      }
+      throw new Error(res.error.message || "Failed to submit query");
     }
   },
 };

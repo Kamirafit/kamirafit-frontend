@@ -10,9 +10,14 @@ type AuthResult = Pick<AuthSession, "user" | "role" | "accessToken"> & { user: U
 
 export const authService = {
   async loginCustomer(email: string, password: string): Promise<AuthResult> {
-    const raw = await unwrapApiResponse<any>(apiClient.post("/auth/login-customer", { email, password }));
+    const raw = await unwrapApiResponse<{
+      user?: User;
+      token?: string;
+      accessToken?: string;
+      role?: string;
+    }>(apiClient.post("/auth/login-customer", { email, password }));
     const token = raw.token || raw.accessToken || "";
-    const user = raw.user || raw;
+    const user = raw.user || (raw as unknown as User);
     const role: UserRole = String(raw.role || user?.role || "customer").toLowerCase() === "admin" ? "admin" : "customer";
     if (user) {
       user.role = role;

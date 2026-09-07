@@ -63,7 +63,6 @@ export type FormValues = {
   priceIncludesTax: boolean;
 };
 
-const COLLECTIONS = ["New Arrivals", "Best Sellers", "Summer Collection", "Oversized Collection", "Pet Collection"];
 const ADJUSTMENT_REASONS = ["Stock received", "Damaged", "Returned", "Manual adjustment", "Lost", "Order cancellation", "Stock correction"];
 const MAX_IMAGES = 8;
 
@@ -106,10 +105,6 @@ const EMPTY: FormValues = {
 };
 
 const sectionTitle = "border-b border-line pb-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-gold";
-
-function isCategory(value: string, options: string[]): value is Category {
-  return options.includes(value) && CATEGORY_OPTIONS.includes(value as Category);
-}
 
 function slugify(value: string) {
   return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
@@ -157,7 +152,6 @@ function Toggle({ label, checked, onChange, disabled = false }: { label: string;
 
 export default function ProductFormModal({ open, onClose, onSubmit, initial, categories: categoriesProp, duplicate = false }: Props) {
   const categoriesQuery = useAdminCategories();
-  const apiCategories = categoriesQuery.data ?? [];
 
   const [values, setValues] = useState<FormValues>(EMPTY);
   const [productState, setProductState] = useState<ProductState>("draft");
@@ -166,7 +160,6 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
   const [images, setImages] = useState<ImageDraft[]>([]);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [tagInput, setTagInput] = useState("");
   const [bulkStock, setBulkStock] = useState(0);
   const [bulkThreshold, setBulkThreshold] = useState(0);
   const [adjustmentVariant, setAdjustmentVariant] = useState("");
@@ -180,13 +173,14 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
 
   const categoriesList = useMemo(() => {
     if (categoriesProp && categoriesProp.length > 0) return categoriesProp;
-    if (apiCategories && apiCategories.length > 0) return apiCategories;
+    const apiCats = categoriesQuery.data;
+    if (apiCats && apiCats.length > 0) return apiCats;
     return (CATEGORY_OPTIONS as readonly string[]).map((name) => ({
       id: name,
       name,
       subcategories: SUBCATEGORY_MAP[name] || ["General", "Regular", "Printed"],
     }));
-  }, [categoriesProp, apiCategories]);
+  }, [categoriesProp, categoriesQuery.data]);
 
   const selectedCategoryObj = useMemo(
     () => categoriesList.find((c: AdminCategory) => c.name === values.category),
@@ -306,17 +300,6 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
     return next;
   });
 
-  const addTag = () => {
-    const tag = tagInput.trim().toLowerCase();
-    if (!tag) return;
-    if (values.tags.includes(tag)) {
-      setErrors((previous) => ({ ...previous, tags: "That tag is already included." }));
-      return;
-    }
-    set("tags", [...values.tags, tag]);
-    setTagInput("");
-    setErrors((previous) => ({ ...previous, tags: "" }));
-  };
 
   const adjustStock = () => {
     const variant = variants.find((item) => item.id === adjustmentVariant);

@@ -64,7 +64,7 @@ export default function AddressFormModal({ address, onClose, onSave }: Props) {
         }
       });
     }
-  }, [formData.pincode]);
+  }, [formData.pincode, formData.city, formData.state]);
 
   const handlePincodeChange = async (value: string) => {
     const cleanPin = value.replace(/\D/g, "").slice(0, 6);

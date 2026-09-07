@@ -14,7 +14,6 @@ import {
 } from "@/services/admin";
 import AdminTableSkeleton from "@/components/skeleton/AdminTableSkeleton";
 import type { Category, Product } from "@/features/product/types";
-import type { AdminCategory } from "@/types/entities";
 import ActionButton from "../components/ActionButton";
 import ConfirmDialog from "../components/ConfirmDialog";
 import DataTable, { type Column } from "../components/DataTable";
@@ -63,10 +62,6 @@ export default function ProductsPage() {
   const [duplicating, setDuplicating] = useState<Product | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const categoryOptions = useMemo(
-    () => categories.map((c: AdminCategory) => c.name),
-    [categories],
-  );
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
