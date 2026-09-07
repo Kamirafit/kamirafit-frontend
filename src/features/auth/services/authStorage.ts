@@ -11,9 +11,6 @@ const AUTH_CHANNEL_NAME = "kamirafit_auth_channel";
 
 let authChannel: BroadcastChannel | null = null;
 
-// In-memory store for administrator access token (Never written to disk/localStorage)
-let inMemoryAdminAccessToken: string | null = null;
-
 function getAuthChannel(): BroadcastChannel | null {
   if (typeof window === "undefined" || typeof BroadcastChannel === "undefined") {
     return null;
@@ -137,7 +134,7 @@ export const AuthStorage = {
   },
 
   // Admin Auth: Bearer tokens are NEVER persisted into localStorage.
-  // We keep the bearer token in memory and user profile metadata in sessionStorage.
+  // We keep session-scoped admin credentials in sessionStorage (scoped to the tab/window).
   getAdminAuth(): AuthState | null {
     if (typeof window === "undefined") return null;
 
@@ -151,10 +148,7 @@ export const AuthStorage = {
 
     try {
       const parsed: AuthState = JSON.parse(sessionData);
-      return {
-        ...parsed,
-        accessToken: inMemoryAdminAccessToken || "",
-      };
+      return parsed;
     } catch {
       return null;
     }
@@ -163,28 +157,18 @@ export const AuthStorage = {
   setAdminAuth(state: AuthState): void {
     if (typeof window === "undefined") return;
 
-    // Retain token strictly in memory
-    inMemoryAdminAccessToken = state.accessToken || null;
-
-    // Scrub token from session storage payload
-    const safeSessionState: AuthState = {
-      ...state,
-      accessToken: "",
-    };
-
-    sessionStorage.setItem("kamira_admin_session", JSON.stringify(safeSessionState));
+    sessionStorage.setItem("kamira_admin_session", JSON.stringify(state));
     localStorage.removeItem("kamira_auth_admin"); // Ensure localStorage is pristine
 
     broadcastAuthEvent({
       type: "LOGIN",
       target: "admin",
-      state: safeSessionState,
+      state,
       timestamp: Date.now(),
     });
   },
 
   clearAdminAuth(): void {
-    inMemoryAdminAccessToken = null;
     if (typeof window !== "undefined") {
       sessionStorage.removeItem("kamira_admin_session");
       localStorage.removeItem("kamira_auth_admin");
