@@ -80,10 +80,20 @@ function ChatIcon() {
   );
 }
 
+function QuoteIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M3 21c3 0 7-1 7-8V5c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v6c0 4.5 2.5 8 3 10Z" />
+      <path d="M17 21c3 0 7-1 7-8V5c0-1.1-.9-2-2-2h-4c-1.1 0-2 .9-2 2v6c0 4.5 2.5 8 3 10Z" />
+    </svg>
+  );
+}
+
 const ITEMS: Item[] = [
   { label: "Dashboard", href: "/dedicated-admin", icon: <DashboardIcon /> },
   { label: "Products", href: "/dedicated-admin/products", icon: <BoxIcon /> },
   { label: "Orders", href: "/dedicated-admin/orders", icon: <OrdersIcon /> },
+  { label: "Testimonials", href: "/dedicated-admin/testimonials", icon: <QuoteIcon /> },
   { label: "Queries", href: "/dedicated-admin/queries", icon: <ChatIcon /> },
   { label: "Users", href: "/dedicated-admin/users", icon: <UsersIcon /> },
   { label: "Categories", href: "/dedicated-admin/categories", icon: <FolderIcon /> },

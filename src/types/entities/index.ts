@@ -11,3 +11,4 @@ export * from "./address";
 export * from "./admin";
 export * from "./auth";
 export * from "./contact";
+export * from "./testimonial";
