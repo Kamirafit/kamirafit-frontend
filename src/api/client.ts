@@ -1,4 +1,4 @@
-import axios, { AxiosError } from "axios";
+import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import type { ApiErrorDto } from "@/types/api/common";
 import { AuthStorage } from "@/features/auth/services/authStorage";
 
@@ -19,22 +19,43 @@ function isErrorPayload(value: unknown): value is { message?: string; code?: str
   return typeof value === "object" && value !== null;
 }
 
+function getBaseUrl(): string {
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  if (process.env.INTERNAL_API_URL) {
+    return process.env.INTERNAL_API_URL;
+  }
+  if (typeof window !== "undefined") {
+    return "/api";
+  }
+  // Server-side fallback for static generation / SSR
+  return "http://localhost:10000/api/v1";
+}
+
 export const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "/api",
+  baseURL: getBaseUrl(),
   timeout: 15000,
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
 apiClient.interceptors.request.use(
-  (config) => {
+  (config: InternalAxiosRequestConfig) => {
     if (typeof window !== "undefined") {
       const url = config.url || "";
-      const isAdminRequest = url.includes("/admin") || url.includes("/dedicated-admin") || window.location.pathname.startsWith("/dedicated-admin");
+      const isAdminRequest =
+        url.includes("/admin") ||
+        url.includes("/dedicated-admin") ||
+        window.location.pathname.startsWith("/dedicated-admin");
+
       const authData = isAdminRequest ? AuthStorage.getAdminAuth() : AuthStorage.getCustomerAuth();
       if (authData && authData.isAuthenticated && authData.user) {
-        if (authData.accessToken) config.headers.Authorization = `Bearer ${authData.accessToken}`;
+        if (authData.accessToken) {
+          config.headers.Authorization = `Bearer ${authData.accessToken}`;
+        }
       }
     }
     return config;
@@ -42,11 +63,29 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (value?: unknown) => void;
+  reject: (reason?: unknown) => void;
+}> = [];
+
+const processQueue = (error: Error | null) => {
+  failedQueue.forEach((promise) => {
+    if (error) {
+      promise.reject(error);
+    } else {
+      promise.resolve();
+    }
+  });
+  failedQueue = [];
+};
+
 apiClient.interceptors.response.use(
   (response) => {
     return response;
   },
-  (error: AxiosError<unknown>) => {
+  async (error: AxiosError<unknown>) => {
+    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
     const payload = isErrorPayload(error.response?.data) ? error.response.data : undefined;
     const formattedError: ApiErrorResponse = {
       success: false,
@@ -54,8 +93,45 @@ apiClient.interceptors.response.use(
       code: payload?.code || error.response?.status?.toString() || "UNKNOWN_ERROR",
     };
 
-    if (error.response?.status === 401) {
-      if (typeof window !== "undefined") {
+    if (error.response?.status === 401 && !originalRequest._retry && typeof window !== "undefined") {
+      const url = originalRequest.url || "";
+      if (url.includes("/auth/refresh") || url.includes("/auth/login")) {
+        return Promise.reject(formattedError);
+      }
+
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then(() => apiClient(originalRequest))
+          .catch((err) => Promise.reject(err));
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        const refreshResponse = await apiClient.post("/auth/refresh");
+        const newAccessToken = refreshResponse.data?.data?.accessToken;
+
+        if (newAccessToken) {
+          const pathname = window.location.pathname;
+          if (pathname.startsWith("/dedicated-admin")) {
+            const adminState = AuthStorage.getAdminAuth();
+            if (adminState) {
+              AuthStorage.setAdminAuth({ ...adminState, accessToken: newAccessToken });
+            }
+          } else {
+            const customerState = AuthStorage.getCustomerAuth();
+            if (customerState) {
+              AuthStorage.setCustomerAuth({ ...customerState, accessToken: newAccessToken });
+            }
+          }
+          processQueue(null);
+          return apiClient(originalRequest);
+        }
+      } catch (refreshErr: unknown) {
+        processQueue(refreshErr instanceof Error ? refreshErr : new Error("Token refresh failed"));
         const pathname = window.location.pathname;
         const isAdminRequest = pathname.startsWith("/dedicated-admin");
         if (isAdminRequest) {
@@ -69,6 +145,9 @@ apiClient.interceptors.response.use(
             window.location.href = `/login?redirect=${encodeURIComponent(pathname)}`;
           }
         }
+        return Promise.reject(formattedError);
+      } finally {
+        isRefreshing = false;
       }
     }
 

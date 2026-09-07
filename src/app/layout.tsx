@@ -15,10 +15,34 @@ const playfair = Playfair_Display({
   style: ["normal", "italic"],
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://kamirafit.com";
+
 export const metadata: Metadata = {
-  title: "KamiraFit — Elevate Your Everyday Style",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "KamiraFit — Elevate Your Everyday Style",
+    template: "%s | KamiraFit",
+  },
   description:
     "Premium comfort. Effortless fashion. Discover KamiraFit's latest collection of oversized tees, regular fit essentials, and hoodies.",
+  openGraph: {
+    title: "KamiraFit — Elevate Your Everyday Style",
+    description:
+      "Premium comfort. Effortless fashion. Discover KamiraFit's latest collection of oversized tees, regular fit essentials, and hoodies.",
+    url: siteUrl,
+    siteName: "KamiraFit",
+    locale: "en_IN",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "KamiraFit — Elevate Your Everyday Style",
+    description: "Premium comfort. Effortless fashion. Discover KamiraFit's luxury streetwear essentials.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({

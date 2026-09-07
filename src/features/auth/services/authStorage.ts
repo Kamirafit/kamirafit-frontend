@@ -11,6 +11,9 @@ const AUTH_CHANNEL_NAME = "kamirafit_auth_channel";
 
 let authChannel: BroadcastChannel | null = null;
 
+// In-memory store for administrator access token (Never written to disk/localStorage)
+let inMemoryAdminAccessToken: string | null = null;
+
 function getAuthChannel(): BroadcastChannel | null {
   if (typeof window === "undefined" || typeof BroadcastChannel === "undefined") {
     return null;
@@ -43,7 +46,6 @@ export function subscribeAuthSync(onEvent: (event: AuthSyncEvent) => void): () =
 
   let lastTimestamp = 0;
   const handleEvent = (event: AuthSyncEvent) => {
-    // Deduplicate if both BroadcastChannel and storage event fire within a tight 50ms window
     if (event.timestamp && Math.abs(event.timestamp - lastTimestamp) < 50) {
       return;
     }
@@ -83,26 +85,6 @@ export function subscribeAuthSync(onEvent: (event: AuthSyncEvent) => void): () =
           // ignore parse errors
         }
       }
-    } else if (storageEvent.key === "kamira_auth_admin") {
-      if (!storageEvent.newValue) {
-        handleEvent({
-          type: "LOGOUT",
-          target: "admin",
-          timestamp: Date.now(),
-        });
-      } else {
-        try {
-          const parsed = JSON.parse(storageEvent.newValue);
-          handleEvent({
-            type: "LOGIN",
-            target: "admin",
-            state: parsed,
-            timestamp: Date.now(),
-          });
-        } catch {
-          // ignore parse errors
-        }
-      }
     } else if (storageEvent.key === null) {
       handleEvent({
         type: "LOGOUT",
@@ -128,6 +110,7 @@ export function subscribeAuthSync(onEvent: (event: AuthSyncEvent) => void): () =
 }
 
 export const AuthStorage = {
+  // Customer Auth (Stored in localStorage)
   getCustomerAuth(): AuthState | null {
     if (typeof window === "undefined") return null;
     const data = localStorage.getItem("kamira_auth_customer");
@@ -152,25 +135,60 @@ export const AuthStorage = {
       timestamp: Date.now(),
     });
   },
-  
+
+  // Admin Auth: Bearer tokens are NEVER persisted into localStorage.
+  // We keep the bearer token in memory and user profile metadata in sessionStorage.
   getAdminAuth(): AuthState | null {
     if (typeof window === "undefined") return null;
-    const data = localStorage.getItem("kamira_auth_admin");
-    return data ? JSON.parse(data) : null;
+
+    // Purge any legacy admin tokens accidentally left in localStorage
+    if (localStorage.getItem("kamira_auth_admin")) {
+      localStorage.removeItem("kamira_auth_admin");
+    }
+
+    const sessionData = sessionStorage.getItem("kamira_admin_session");
+    if (!sessionData) return null;
+
+    try {
+      const parsed: AuthState = JSON.parse(sessionData);
+      return {
+        ...parsed,
+        accessToken: inMemoryAdminAccessToken || "",
+      };
+    } catch {
+      return null;
+    }
   },
+
   setAdminAuth(state: AuthState): void {
     if (typeof window === "undefined") return;
-    localStorage.setItem("kamira_auth_admin", JSON.stringify(state));
+
+    // Retain token strictly in memory
+    inMemoryAdminAccessToken = state.accessToken || null;
+
+    // Scrub token from session storage payload
+    const safeSessionState: AuthState = {
+      ...state,
+      accessToken: "",
+    };
+
+    sessionStorage.setItem("kamira_admin_session", JSON.stringify(safeSessionState));
+    localStorage.removeItem("kamira_auth_admin"); // Ensure localStorage is pristine
+
     broadcastAuthEvent({
       type: "LOGIN",
       target: "admin",
-      state,
+      state: safeSessionState,
       timestamp: Date.now(),
     });
   },
+
   clearAdminAuth(): void {
-    if (typeof window === "undefined") return;
-    localStorage.removeItem("kamira_auth_admin");
+    inMemoryAdminAccessToken = null;
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("kamira_admin_session");
+      localStorage.removeItem("kamira_auth_admin");
+    }
     broadcastAuthEvent({
       type: "LOGOUT",
       target: "admin",
@@ -181,6 +199,5 @@ export const AuthStorage = {
   clearAll(): void {
     this.clearCustomerAuth();
     this.clearAdminAuth();
-  }
+  },
 };
-

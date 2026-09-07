@@ -8,10 +8,10 @@ import { FacebookIcon, InstagramIcon } from "./icons";
 import { useContactModal } from "@/components/contact/ContactModalProvider";
 
 const SUPPORT_LINKS = [
-  { label: "Contact", href: "#" },
-  { label: "Shipping", href: "#" },
-  { label: "Returns", href: "#" },
-  { label: "Size Guide", href: "#" },
+  { label: "Contact", href: "/contact" },
+  { label: "Shipping", href: "/shipping" },
+  { label: "Returns", href: "/returns" },
+  { label: "Size Guide", href: "/size-guide" },
 ];
 
 const SOCIALS = [
@@ -142,12 +142,12 @@ export default function Footer() {
                       {link.label}
                     </button>
                   ) : (
-                    <a
+                    <Link
                       href={link.href}
                       className="text-[13px] text-paper-muted transition-colors duration-200 hover:text-gold"
                     >
                       {link.label}
-                    </a>
+                    </Link>
                   )}
                 </li>
               ))}
@@ -158,15 +158,15 @@ export default function Footer() {
         <div className="mt-16 flex flex-col items-start justify-between gap-4 border-t border-line pt-8 text-xs text-paper-muted sm:flex-row sm:items-center">
           <p>© {year} KamiraFit. All rights reserved.</p>
           <div className="flex items-center gap-5">
-            <a href="#" className="transition-colors hover:text-gold">
+            <Link href="/privacy" className="transition-colors hover:text-gold">
               Privacy
-            </a>
-            <a href="#" className="transition-colors hover:text-gold">
+            </Link>
+            <Link href="/terms" className="transition-colors hover:text-gold">
               Terms
-            </a>
-            <a href="#" className="transition-colors hover:text-gold">
+            </Link>
+            <Link href="/cookies" className="transition-colors hover:text-gold">
               Cookies
-            </a>
+            </Link>
           </div>
         </div>
       </div>

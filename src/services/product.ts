@@ -8,6 +8,10 @@ import type { CreateProductRequestDto, DeleteProductResponseDto, UpdateProductRe
 let productsPromise: Promise<Product[]> | null = null;
 let featuredProductsPromise: Promise<Product[]> | null = null;
 
+const isMockEnabled = (): boolean => {
+  return process.env.NEXT_PUBLIC_USE_MOCK_API === "true" && process.env.NODE_ENV !== "production";
+};
+
 const fallbackProducts = () => PRODUCTS.map(adaptProduct);
 
 const list = (params?: Record<string, unknown>): Promise<Product[]> => {
@@ -16,22 +20,35 @@ const list = (params?: Record<string, unknown>): Promise<Product[]> => {
     productsPromise = unwrapApiResponse<any>(apiClient.get("/products"))
       .then((r) => {
         const items = Array.isArray(r) ? r : r?.data || [];
-        if (items.length > 0) return items.map(adaptProduct);
-        return fallbackProducts();
+        return items.map(adaptProduct);
       })
-      .catch(() => fallbackProducts())
+      .catch((err) => {
+        if (isMockEnabled()) {
+          console.warn("API unavailable; using dev mock fallback products:", err);
+          return fallbackProducts();
+        }
+        throw err;
+      })
       .finally(() => {
-        setTimeout(() => { productsPromise = null; }, 10000);
+        setTimeout(() => {
+          productsPromise = null;
+        }, 10000);
       });
     return productsPromise;
   }
+
   return unwrapApiResponse<any>(apiClient.get("/products", { params }))
     .then((r) => {
       const items = Array.isArray(r) ? r : r?.data || [];
-      if (items.length > 0) return items.map(adaptProduct);
-      return fallbackProducts();
+      return items.map(adaptProduct);
     })
-    .catch(() => fallbackProducts());
+    .catch((err) => {
+      if (isMockEnabled()) {
+        console.warn("API unavailable; using dev mock fallback products:", err);
+        return fallbackProducts();
+      }
+      throw err;
+    });
 };
 
 export const productService = {
@@ -41,34 +58,50 @@ export const productService = {
     featuredProductsPromise = unwrapApiResponse<any[]>(apiClient.get("/products/featured"))
       .then((x) => {
         const items = Array.isArray(x) ? x : [];
-        if (items.length > 0) return items.map(adaptProduct);
-        return fallbackProducts().slice(0, 4);
+        return items.map(adaptProduct);
       })
-      .catch(() => fallbackProducts().slice(0, 4))
+      .catch((err) => {
+        if (isMockEnabled()) {
+          console.warn("API unavailable; using dev mock fallback featured products:", err);
+          return fallbackProducts().slice(0, 4);
+        }
+        return [];
+      })
       .finally(() => {
-        setTimeout(() => { featuredProductsPromise = null; }, 10000);
+        setTimeout(() => {
+          featuredProductsPromise = null;
+        }, 10000);
       });
     return featuredProductsPromise;
   },
   getProduct: (id: string) =>
     unwrapApiResponse<any>(apiClient.get("/products/" + id))
       .then(adaptProduct)
-      .catch(() => {
-        const local = getProductById(id);
-        if (local) return adaptProduct(local);
-        throw new Error("Product not found");
+      .catch((err) => {
+        if (isMockEnabled()) {
+          const local = getProductById(id);
+          if (local) return adaptProduct(local);
+        }
+        throw err instanceof Error ? err : new Error("Product not found");
       }),
   getRelatedProducts: (id: string, limit = 4) =>
     unwrapApiResponse<any[]>(apiClient.get("/products/" + id + "/related", { params: { limit } }))
       .then((x) => {
         const items = Array.isArray(x) ? x : [];
-        if (items.length > 0) return items.map(adaptProduct);
-        return getFallbackRelated(id, limit).map(adaptProduct);
+        return items.map(adaptProduct);
       })
-      .catch(() => getFallbackRelated(id, limit).map(adaptProduct)),
-  createProduct: (product: CreateProductRequestDto) => unwrapApiResponse<any>(apiClient.post("/products", product)).then(adaptProduct),
-  updateProduct: (id: string, product: UpdateProductRequestDto["data"]) => unwrapApiResponse<any>(apiClient.put("/products/" + id, product)).then(adaptProduct),
-  deleteProduct: (id: string): Promise<DeleteProductResponseDto["data"]["id"]> => unwrapApiResponse<any>(apiClient.delete("/products/" + id)).then((x) => x.id),
+      .catch(() => {
+        if (isMockEnabled()) {
+          return getFallbackRelated(id, limit).map(adaptProduct);
+        }
+        return [];
+      }),
+  createProduct: (product: CreateProductRequestDto) =>
+    unwrapApiResponse<any>(apiClient.post("/products", product)).then(adaptProduct),
+  updateProduct: (id: string, product: UpdateProductRequestDto["data"]) =>
+    unwrapApiResponse<any>(apiClient.put("/products/" + id, product)).then(adaptProduct),
+  deleteProduct: (id: string): Promise<DeleteProductResponseDto["data"]["id"]> =>
+    unwrapApiResponse<any>(apiClient.delete("/products/" + id)).then((x) => x.id),
 };
 
 export function useProducts() {
