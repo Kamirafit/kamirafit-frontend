@@ -55,9 +55,13 @@ export function middleware(request: NextRequest) {
   const username = process.env.ADMIN_USERNAME;
   const password = process.env.ADMIN_PASSWORD;
 
-  // In production or development, NEVER allow access if admin credentials are missing
+  // In production, require valid administrative gate credentials; deny access (403) if missing.
+  // In development/test, allow access if credentials are not configured so developers can work locally.
   if (!username || !password) {
-    return forbidden("Admin portal is disabled: administrative gate credentials are not configured.");
+    if (process.env.NODE_ENV === "production") {
+      return forbidden("Admin portal is disabled: administrative gate credentials are not configured.");
+    }
+    return NextResponse.next();
   }
 
   const authorization = request.headers.get("authorization");
