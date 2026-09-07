@@ -15,9 +15,12 @@ export default function AdminProviders({ children }: { children: ReactNode }) {
 
   return (
     <Provider store={storeRef.current}>
-      <AuthHydrator storageKey="kamira_auth_admin">
-        <QueryProvider><OfflineBanner />{children}</QueryProvider>
-      </AuthHydrator>
+      <QueryProvider>
+        <AuthHydrator storageKey="kamira_auth_admin">
+          <OfflineBanner />
+          {children}
+        </AuthHydrator>
+      </QueryProvider>
     </Provider>
   );
 }

@@ -17,15 +17,15 @@ export default function Providers({ children }: { children: ReactNode }) {
   }
   return (
     <Provider store={storeRef.current}>
-      <AuthHydrator storageKey="kamira_auth_customer">
-        <QueryProvider>
+      <QueryProvider>
+        <AuthHydrator storageKey="kamira_auth_customer">
           <OfflineBanner />
           <CommerceStateSync />
           <SpotlightProvider>
             <ContactModalProvider>{children}</ContactModalProvider>
           </SpotlightProvider>
-        </QueryProvider>
-      </AuthHydrator>
+        </AuthHydrator>
+      </QueryProvider>
     </Provider>
   );
 }

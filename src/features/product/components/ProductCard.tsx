@@ -6,7 +6,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { DEFAULT_PRODUCT_IMAGE, formatPrice, getValidImageSrc } from "@/lib/format";
 import { useAppDispatch, useAppSelector } from "../hooks/redux";
 import { addToCart } from "../store/cartSlice";
-import { toggleWishlist } from "../store/wishlistSlice";
+import { useOptimisticWishlist } from "@/services/wishlist";
 import type { Product } from "../types";
 import { HeartIcon } from "./icons";
 
@@ -43,7 +43,8 @@ export default function ProductCard({ product }: Props) {
   const pathname = usePathname();
   const dispatch = useAppDispatch();
   const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
-  const isSaved = useAppSelector((s) => s.wishlist.ids.includes(product.id));
+  const { isSaved, toggle } = useOptimisticWishlist();
+  const saved = isSaved(product.id);
   const inCart = useAppSelector((s) =>
     s.cart.items.some((it) => it.id === product.id),
   );
@@ -94,16 +95,20 @@ export default function ProductCard({ product }: Props) {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              aria-label={isSaved ? "Remove from wishlist" : "Add to wishlist"}
-              aria-pressed={isSaved}
-              onClick={(e) => handleActionWithAuth(e, () => dispatch(toggleWishlist(product.id)))}
+              aria-label={saved ? "Remove from wishlist" : "Add to wishlist"}
+              aria-pressed={saved}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggle(product.id);
+              }}
               className={`inline-flex h-9 w-9 items-center justify-center rounded-full border transition-all ${
-                isSaved
+                saved
                   ? "border-transparent bg-[#DC2626]/10 text-[#DC2626]"
                   : "border-line text-paper-muted hover:border-[#DC2626]/40 hover:text-[#DC2626]"
               }`}
             >
-              <HeartIcon filled={isSaved} width={15} height={15} />
+              <HeartIcon filled={saved} width={15} height={15} />
             </button>
             <button
               type="button"

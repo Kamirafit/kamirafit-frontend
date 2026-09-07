@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { formatPrice } from "@/lib/format";
 import { useAppDispatch, useAppSelector } from "../hooks/redux";
 import { addToCart } from "../store/cartSlice";
-import { toggleWishlist } from "../store/wishlistSlice";
+import { useOptimisticWishlist } from "@/services/wishlist";
 import type { Color, Product, Size } from "../types";
 import ColorSelector from "./ColorSelector";
 import { HeartIcon, StarIcon } from "./icons";
@@ -123,9 +123,8 @@ export default function ProductDetails({ product }: Props) {
   const pathname = usePathname();
   const dispatch = useAppDispatch();
   const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
-  const isSaved = useAppSelector((s) =>
-    s.wishlist.ids.includes(product.id),
-  );
+  const { isSaved, toggle: toggleWishlistOptimistic } = useOptimisticWishlist();
+  const saved = isSaved(product.id);
 
   const [selectedSize, setSelectedSize] = useState<Size | null>(
     product.size[0] ?? null,
@@ -207,12 +206,7 @@ export default function ProductDetails({ product }: Props) {
   };
 
   const handleToggleWishlist = () => {
-    if (!isAuthenticated) {
-      const current = pathname || `/product/${product.id}`;
-      router.push(`/login?redirect=${encodeURIComponent(current)}`);
-      return;
-    }
-    dispatch(toggleWishlist(product.id));
+    toggleWishlistOptimistic(product.id);
   };
 
   return (
@@ -347,16 +341,16 @@ export default function ProductDetails({ product }: Props) {
           </button>
           <button
             type="button"
-            aria-pressed={isSaved}
-            aria-label={isSaved ? "Remove from wishlist" : "Add to wishlist"}
+            aria-pressed={saved}
+            aria-label={saved ? "Remove from wishlist" : "Add to wishlist"}
             onClick={handleToggleWishlist}
             className={`inline-flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full border transition-all ${
-              isSaved
+              saved
                 ? "border-transparent bg-[#DC2626]/10 text-[#DC2626]"
                 : "border-line-strong text-paper hover:border-[#DC2626] hover:text-[#DC2626]"
             }`}
           >
-            <HeartIcon filled={isSaved} width={18} height={18} />
+            <HeartIcon filled={saved} width={18} height={18} />
           </button>
         </div>
 

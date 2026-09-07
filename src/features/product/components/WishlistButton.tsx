@@ -1,8 +1,6 @@
 "use client";
 
-import { useRouter, usePathname } from "next/navigation";
-import { useAppDispatch, useAppSelector } from "../hooks/redux";
-import { toggleWishlist } from "../store/wishlistSlice";
+import { useOptimisticWishlist } from "@/services/wishlist";
 import { HeartIcon } from "./icons";
 
 type Props = {
@@ -11,34 +9,26 @@ type Props = {
 };
 
 export default function WishlistButton({ productId, className = "" }: Props) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const dispatch = useAppDispatch();
-  const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
-  const isSaved = useAppSelector((s) => s.wishlist.ids.includes(productId));
+  const { isSaved, toggle } = useOptimisticWishlist();
+  const saved = isSaved(productId);
 
   return (
     <button
       type="button"
-      aria-pressed={isSaved}
-      aria-label={isSaved ? "Remove from wishlist" : "Add to wishlist"}
+      aria-pressed={saved}
+      aria-label={saved ? "Remove from wishlist" : "Add to wishlist"}
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
-        if (!isAuthenticated) {
-          const current = pathname || "/shop";
-          router.push(`/login?redirect=${encodeURIComponent(current)}`);
-          return;
-        }
-        dispatch(toggleWishlist(productId));
+        toggle(productId);
       }}
       className={`inline-flex h-9 w-9 items-center justify-center rounded-full border backdrop-blur transition-all duration-200 hover:-translate-y-0.5 ${
-        isSaved
+        saved
           ? "border-gold bg-gold/15 text-gold shadow-[0_8px_20px_-10px_rgba(139,30,45,0.6)]"
           : "border-line bg-ink/75 text-paper-muted hover:border-gold hover:text-gold"
       } ${className}`}
     >
-      <HeartIcon filled={isSaved} width={16} height={16} />
+      <HeartIcon filled={saved} width={16} height={16} />
     </button>
   );
 }

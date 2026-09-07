@@ -5,24 +5,21 @@ import { useAppDispatch, useAppSelector } from "@/features/product/hooks/redux";
 import { replaceCart } from "@/features/product/store/cartSlice";
 import { replaceWishlist } from "@/features/product/store/wishlistSlice";
 import { useCart, useUpdateCart } from "@/services/cart";
-import { useWishlist, useUpdateWishlist } from "@/services/wishlist";
+import { useWishlist } from "@/services/wishlist";
 
 export default function CommerceStateSync() {
   const dispatch = useAppDispatch();
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   const cartItems = useAppSelector((state) => state.cart.items);
-  const wishlistIds = useAppSelector((state) => state.wishlist.ids);
 
   const cartQuery = useCart(isAuthenticated);
   const wishlistQuery = useWishlist(isAuthenticated);
   const updateCart = useUpdateCart();
-  const updateWishlist = useUpdateWishlist();
 
   // Track hydration and last synchronized payload to avoid infinite sync loops
   const hasHydratedCartRef = useRef(false);
   const hasHydratedWishlistRef = useRef(false);
   const lastSyncedCartJsonRef = useRef<string>("");
-  const lastSyncedWishlistJsonRef = useRef<string>("");
 
   // Reset hydration refs on logout/login state change
   useEffect(() => {
@@ -30,7 +27,6 @@ export default function CommerceStateSync() {
       hasHydratedCartRef.current = false;
       hasHydratedWishlistRef.current = false;
       lastSyncedCartJsonRef.current = "";
-      lastSyncedWishlistJsonRef.current = "";
     }
   }, [isAuthenticated]);
 
@@ -47,7 +43,6 @@ export default function CommerceStateSync() {
   useEffect(() => {
     if (isAuthenticated && wishlistQuery.data && !hasHydratedWishlistRef.current) {
       hasHydratedWishlistRef.current = true;
-      lastSyncedWishlistJsonRef.current = JSON.stringify(wishlistQuery.data);
       dispatch(replaceWishlist(wishlistQuery.data));
     }
   }, [isAuthenticated, wishlistQuery.data, dispatch]);
@@ -62,17 +57,6 @@ export default function CommerceStateSync() {
       updateCart.mutate(cartItems);
     }
   }, [cartItems, isAuthenticated, updateCart]);
-
-  // 4. Sync Wishlist Changes to Server (Only when user explicitly modifies wishlist in UI)
-  useEffect(() => {
-    if (!isAuthenticated || !hasHydratedWishlistRef.current) return;
-
-    const currentJson = JSON.stringify(wishlistIds);
-    if (currentJson !== lastSyncedWishlistJsonRef.current) {
-      lastSyncedWishlistJsonRef.current = currentJson;
-      updateWishlist.mutate(wishlistIds);
-    }
-  }, [wishlistIds, isAuthenticated, updateWishlist]);
 
   return null;
 }
