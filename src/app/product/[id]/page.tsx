@@ -10,8 +10,7 @@ import { productService } from "@/services/product";
 
 type PageParams = { id: string };
 
-export const dynamic = "force-dynamic";
-export const revalidate = 3600; // ISR - Revalidate detail pages every hour
+export const revalidate = 60; // ISR - Revalidate detail pages every 60s
 
 export async function generateStaticParams(): Promise<PageParams[]> {
   try {
@@ -90,6 +89,11 @@ export default async function ProductPage({
   const related = await productService.getRelatedProducts(product.id, 4);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://kamirafit.com";
 
+  const hasStock = Array.isArray(product.variants) && product.variants.length > 0
+    ? product.variants.some((v) => ((v.stock ?? 0) > 0 || (v.inventory?.available ?? 0) > 0) && v.isAvailable !== false)
+    : (product.isAvailable !== false);
+  const availability = hasStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock";
+
   // Product JSON-LD Schema
   const jsonLd = {
     "@context": "https://schema.org",
@@ -106,7 +110,7 @@ export default async function ProductPage({
       url: `${siteUrl}/product/${product.id}`,
       priceCurrency: "INR",
       price: product.price,
-      availability: "https://schema.org/InStock",
+      availability,
       itemCondition: "https://schema.org/NewCondition",
     },
     ...(product.reviews?.length
@@ -120,11 +124,16 @@ export default async function ProductPage({
       : {}),
   };
 
+  const safeJsonLdString = JSON.stringify(jsonLd)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026");
+
   return (
     <PageShell>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLdString }}
       />
       <Container className="py-8 lg:py-10">
         <nav

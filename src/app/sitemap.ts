@@ -63,9 +63,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   let productPages: MetadataRoute.Sitemap = [];
   try {
-    const products = await productService.getFeaturedProducts();
+    const products = await productService.getProducts();
+    const isProd = process.env.NODE_ENV === "production";
     productPages = (products || [])
-      .filter((p) => p && p.id && !p.id.startsWith("p-"))
+      .filter((p) => p && p.id && (!isProd || !p.id.startsWith("p-0")))
       .map((product) => ({
         url: `${baseUrl}/product/${product.id}`,
         lastModified: new Date(product.createdAt || Date.now()),

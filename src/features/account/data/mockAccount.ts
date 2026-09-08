@@ -24,6 +24,7 @@ export const MOCK_ADDRESSES: Address[] = [
     city: "Mumbai",
     state: "Maharashtra",
     pincode: "400050",
+    country: "India",
     isDefault: true,
   },
   {
@@ -36,6 +37,7 @@ export const MOCK_ADDRESSES: Address[] = [
     city: "Mumbai",
     state: "Maharashtra",
     pincode: "400069",
+    country: "India",
     isDefault: false,
   }
 ];

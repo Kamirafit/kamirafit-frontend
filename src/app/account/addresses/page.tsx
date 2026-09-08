@@ -32,6 +32,7 @@ export default function AddressesPage() {
         city: address.city,
         state: address.state,
         pincode: address.pincode,
+        country: address.country || "India",
         isDefault: address.isDefault,
       };
       await createMutation.mutateAsync(addressData);
@@ -62,6 +63,7 @@ export default function AddressesPage() {
         city: address.city,
         state: address.state,
         pincode: address.pincode,
+        country: address.country || "India",
         isDefault: true,
       },
     });

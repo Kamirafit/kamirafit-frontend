@@ -8,8 +8,12 @@ export type ShippingDetails = {
   name: string;
   phone: string;
   address: string;
+  addressLine2?: string;
+  landmark?: string;
   city: string;
+  state: string;
   pincode: string;
+  country?: string;
 };
 
 export type ShippingErrors = Partial<Record<keyof ShippingDetails, string>>;
@@ -66,11 +70,16 @@ export default function ShippingForm({
 
   const setPincode = async (value: string) => {
     const clean = value.replace(/\D/g, "").slice(0, 6);
-    set("pincode", clean);
+    onChange({ ...values, pincode: clean });
     if (clean.length === 6) {
       const result = await lookupPincode(clean);
-      if (result?.city) {
-        set("city", result.city);
+      if (result) {
+        onChange({
+          ...values,
+          pincode: clean,
+          city: result.city || values.city,
+          state: result.state || values.state,
+        });
       }
     }
   };
@@ -129,15 +138,15 @@ export default function ShippingForm({
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <FieldLabel htmlFor={fieldId("address")}>Address</FieldLabel>
+        <FieldLabel htmlFor={fieldId("address")}>Address Line 1</FieldLabel>
         <textarea
           id={fieldId("address")}
-          rows={3}
+          rows={2}
           autoComplete="street-address"
           maxLength={240}
           value={values.address}
           onChange={(e) => set("address", e.target.value)}
-          placeholder="House no., street, locality"
+          placeholder="House / Flat no., building name, street"
           className={inputClass(Boolean(errors.address))}
           aria-invalid={Boolean(errors.address)}
           aria-describedby={
@@ -153,26 +162,33 @@ export default function ShippingForm({
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
-          <FieldLabel htmlFor={fieldId("city")}>City <span className="text-[10px] font-normal lowercase text-paper-muted">(auto-detected)</span></FieldLabel>
+          <FieldLabel htmlFor={fieldId("addressLine2")}>Address Line 2 <span className="text-[10px] font-normal lowercase text-paper-muted">(optional)</span></FieldLabel>
           <input
-            disabled
-            id={fieldId("city")}
+            id={fieldId("addressLine2")}
             type="text"
-            autoComplete="address-level2"
-            maxLength={80}
-            value={values.city}
-            placeholder="Auto-detected from Pincode"
-            className="w-full rounded-xl border border-line bg-ink-3/50 px-4 py-3 text-sm text-paper cursor-not-allowed opacity-80 select-none outline-none"
-            aria-invalid={Boolean(errors.city)}
-            aria-describedby={errors.city ? `${fieldId("city")}-err` : undefined}
+            maxLength={100}
+            value={values.addressLine2 || ""}
+            onChange={(e) => set("addressLine2", e.target.value)}
+            placeholder="Apartment, suite, unit"
+            className={inputClass(false)}
           />
-          {errors.city ? (
-            <p id={`${fieldId("city")}-err`} className="text-xs text-red-400">
-              {errors.city}
-            </p>
-          ) : null}
         </div>
 
+        <div className="flex flex-col gap-1.5">
+          <FieldLabel htmlFor={fieldId("landmark")}>Landmark <span className="text-[10px] font-normal lowercase text-paper-muted">(optional)</span></FieldLabel>
+          <input
+            id={fieldId("landmark")}
+            type="text"
+            maxLength={100}
+            value={values.landmark || ""}
+            onChange={(e) => set("landmark", e.target.value)}
+            placeholder="Near City Mall, Opposite Metro"
+            className={inputClass(false)}
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
         <div className="flex flex-col gap-1.5">
           <FieldLabel htmlFor={fieldId("pincode")}>Pincode</FieldLabel>
           <input
@@ -197,6 +213,48 @@ export default function ShippingForm({
               className="text-xs text-red-400"
             >
               {errors.pincode}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <FieldLabel htmlFor={fieldId("city")}>City</FieldLabel>
+          <input
+            id={fieldId("city")}
+            type="text"
+            autoComplete="address-level2"
+            maxLength={80}
+            value={values.city}
+            onChange={(e) => set("city", e.target.value)}
+            placeholder="City"
+            className={inputClass(Boolean(errors.city))}
+            aria-invalid={Boolean(errors.city)}
+            aria-describedby={errors.city ? `${fieldId("city")}-err` : undefined}
+          />
+          {errors.city ? (
+            <p id={`${fieldId("city")}-err`} className="text-xs text-red-400">
+              {errors.city}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <FieldLabel htmlFor={fieldId("state")}>State</FieldLabel>
+          <input
+            id={fieldId("state")}
+            type="text"
+            autoComplete="address-level1"
+            maxLength={80}
+            value={values.state}
+            onChange={(e) => set("state", e.target.value)}
+            placeholder="State"
+            className={inputClass(Boolean(errors.state))}
+            aria-invalid={Boolean(errors.state)}
+            aria-describedby={errors.state ? `${fieldId("state")}-err` : undefined}
+          />
+          {errors.state ? (
+            <p id={`${fieldId("state")}-err`} className="text-xs text-red-400">
+              {errors.state}
             </p>
           ) : null}
         </div>

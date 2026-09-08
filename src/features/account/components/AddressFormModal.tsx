@@ -134,6 +134,7 @@ export default function AddressFormModal({ address, onClose, onSave }: Props) {
       city: (formData.city || "").trim(),
       state: (formData.state || "").trim(),
       pincode: (formData.pincode || "").trim(),
+      country: (formData.country || "India").trim(),
       isDefault: formData.isDefault || false,
     });
   };

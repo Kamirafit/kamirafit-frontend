@@ -2,7 +2,6 @@ import PageShell from "@/components/layout/PageShell";
 import ShopPageClient from "@/features/product/components/ShopPageClient";
 import { productService } from "@/services/product";
 
-export const dynamic = "force-dynamic";
 export const revalidate = 60; // ISR - Revalidate shop listings every minute
 
 export const metadata = {

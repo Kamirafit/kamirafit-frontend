@@ -15,5 +15,6 @@ export const AddressSchema = z.object({
   city: z.string(),
   state: z.string(),
   pincode: z.string(),
+  country: z.string().optional().default("India"),
   isDefault: z.boolean(),
 });

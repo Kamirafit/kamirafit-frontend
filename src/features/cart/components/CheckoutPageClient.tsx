@@ -22,8 +22,12 @@ const INITIAL_VALUES: ShippingDetails = {
   name: "",
   phone: "",
   address: "",
+  addressLine2: "",
+  landmark: "",
   city: "",
+  state: "",
   pincode: "",
+  country: "India",
 };
 
 function cleanText(value: string, maxLength: number) {
@@ -35,8 +39,12 @@ function normalize(values: ShippingDetails): ShippingDetails {
     name: cleanText(values.name, 80),
     phone: values.phone.replace(/[^\d+\s-]/g, "").trim().slice(0, 16),
     address: cleanText(values.address, 240),
+    addressLine2: values.addressLine2 ? cleanText(values.addressLine2, 100) : "",
+    landmark: values.landmark ? cleanText(values.landmark, 100) : "",
     city: cleanText(values.city, 80),
+    state: cleanText(values.state, 80),
     pincode: values.pincode.replace(/\D/g, "").slice(0, 6),
+    country: cleanText(values.country || "India", 50),
   };
 }
 
@@ -52,8 +60,11 @@ function validate(values: ShippingDetails): ShippingErrors {
   if (!values.address.trim() || values.address.trim().length < 6) {
     errors.address = "Address looks too short.";
   }
-  if (!values.city.trim()) {
+  if (!values.city.trim() || values.city.trim().length < 2) {
     errors.city = "City is required.";
+  }
+  if (!values.state.trim() || values.state.trim().length < 2) {
+    errors.state = "State is required for GST & delivery calculation.";
   }
   if (!/^\d{6}$/.test(values.pincode.trim())) {
     errors.pincode = "Pincode must be 6 digits.";
@@ -73,17 +84,19 @@ export default function CheckoutPageClient() {
   const [values, setValues] = useState<ShippingDetails>(INITIAL_VALUES);
   const [errors, setErrors] = useState<ShippingErrors>({});
   const [placedOrderTotal, setPlacedOrderTotal] = useState<number | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const checkoutMutation = useCheckout();
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (resolved.length === 0) return;
+    if (resolved.length === 0 || isSubmitting) return;
     const cleanedValues = normalize(values);
     setValues(cleanedValues);
     const nextErrors = validate(cleanedValues);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
 
+    setIsSubmitting(true);
     try {
       const result = await checkoutMutation.mutateAsync({
         items,
@@ -92,16 +105,21 @@ export default function CheckoutPageClient() {
           fullName: cleanedValues.name,
           phoneNumber: cleanedValues.phone,
           addressLine1: cleanedValues.address,
+          addressLine2: cleanedValues.addressLine2 || undefined,
+          landmark: cleanedValues.landmark || undefined,
           city: cleanedValues.city,
-          state: "",
+          state: cleanedValues.state,
           pincode: cleanedValues.pincode,
+          country: cleanedValues.country || "India",
         },
-        paymentMethod: "Mock payment",
+        paymentMethod: "ONLINE",
       });
       setPlacedOrderTotal(result.order.totalAmount);
       dispatch(clearCart());
     } catch {
       setErrors({ address: "Unable to place the order. Please try again." });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
