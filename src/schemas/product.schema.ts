@@ -29,8 +29,12 @@ export const VariantSchema = z.object({
   inventory: InventorySchema,
   price: z.number(),
   salePrice: z.number().optional(),
+  offerPrice: z.number().optional(),
   mrp: z.number().optional(),
   stock: z.number().optional(),
+  weight: z.number().optional(),
+  gstPercentage: z.number().optional(),
+  hsnCode: z.string().optional(),
   images: z.array(z.string()).optional(),
   isAvailable: z.boolean().optional(),
 });
@@ -48,6 +52,7 @@ export const ProductEntitySchema = z.object({
   slug: z.string(),
   description: z.string(),
   category: CategoryNameSchema,
+  categoryId: z.string().optional(),
   brand: z.string(),
   status: ProductStatusSchema,
   variants: z.array(VariantSchema),
@@ -57,6 +62,7 @@ export const ProductEntitySchema = z.object({
 export const ProductSchema = ProductEntitySchema.extend({
   _id: z.string().optional(),
   name: z.string(),
+  categoryId: z.string().optional(),
   categoryName: z.string().optional(),
   subcategory: z.string().optional(),
   isActive: z.boolean().optional(),
@@ -65,11 +71,13 @@ export const ProductSchema = ProductEntitySchema.extend({
   costPrice: z.number().optional(),
   price: z.number(),
   salePrice: z.number().optional(),
+  offerPrice: z.number().optional(),
   mrp: z.number().optional(),
   basePrice: z.number().optional(),
   baseMrp: z.number().optional(),
   image: z.string(),
   images: z.array(z.string()),
+  imageColorMap: z.record(z.string(), z.string()).optional(),
   size: z.array(SizeSchema),
   sizes: z.array(SizeSchema).optional(),
   color: z.array(ColorSchema),
@@ -89,11 +97,13 @@ export const CreateProductRequestDtoSchema = ProductEntitySchema.omit({
   .extend({
     category: CategoryNameSchema,
     name: z.string().optional(),
+    costPrice: z.number().optional(),
     price: z.number().optional(),
     size: z.array(SizeSchema).optional(),
     color: z.array(ColorSchema).optional(),
     image: z.string().optional(),
     images: z.array(z.string()).optional(),
+    imageColorMap: z.record(z.string(), z.string()).optional(),
   });
 
 export const UpdateProductRequestDtoSchema = z.object({
@@ -102,10 +112,12 @@ export const UpdateProductRequestDtoSchema = z.object({
     .partial()
     .extend({
       name: z.string().optional(),
+      costPrice: z.number().optional(),
       price: z.number().optional(),
       size: z.array(SizeSchema).optional(),
       color: z.array(ColorSchema).optional(),
       image: z.string().optional(),
       images: z.array(z.string()).optional(),
+      imageColorMap: z.record(z.string(), z.string()).optional(),
     }),
 });

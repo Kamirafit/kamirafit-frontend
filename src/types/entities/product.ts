@@ -27,15 +27,24 @@ export function adaptProduct(raw: any): Product {
     const quantity = typeof v.inventory?.quantity === "number" ? v.inventory.quantity : available;
     const reserved = typeof v.inventory?.reserved === "number" ? v.inventory.reserved : 0;
 
+    const vPrice = typeof v.price === "number" ? v.price : (typeof v.offerPrice === "number" ? v.offerPrice : (p.price || p.basePrice || 0));
+    const vMrp = typeof v.mrp === "number" ? v.mrp : (p.mrp || p.baseMrp || vPrice);
+    const vSalePrice = typeof v.salePrice === "number" ? v.salePrice : (typeof v.offerPrice === "number" ? v.offerPrice : vPrice);
+    const vOfferPrice = typeof v.offerPrice === "number" ? v.offerPrice : vPrice;
+
     return {
       id: v.id || v._id || `v-${index}`,
       sku: v.sku || `SKU-${index}`,
       color: v.color || "Black",
       size: v.size || "M",
-      price: typeof v.price === "number" ? v.price : (p.price || 0),
-      salePrice: typeof v.salePrice === "number" ? v.salePrice : (p.mrp || p.salePrice || 0),
-      mrp: typeof v.mrp === "number" ? v.mrp : (p.mrp || 0),
+      price: vPrice,
+      salePrice: vSalePrice,
+      offerPrice: vOfferPrice,
+      mrp: vMrp,
       stock: available,
+      weight: typeof v.weight === "number" ? v.weight : 0.2,
+      gstPercentage: typeof v.gstPercentage === "number" ? v.gstPercentage : 12.0,
+      hsnCode: v.hsnCode || "61091000",
       inventory: {
         quantity,
         reserved,
@@ -78,6 +87,18 @@ export function adaptProduct(raw: any): Product {
   const createdAt = p.createdAt || p.metadata?.createdAt || new Date().toISOString();
   const updatedAt = p.updatedAt || p.metadata?.updatedAt || undefined;
 
+  let imageColorMap: Record<string, string> = {};
+  if (p.imageColorMap && typeof p.imageColorMap === "object" && !Array.isArray(p.imageColorMap)) {
+    imageColorMap = p.imageColorMap;
+  } else if (Array.isArray(p.imageColorMap)) {
+    p.imageColorMap.forEach((item: any) => {
+      if (item && item.src && item.color) imageColorMap[item.src] = item.color;
+    });
+  }
+
+  const resolvedCatName = p.categoryName || (typeof p.category === "string" ? p.category : p.category?.name) || "T-Shirts";
+  const resolvedCatId = p.categoryId || p.category?.id || (typeof p.category === "object" ? p.category?.id : undefined);
+
   return {
     id: p.id || p._id || "",
     _id: p._id || p.id || "",
@@ -85,22 +106,25 @@ export function adaptProduct(raw: any): Product {
     title: p.title || p.name || "Untitled Product",
     slug: p.slug || "",
     description: p.description || "",
-    category: p.category || p.categoryName || "T-Shirts",
-    categoryName: p.categoryName || p.category || "T-Shirts",
+    categoryId: resolvedCatId,
+    category: resolvedCatName,
+    categoryName: resolvedCatName,
     subcategory: p.subcategory || "",
     brand: p.brand || "KamiraFit",
     status: p.status || (p.isActive ? "active" : "inactive"),
     isActive: typeof p.isActive === "boolean" ? p.isActive : p.status === "active",
     isAvailable: typeof p.isAvailable === "boolean" ? p.isAvailable : true,
     isFeatured: typeof p.isFeatured === "boolean" ? p.isFeatured : false,
-    costPrice: typeof p.costPrice === "number" ? p.costPrice : 0,
-    price: typeof p.price === "number" ? p.price : (variants[0]?.price ?? 0),
-    salePrice: typeof p.salePrice === "number" ? p.salePrice : (p.mrp || 0),
-    mrp: typeof p.mrp === "number" ? p.mrp : (p.salePrice || 0),
+    costPrice: typeof p.costPrice === "number" ? p.costPrice : (p.costPrice ? Number(p.costPrice) : 0),
+    price: typeof p.price === "number" ? p.price : (variants[0]?.price ?? (p.basePrice || 0)),
+    salePrice: typeof p.salePrice === "number" ? p.salePrice : (typeof p.offerPrice === "number" ? p.offerPrice : (variants[0]?.salePrice ?? p.price ?? 0)),
+    offerPrice: typeof p.offerPrice === "number" ? p.offerPrice : (variants[0]?.offerPrice ?? p.price ?? 0),
+    mrp: typeof p.mrp === "number" ? p.mrp : (p.baseMrp || p.salePrice || 0),
     basePrice: typeof p.basePrice === "number" ? p.basePrice : (p.price || 0),
     baseMrp: typeof p.baseMrp === "number" ? p.baseMrp : (p.mrp || 0),
     image: p.image || images[0] || "",
     images: images.length ? images : [p.image || ""].filter(Boolean),
+    imageColorMap,
     size: sizes,
     sizes: sizes,
     color: colors,

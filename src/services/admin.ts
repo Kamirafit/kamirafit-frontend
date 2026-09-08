@@ -9,6 +9,11 @@ import {
   type ContactQuery,
   type Product,
   type BusinessAnalytics,
+  type AdminCoupon,
+  type CreateCouponDto,
+  type UpdateCouponDto,
+  type CouponQueryParams,
+  type CouponListResponse,
 } from "@/types/entities";
 import type { AdminStatsDto } from "@/types/api/admin";
 
@@ -139,6 +144,30 @@ export function adaptOrder(raw: any): Order {
   };
 }
 
+export function adaptCoupon(raw: any): AdminCoupon {
+  const c = raw?.data || raw || {};
+  const discountVal = Number(c.discountValue ?? c.discountVal ?? 0);
+  return {
+    id: c.id || "",
+    code: c.code || "",
+    discountType: c.discountType || "PERCENTAGE",
+    discountValue: discountVal,
+    discountVal,
+    maxDiscount: c.maxDiscount != null ? Number(c.maxDiscount) : null,
+    minOrderVal: c.minOrderVal != null ? Number(c.minOrderVal) : null,
+    startDate: c.startDate || new Date().toISOString(),
+    endDate: c.endDate || null,
+    applicableCategoryIds: Array.isArray(c.applicableCategoryIds) ? c.applicableCategoryIds : [],
+    usageLimit: c.usageLimit != null ? Number(c.usageLimit) : null,
+    usedCount: Number(c.usedCount || 0),
+    description: c.description || null,
+    isActive: typeof c.isActive === "boolean" ? c.isActive : true,
+    createdAt: c.createdAt || new Date().toISOString(),
+    updatedAt: c.updatedAt || new Date().toISOString(),
+    _count: c._count,
+  };
+}
+
 async function adminRequest<T>(
   method: "get" | "post" | "put" | "patch" | "delete",
   path: string,
@@ -188,27 +217,82 @@ export const adminService = {
       description: x.description || "",
       brand: x.brand || "KamiraFit",
       categoryId: x.categoryId || x.category,
-      baseMrp: x.mrp || x.baseMrp || x.price || 0,
-      basePrice: x.price || x.basePrice || 0,
+      category: x.category || x.categoryName,
+      subcategory: x.subcategory || "",
+      baseMrp: Number(x.mrp || x.baseMrp || x.price || 0),
+      basePrice: Number(x.price || x.basePrice || 0),
+      mrp: Number(x.mrp || x.baseMrp || x.price || 0),
+      price: Number(x.price || x.basePrice || 0),
+      costPrice: Number(x.costPrice || 0),
       images: x.images || (x.image ? [x.image] : []),
+      imageColorMap: x.imageColorMap || {},
+      isFeatured: Boolean(x.isFeatured),
+      status: x.status || "active",
+      slug: x.slug,
       variants:
         Array.isArray(x.variants) && x.variants.length > 0
-          ? x.variants
-          : (x.size || ["M"]).map((size: string, index: number) => ({
-              size,
-              color: x.color?.[0] || "Black",
-              sku: `KF-${(x.name || "PRD").slice(0, 3).toUpperCase()}-${size}-${index + 1}`,
-              mrp: x.mrp || x.price || 0,
-              offerPrice: x.price || 0,
-              stock: 50,
-              hsnCode: "61091000",
-              gstPercentage: 12.0,
-            })),
+          ? x.variants.map((v: any) => ({
+              size: v.size,
+              color: v.color,
+              sku: String(v.sku || "").trim().replace(/\s+/g, "-").replace(/[^a-zA-Z0-9_-]/g, ""),
+              mrp: Number(v.mrp || x.mrp || x.baseMrp || x.price || 0),
+              offerPrice: Number(v.offerPrice || v.price || x.price || x.basePrice || 0),
+              stock: typeof v.stock === "number" ? v.stock : 50,
+              hsnCode: String(v.hsnCode || "61091000"),
+              gstPercentage: typeof v.gstPercentage === "number" ? v.gstPercentage : 12.0,
+              weight: typeof v.weight === "number" ? v.weight : 0.2,
+            }))
+          : (x.size || ["M"]).map((size: string, index: number) => {
+              const safeSize = String(size).trim().replace(/\s+/g, "-").replace(/[^a-zA-Z0-9_-]/g, "");
+              const safeName = (x.name || "PRD").slice(0, 3).toUpperCase().replace(/[^a-zA-Z0-9_-]/g, "");
+              return {
+                size,
+                color: x.color?.[0] || "Black",
+                sku: `KF-${safeName}-${safeSize}-${index + 1}`,
+                mrp: Number(x.mrp || x.baseMrp || x.price || 0),
+                offerPrice: Number(x.price || x.basePrice || 0),
+                stock: 50,
+                hsnCode: "61091000",
+                gstPercentage: 12.0,
+                weight: 0.2,
+              };
+            }),
     };
     return adminRequest<any>("post", "/products", payload).then(adaptProduct);
   },
-  updateProduct: (id: string, x: any) =>
-    adminRequest<any>("put", "/products/" + id, x).then(adaptProduct),
+  updateProduct: (id: string, x: any) => {
+    const payload: any = {
+      ...(x.name ? { name: x.name } : {}),
+      ...(x.title ? { title: x.title } : {}),
+      ...(x.description ? { description: x.description } : {}),
+      ...(x.brand ? { brand: x.brand } : {}),
+      ...(x.status ? { status: x.status } : {}),
+      ...(x.isFeatured !== undefined ? { isFeatured: Boolean(x.isFeatured) } : {}),
+      ...(x.price !== undefined || x.basePrice !== undefined ? { price: x.price ?? x.basePrice, basePrice: x.price ?? x.basePrice } : {}),
+      ...(x.mrp !== undefined || x.baseMrp !== undefined ? { mrp: x.mrp ?? x.baseMrp, baseMrp: x.mrp ?? x.baseMrp } : {}),
+      ...(x.costPrice !== undefined ? { costPrice: Number(x.costPrice) } : {}),
+      ...(x.categoryId || x.category ? { categoryId: x.categoryId || x.category, category: x.category } : {}),
+      ...(x.subcategory ? { subcategory: x.subcategory } : {}),
+      ...(x.images || x.image ? { images: x.images || [x.image] } : {}),
+      ...(x.imageColorMap !== undefined ? { imageColorMap: x.imageColorMap } : {}),
+      ...(x.slug ? { slug: x.slug } : {}),
+    };
+    if (Array.isArray(x.variants) && x.variants.length > 0) {
+      payload.variants = x.variants.map((v: any) => ({
+        ...(v.id && !v.id.startsWith("variant-") ? { id: v.id } : {}),
+        size: v.size,
+        color: v.color,
+        sku: String(v.sku || "").trim().replace(/\s+/g, "-").replace(/[^a-zA-Z0-9_-]/g, ""),
+        mrp: Number(v.mrp || x.mrp || x.baseMrp || x.price || 0),
+        offerPrice: Number(v.offerPrice || v.price || x.price || x.basePrice || 0),
+        stock: typeof v.stock === "number" ? v.stock : 50,
+        hsnCode: String(v.hsnCode || "61091000"),
+        gstPercentage: typeof v.gstPercentage === "number" ? v.gstPercentage : 12.0,
+        weight: typeof v.weight === "number" ? v.weight : 0.2,
+      }));
+    }
+    return adminRequest<any>("put", "/products/" + id, payload).then(adaptProduct);
+  },
   toggleProductStatus: (id: string) =>
     adminRequest<any>("patch", "/products/" + id + "/toggle").then(adaptProduct),
   deleteProduct: (id: string) =>
@@ -268,6 +352,40 @@ export const adminService = {
   },
   getAnalytics: (timeframe: string = "30d") =>
     adminRequest<BusinessAnalytics>("get", "/analytics", undefined, { params: { timeframe } }),
+  getCoupons: (params?: CouponQueryParams): Promise<CouponListResponse> =>
+    adminRequest<any>("get", "/coupons", undefined, { params }).then((r) => {
+      const rawList = Array.isArray(r) ? r : r?.items || r?.coupons || r?.data || [];
+      const coupons = rawList.map(adaptCoupon);
+      const total = typeof r?.total === "number" ? r.total : coupons.length;
+      const activeCount =
+        typeof r?.activeCount === "number"
+          ? r.activeCount
+          : coupons.filter((c: AdminCoupon) => c.isActive).length;
+      const expiredCount = typeof r?.expiredCount === "number" ? r.expiredCount : 0;
+      return {
+        coupons,
+        items: coupons,
+        total,
+        activeCount,
+        expiredCount,
+        pagination: r?.pagination || {
+          page: 1,
+          limit: coupons.length,
+          total,
+          pages: 1,
+        },
+      };
+    }),
+  getCoupon: (id: string): Promise<AdminCoupon> =>
+    adminRequest<any>("get", "/coupons/" + id).then(adaptCoupon),
+  createCoupon: (payload: CreateCouponDto): Promise<AdminCoupon> =>
+    adminRequest<any>("post", "/coupons", payload).then(adaptCoupon),
+  updateCoupon: (id: string, payload: UpdateCouponDto): Promise<AdminCoupon> =>
+    adminRequest<any>("put", "/coupons/" + id, payload).then(adaptCoupon),
+  toggleCouponStatus: (id: string): Promise<AdminCoupon> =>
+    adminRequest<any>("patch", "/coupons/" + id + "/toggle").then(adaptCoupon),
+  deleteCoupon: (id: string): Promise<string> =>
+    adminRequest<{ id: string }>("delete", "/coupons/" + id).then((x) => x?.id || id),
 };
 
 export function useAdminStats() {
@@ -451,6 +569,62 @@ export function useBusinessAnalytics(timeframe: string = "30d") {
     queryKey: ["admin", "analytics", timeframe],
     queryFn: () => adminService.getAnalytics(timeframe),
     staleTime: 60 * 1000,
+  });
+}
+
+export function useAdminCoupons(params?: CouponQueryParams) {
+  return useQuery({
+    queryKey: ["admin", "coupons", params],
+    queryFn: () => adminService.getCoupons(params),
+  });
+}
+
+export function useAdminCoupon(id: string) {
+  return useQuery({
+    queryKey: ["admin", "coupons", id],
+    queryFn: () => adminService.getCoupon(id),
+    enabled: Boolean(id),
+  });
+}
+
+export function useCreateAdminCoupon() {
+  const q = useQueryClient();
+  return useMutation({
+    mutationFn: (data: CreateCouponDto) => adminService.createCoupon(data),
+    onSuccess: () => {
+      q.invalidateQueries({ queryKey: ["admin", "coupons"] });
+    },
+  });
+}
+
+export function useUpdateAdminCoupon() {
+  const q = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateCouponDto }) =>
+      adminService.updateCoupon(id, data),
+    onSuccess: () => {
+      q.invalidateQueries({ queryKey: ["admin", "coupons"] });
+    },
+  });
+}
+
+export function useToggleAdminCoupon() {
+  const q = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => adminService.toggleCouponStatus(id),
+    onSuccess: () => {
+      q.invalidateQueries({ queryKey: ["admin", "coupons"] });
+    },
+  });
+}
+
+export function useDeleteAdminCoupon() {
+  const q = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => adminService.deleteCoupon(id),
+    onSuccess: () => {
+      q.invalidateQueries({ queryKey: ["admin", "coupons"] });
+    },
   });
 }
 

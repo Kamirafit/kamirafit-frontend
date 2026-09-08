@@ -82,6 +82,7 @@ export default function ProductsPage() {
 
   const openAdd = () => {
     setEditing(null);
+    setDuplicating(null);
     setFormOpen(true);
   };
 
@@ -98,33 +99,35 @@ export default function ProductsPage() {
   };
 
   const handleSubmit = (values: FormValues) => {
+    const payload = {
+      name: values.name,
+      price: values.price,
+      costPrice: values.costPrice,
+      mrp: values.mrp || values.price,
+      basePrice: values.price,
+      baseMrp: values.mrp || values.price,
+      description: values.description,
+      category: values.category as Category,
+      categoryId: values.categoryId,
+      subcategory: values.subcategory,
+      size: values.size,
+      color: values.color,
+      images: values.images,
+      imageColorMap: values.imageColorMap || {},
+      image: values.image,
+      status: values.status,
+      isFeatured: values.isFeatured,
+      slug: values.slug,
+      variants: values.variants,
+    };
+
     if (editing && !duplicating) {
       updateMutation.mutate({
         id: editing.id,
-        patch: {
-          name: values.name,
-          price: values.price,
-          description: values.description,
-          category: values.category as Category,
-          size: values.size,
-          color: values.color,
-          images: values.images,
-          image: values.image,
-          status: values.status,
-        },
+        patch: payload,
       });
     } else {
-      createMutation.mutate({
-        name: values.name,
-        price: values.price,
-        description: values.description,
-        category: values.category as Category,
-        size: values.size,
-        color: values.color,
-        images: values.images,
-        image: values.image,
-        status: values.status,
-      });
+      createMutation.mutate(payload);
     }
     setFormOpen(false);
     setEditing(null);

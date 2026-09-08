@@ -13,3 +13,4 @@ export * from "./auth";
 export * from "./contact";
 export * from "./testimonial";
 export * from "./analytics";
+export * from "./coupon";

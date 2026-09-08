@@ -21,7 +21,20 @@ import MultiSelectChips from "./MultiSelectChips";
 
 type ProductState = "draft" | "active" | "archived";
 type ImageDraft = { id: string; src: string; color: Color | "" };
-type VariantDraft = { id: string; color: Color; size: Size; sku: string; stock: number; threshold: number };
+type VariantDraft = {
+  id: string;
+  color: Color;
+  size: Size;
+  sku: string;
+  stock: number;
+  threshold: number;
+  mrp?: number;
+  offerPrice?: number;
+  price?: number;
+  hsnCode?: string;
+  gstPercentage?: number;
+  weight?: number;
+};
 type HistoryEntry = { id: string; variantId: string; at: string; reason: string; change: number; previous: number; next: number; note: string };
 
 type Props = {
@@ -41,10 +54,12 @@ export type FormValues = {
   mrp: number;
   description: string;
   category: Category;
+  categoryId?: string;
   subcategory: string;
   size: Size[];
   color: Color[];
   images: string[];
+  imageColorMap?: Record<string, string>;
   image: string;
   status: ProductStatus;
   tags: string[];
@@ -61,6 +76,20 @@ export type FormValues = {
   taxEnabled: boolean;
   gstRate: number;
   priceIncludesTax: boolean;
+  variants?: Array<{
+    id?: string;
+    size: Size;
+    color: Color;
+    sku: string;
+    stock: number;
+    threshold?: number;
+    mrp: number;
+    offerPrice: number;
+    price?: number;
+    hsnCode?: string;
+    gstPercentage?: number;
+    weight?: number;
+  }>;
 };
 
 const ADJUSTMENT_REASONS = ["Stock received", "Damaged", "Returned", "Manual adjustment", "Lost", "Order cancellation", "Stock correction"];
@@ -86,6 +115,7 @@ const EMPTY: FormValues = {
   size: [],
   color: [],
   images: [],
+  imageColorMap: {},
   image: "",
   status: "inactive",
   tags: [],
@@ -129,7 +159,8 @@ function productStateFromStatus(status: ProductStatus): ProductState {
 }
 
 function makeSku(name: string, category: string, color: Color, size: Size, used: Set<string>) {
-  const base = code(name || category) + "-" + code(category) + "-" + color.slice(0, 3).toUpperCase() + "-" + size;
+  const safeSize = String(size).trim().replace(/\s+/g, "-").replace(/[^a-zA-Z0-9_-]/g, "");
+  const base = code(name || category) + "-" + code(category) + "-" + color.slice(0, 3).toUpperCase() + "-" + safeSize;
   let sku = base;
   let suffix = 2;
   while (used.has(sku)) sku = base + "-" + suffix++;
@@ -205,20 +236,51 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
   useEffect(() => {
     if (!open) return;
     if (initial) {
-      const initialImages = initial.images.map((src, index) => ({ id: "existing-" + index, src, color: "" as Color | "" }));
-      const seededVariants = initial.variants.map((variant, index) => ({ id: variant.id || "variant-" + index, color: variant.color, size: variant.size, sku: variant.sku, stock: variant.inventory.available, threshold: 5 }));
+      const colorMap = (initial as any).imageColorMap || {};
+      const singleProductColor = initial.color && initial.color.length === 1 ? initial.color[0] : "";
+      const initialImages = initial.images.map((src, index) => {
+        const assignedColor = colorMap[src] || colorMap[String(index)] || "";
+        return {
+          id: "existing-" + index,
+          src,
+          color: (assignedColor || singleProductColor) as Color | "",
+        };
+      });
+      const allAssignedColors = Object.values(colorMap).filter(Boolean) as Color[];
+      const combinedColors = Array.from(new Set([...(initial.color || []), ...allAssignedColors]));
+
+      const seededVariants = initial.variants.map((variant, index) => ({
+        id: variant.id || "variant-" + index,
+        color: variant.color,
+        size: variant.size,
+        sku: variant.sku,
+        stock: variant.inventory?.available ?? variant.stock ?? 0,
+        threshold: 5,
+        mrp: variant.mrp || initial.mrp || initial.baseMrp || initial.price,
+        offerPrice: (variant as any).offerPrice || variant.price || initial.price,
+        price: variant.price || initial.price,
+        hsnCode: (variant as any).hsnCode || "61091000",
+        gstPercentage: (variant as any).gstPercentage || 12,
+        weight: (variant as any).weight || 0.2,
+      }));
       setValues({
         ...EMPTY,
         name: duplicate ? initial.name + " Copy" : initial.name,
         price: initial.price,
+        costPrice: initial.costPrice ?? 0,
+        mrp: initial.mrp || initial.baseMrp || initial.price,
         description: initial.description,
         category: initial.category,
+        categoryId: initial.categoryId,
+        subcategory: initial.subcategory || "",
         size: initial.size,
-        color: initial.color,
+        color: combinedColors,
         images: initial.images,
+        imageColorMap: colorMap,
         image: initial.image,
         status: initial.status,
         slug: duplicate ? slugify(initial.name + " Copy") : initial.slug,
+        isFeatured: Boolean(initial.isFeatured),
       });
       setProductState(productStateFromStatus(initial.status));
       setImages(initialImages);
@@ -257,7 +319,20 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
     const used = new Set(variants.map((variant) => variant.sku));
     const next = values.color.flatMap((color) => values.size.map((size) => {
       const existing = previous.get(color + "-" + size);
-      return existing || { id: color + "-" + size, color, size, sku: makeSku(values.name, values.category, color, size, used), stock: 0, threshold: 5 };
+      return existing || {
+        id: color + "-" + size,
+        color,
+        size,
+        sku: makeSku(values.name, values.category, color, size, used),
+        stock: 0,
+        threshold: 5,
+        mrp: values.mrp || values.price,
+        offerPrice: values.price,
+        price: values.price,
+        hsnCode: "61091000",
+        gstPercentage: values.gstRate || 12,
+        weight: values.weight || 0.2,
+      };
     }));
     setVariants(next);
     setErrors((previousErrors) => ({ ...previousErrors, variants: "" }));
@@ -339,14 +414,38 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
     }
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) return;
+
+    const imageColorMap: Record<string, string> = {};
+    images.forEach((img) => {
+      if (img.src && img.color) {
+        imageColorMap[img.src] = img.color;
+      }
+    });
+
     onSubmit({
       ...values,
       name: values.name.trim(),
       slug: values.slug || slugify(values.name),
       description: values.description.trim(),
+      costPrice: values.costPrice,
       images: images.map((image) => image.src),
-      image: images[0].src,
+      imageColorMap,
+      image: images[0]?.src || "",
       status: productState === "active" ? "active" : "inactive",
+      variants: variants.map((v) => ({
+        id: v.id.startsWith("variant-") || (v.id.includes("-") && v.id.length < 20) ? undefined : v.id,
+        size: v.size,
+        color: v.color,
+        sku: v.sku,
+        stock: v.stock,
+        threshold: v.threshold,
+        mrp: v.mrp || values.mrp || values.price,
+        offerPrice: v.offerPrice || values.price,
+        price: values.price,
+        hsnCode: v.hsnCode || "61091000",
+        gstPercentage: v.gstPercentage || values.gstRate || 12,
+        weight: v.weight || values.weight || 0.2,
+      })),
     });
   };
 
@@ -360,8 +459,14 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
               <select
                 value={values.category}
                 onChange={(event) => {
-                  const selectedCat = event.target.value;
-                  setValues((prev) => ({ ...prev, category: selectedCat as Category, subcategory: "" }));
+                  const selectedCatName = event.target.value;
+                  const catObj = categoriesList.find((c: AdminCategory) => c.name === selectedCatName || c.id === selectedCatName);
+                  setValues((prev) => ({
+                    ...prev,
+                    category: (catObj?.name || selectedCatName) as Category,
+                    categoryId: catObj?.id,
+                    subcategory: ""
+                  }));
                 }}
                 className={selectClass}
               >
@@ -496,7 +601,7 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
             <input ref={fileInputRef} id="product-images-upload" type="file" accept="image/*" multiple className="sr-only" onChange={(event) => handleFiles(event.target.files)} />
           </div>
           {errors.images ? <p className="text-[12px] text-[#B3261E]">{errors.images}</p> : null}
-          {images.length ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{images.map((image, index) => <div key={image.id} draggable onDragStart={() => setDraggedImage(image.id)} onDragOver={(event) => event.preventDefault()} onDrop={() => { if (draggedImage) moveImage(draggedImage, image.id); setDraggedImage(null); }} className="group relative aspect-square overflow-hidden rounded-2xl border border-line bg-ink-2"><Image src={image.src} alt={"Product image " + (index + 1)} fill sizes="160px" className="object-cover" unoptimized={image.src.startsWith("blob:")} /><div className="absolute inset-x-1 bottom-1 flex gap-1"><select aria-label="Assign image color" value={image.color} onChange={(event) => setImages((previous) => previous.map((item) => item.id === image.id ? { ...item, color: event.target.value as Color | "" } : item))} className="min-w-0 flex-1 rounded-lg bg-ink/85 px-1 py-1 text-[10px] text-paper"><option value="">All colors</option>{values.color.map((color) => <option key={color}>{color}</option>)}</select></div>{index === 0 ? <span className="absolute left-1 top-1 rounded-full bg-gold px-2 py-1 text-[9px] font-semibold uppercase text-white">Primary</span> : <button type="button" onClick={() => moveImage(image.id, images[0].id)} className="absolute left-1 top-1 rounded-full bg-ink/80 px-2 py-1 text-[9px] font-semibold uppercase text-paper">Set primary</button>}<button type="button" onClick={() => removeImage(image.id)} className="absolute right-1 top-1 h-7 w-7 rounded-full bg-ink/85 text-paper hover:text-[#B3261E]" aria-label="Remove image">×</button></div>)}</div> : null}
+          {images.length ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{images.map((image, index) => <div key={image.id} draggable onDragStart={() => setDraggedImage(image.id)} onDragOver={(event) => event.preventDefault()} onDrop={() => { if (draggedImage) moveImage(draggedImage, image.id); setDraggedImage(null); }} className="group relative aspect-square overflow-hidden rounded-2xl border border-line bg-ink-2"><Image src={image.src} alt={"Product image " + (index + 1)} fill sizes="160px" className="object-cover" unoptimized={image.src.startsWith("blob:")} /><div className="absolute inset-x-1 bottom-1 flex gap-1"><select aria-label="Assign image color" value={image.color} onChange={(event) => { const chosen = event.target.value as Color | ""; setImages((previous) => previous.map((item) => item.id === image.id ? { ...item, color: chosen } : item)); if (chosen && !values.color.includes(chosen)) { set("color", [...values.color, chosen]); } }} className="min-w-0 flex-1 rounded-lg bg-ink/85 px-1 py-1 text-[10px] text-paper"><option value="">All colors</option>{Array.from(new Set([...values.color, ...(image.color ? [image.color] : []), ...variants.map((v) => v.color)])).filter(Boolean).map((color) => <option key={color} value={color}>{color}</option>)}</select></div>{index === 0 ? <span className="absolute left-1 top-1 rounded-full bg-gold px-2 py-1 text-[9px] font-semibold uppercase text-white">Primary</span> : <button type="button" onClick={() => moveImage(image.id, images[0].id)} className="absolute left-1 top-1 rounded-full bg-ink/80 px-2 py-1 text-[9px] font-semibold uppercase text-paper">Set primary</button>}<button type="button" onClick={() => removeImage(image.id)} className="absolute right-1 top-1 h-7 w-7 rounded-full bg-ink/85 text-paper hover:text-[#B3261E]" aria-label="Remove image">×</button></div>)}</div> : null}
         </Section>
 
         <Section title="Shipping">

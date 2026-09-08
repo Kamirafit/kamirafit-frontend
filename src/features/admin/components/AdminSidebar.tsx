@@ -100,11 +100,21 @@ function AnalyticsIcon() {
   );
 }
 
+function TagIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z" />
+      <path d="M7 7h.01" />
+    </svg>
+  );
+}
+
 const ITEMS: Item[] = [
   { label: "Dashboard", href: "/dedicated-admin", icon: <DashboardIcon /> },
   { label: "Analytics", href: "/dedicated-admin/analytics", icon: <AnalyticsIcon /> },
   { label: "Products", href: "/dedicated-admin/products", icon: <BoxIcon /> },
   { label: "Orders", href: "/dedicated-admin/orders", icon: <OrdersIcon /> },
+  { label: "Coupons", href: "/dedicated-admin/coupons", icon: <TagIcon /> },
   { label: "Testimonials", href: "/dedicated-admin/testimonials", icon: <QuoteIcon /> },
   { label: "Queries", href: "/dedicated-admin/queries", icon: <ChatIcon /> },
   { label: "Users", href: "/dedicated-admin/users", icon: <UsersIcon /> },

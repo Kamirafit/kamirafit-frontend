@@ -12,7 +12,7 @@ const ALT_IMAGES = {
   ],
   Kurti: [
     "https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=800&q=80",
-    "https://images.unsplash.com/photo-1583391733956-6c78276477e2?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?auto=format&fit=crop&w=800&q=80",
   ],
   "Co-ords Sets": [
     "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?auto=format&fit=crop&w=800&q=80",
@@ -277,7 +277,7 @@ const SEED: Seed[] = [
     color: ["White", "Blue"],
     rating: 4.7,
     image:
-      "https://images.unsplash.com/photo-1583391733956-6c78276477e2?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=800&q=80",
     createdAt: "2026-04-05",
     popularity: 91,
     description:
