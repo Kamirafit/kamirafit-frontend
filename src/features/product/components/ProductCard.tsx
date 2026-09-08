@@ -64,7 +64,7 @@ export default function ProductCard({ product }: Props) {
   return (
     <article className="group flex flex-col overflow-hidden rounded-2xl border border-line bg-ink transition-all duration-300 hover:-translate-y-0.5 hover:border-gold/40 hover:shadow-[0_30px_60px_-30px_rgba(74,14,26,0.25)]">
       <Link
-        href={`/product/${product.id}`}
+        href={`/product/${product.slug || product.id}`}
         aria-label={`View ${product.name}`}
         className="relative block aspect-[4/5] w-full overflow-hidden bg-ink-2"
       >
@@ -79,7 +79,7 @@ export default function ProductCard({ product }: Props) {
 
       <div className="flex flex-1 flex-col gap-1.5 p-4 sm:p-5">
         <Link
-          href={`/product/${product.id}`}
+          href={`/product/${product.slug || product.id}`}
           className="font-display text-[17px] font-semibold leading-tight text-paper transition-colors hover:text-gold"
         >
           {product.name}

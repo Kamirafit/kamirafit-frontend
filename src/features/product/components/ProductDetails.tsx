@@ -184,7 +184,7 @@ export default function ProductDetails({ product }: Props) {
 
   const handleAddToCart = () => {
     if (!isAuthenticated) {
-      const current = pathname || `/product/${product.id}`;
+      const current = pathname || `/product/${product.slug || product.id}`;
       router.push(`/login?redirect=${encodeURIComponent(current)}`);
       return;
     }

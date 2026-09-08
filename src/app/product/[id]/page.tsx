@@ -21,7 +21,12 @@ export async function generateStaticParams(): Promise<PageParams[]> {
     // Filter out mock IDs in production
     const isProd = process.env.NODE_ENV === "production";
     const validProducts = isProd ? products.filter((p) => !p.id.startsWith("p-0")) : products;
-    return validProducts.map((p) => ({ id: p.id }));
+    const paramsMap = new Map<string, PageParams>();
+    for (const p of validProducts) {
+      if (p.slug) paramsMap.set(p.slug, { id: p.slug });
+      if (p.id) paramsMap.set(p.id, { id: p.id });
+    }
+    return Array.from(paramsMap.values());
   } catch {
     return [];
   }
@@ -37,14 +42,18 @@ export async function generateMetadata({
     const product = await productService.getProduct(id);
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://kamirafit.com";
     const imageUrl = product.images?.[0] || `${siteUrl}/images/og-default.jpg`;
+    const canonicalId = product.slug || product.id;
 
     return {
       title: `${product.name} — KamiraFit`,
       description: product.description.slice(0, 160),
+      alternates: {
+        canonical: `${siteUrl}/product/${canonicalId}`,
+      },
       openGraph: {
         title: `${product.name} — KamiraFit`,
         description: product.description.slice(0, 160),
-        url: `${siteUrl}/product/${product.id}`,
+        url: `${siteUrl}/product/${canonicalId}`,
         images: [
           {
             url: imageUrl,
@@ -88,6 +97,7 @@ export default async function ProductPage({
 
   const related = await productService.getRelatedProducts(product.id, 4);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://kamirafit.com";
+  const canonicalId = product.slug || product.id;
 
   const hasStock = Array.isArray(product.variants) && product.variants.length > 0
     ? product.variants.some((v) => ((v.stock ?? 0) > 0 || (v.inventory?.available ?? 0) > 0) && v.isAvailable !== false)
@@ -107,7 +117,7 @@ export default async function ProductPage({
     },
     offers: {
       "@type": "Offer",
-      url: `${siteUrl}/product/${product.id}`,
+      url: `${siteUrl}/product/${canonicalId}`,
       priceCurrency: "INR",
       price: product.price,
       availability,

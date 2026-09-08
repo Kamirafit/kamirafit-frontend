@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, type FormEvent } from "react";
+import { useId, useRef, type FormEvent } from "react";
 import { buttonClasses } from "@/components/ui/Button";
 import { lookupPincode } from "@/lib/pincode";
 
@@ -31,9 +31,11 @@ type Props = {
 function FieldLabel({
   htmlFor,
   children,
+  required = true,
 }: {
   htmlFor: string;
   children: React.ReactNode;
+  required?: boolean;
 }) {
   return (
     <label
@@ -41,6 +43,7 @@ function FieldLabel({
       className="text-[10px] font-semibold uppercase tracking-[0.28em] text-paper-muted"
     >
       {children}
+      {required ? <span className="ml-0.5 text-gold">*</span> : null}
     </label>
   );
 }
@@ -57,11 +60,15 @@ export default function ShippingForm({
   const id = useId();
   const fieldId = (name: string) => `${id}-${name}`;
 
+  const valuesRef = useRef(values);
+  valuesRef.current = values;
+  const lookupSeqRef = useRef(0);
+
   const set = <K extends keyof ShippingDetails>(
     key: K,
     value: ShippingDetails[K],
   ) => {
-    onChange({ ...values, [key]: value });
+    onChange({ ...valuesRef.current, [key]: value });
   };
 
   const setPhone = (value: string) => {
@@ -70,15 +77,21 @@ export default function ShippingForm({
 
   const setPincode = async (value: string) => {
     const clean = value.replace(/\D/g, "").slice(0, 6);
-    onChange({ ...values, pincode: clean });
+    onChange({ ...valuesRef.current, pincode: clean });
     if (clean.length === 6) {
+      const currentSeq = ++lookupSeqRef.current;
       const result = await lookupPincode(clean);
-      if (result) {
+      // Guard against stale response or newer user modifications
+      if (
+        currentSeq === lookupSeqRef.current &&
+        valuesRef.current.pincode === clean &&
+        result
+      ) {
         onChange({
-          ...values,
+          ...valuesRef.current,
           pincode: clean,
-          city: result.city || values.city,
-          state: result.state || values.state,
+          city: result.city || valuesRef.current.city,
+          state: result.state || valuesRef.current.state,
         });
       }
     }

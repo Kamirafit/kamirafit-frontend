@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { COLOR_SWATCH } from "@/features/product/types";
 import { DEFAULT_PRODUCT_IMAGE, getValidImageSrc } from "@/lib/format";
-import { DELIVERY_FEE, formatPrice, type ResolvedCartItem } from "../utils";
+import { formatPrice, type ResolvedCartItem } from "../utils";
 
 type Props = {
   resolved: ResolvedCartItem[];
@@ -81,7 +81,7 @@ export default function CheckoutOrderSummary({
         <div className="flex items-center justify-between">
           <dt>Delivery fee</dt>
           <dd className="font-medium text-paper">
-            {formatPrice(delivery || DELIVERY_FEE)}
+            {delivery === 0 ? "FREE" : formatPrice(delivery)}
           </dd>
         </div>
         <div className="mt-1 flex items-center justify-between border-t border-line pt-4 text-base">

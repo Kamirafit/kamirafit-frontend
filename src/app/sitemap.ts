@@ -66,13 +66,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const products = await productService.getProducts();
     const isProd = process.env.NODE_ENV === "production";
     productPages = (products || [])
-      .filter((p) => p && p.id && (!isProd || !p.id.startsWith("p-0")))
-      .map((product) => ({
-        url: `${baseUrl}/product/${product.id}`,
-        lastModified: new Date(product.createdAt || Date.now()),
-        changeFrequency: "weekly" as const,
-        priority: 0.8,
-      }));
+      .filter((p) => p && (p.slug || p.id) && p.isActive !== false && (!isProd || !p.id.startsWith("p-0")))
+      .map((product) => {
+        const identifier = product.slug || product.id;
+        const lastModDate = product.updatedAt || product.createdAt || new Date().toISOString();
+        return {
+          url: `${baseUrl}/product/${identifier}`,
+          lastModified: new Date(lastModDate),
+          changeFrequency: "weekly" as const,
+          priority: 0.8,
+        };
+      });
   } catch {
     // If backend is unreachable during static build, return static pages
     productPages = [];

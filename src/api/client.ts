@@ -20,17 +20,20 @@ function isErrorPayload(value: unknown): value is { message?: string; code?: str
 }
 
 function getBaseUrl(): string {
-  if (process.env.NEXT_PUBLIC_API_URL) {
-    return process.env.NEXT_PUBLIC_API_URL;
+  let url = process.env.NEXT_PUBLIC_API_URL || process.env.INTERNAL_API_URL || "";
+  if (!url && typeof window !== "undefined") {
+    url = "/api/v1";
   }
-  if (process.env.INTERNAL_API_URL) {
-    return process.env.INTERNAL_API_URL;
+  if (!url) {
+    url = "http://localhost:10000/api/v1";
   }
-  if (typeof window !== "undefined") {
-    return "/api";
+  url = url.replace(/\/+$/, "");
+  if (url.endsWith("/api")) {
+    url = `${url}/v1`;
+  } else if (!url.endsWith("/api/v1") && !url.includes("/api/")) {
+    url = `${url}/api/v1`;
   }
-  // Server-side fallback for static generation / SSR
-  return "http://localhost:10000/api/v1";
+  return url;
 }
 
 export const apiClient = axios.create({

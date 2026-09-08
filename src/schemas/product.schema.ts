@@ -77,6 +77,7 @@ export const ProductSchema = ProductEntitySchema.extend({
   rating: z.number(),
   reviews: z.array(ReviewSchema),
   createdAt: ISODateTimeStringSchema,
+  updatedAt: ISODateTimeStringSchema.optional(),
   popularity: z.number(),
 });
 

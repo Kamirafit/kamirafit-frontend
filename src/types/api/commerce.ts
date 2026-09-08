@@ -18,6 +18,8 @@ export interface CheckoutRequestDto {
   items: CartItem[];
   shippingAddress: Omit<Address, "id" | "isDefault">;
   paymentMethod: string;
+  couponCode?: string;
+  idempotencyKey?: string;
 }
 export type CheckoutResponseDto = ApiResponseDto<{ order: Order; payment?: Payment }>;
 export type CheckoutErrorDto = ApiErrorDto;

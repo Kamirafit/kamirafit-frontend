@@ -76,6 +76,7 @@ export function adaptProduct(raw: any): Product {
       : 0;
   const popularity = typeof p.popularity === "number" ? p.popularity : (p.metadata?.popularity ?? 0);
   const createdAt = p.createdAt || p.metadata?.createdAt || new Date().toISOString();
+  const updatedAt = p.updatedAt || p.metadata?.updatedAt || undefined;
 
   return {
     id: p.id || p._id || "",
@@ -108,6 +109,7 @@ export function adaptProduct(raw: any): Product {
     rating,
     reviews,
     createdAt,
+    updatedAt,
     popularity,
     metadata: {
       rating,

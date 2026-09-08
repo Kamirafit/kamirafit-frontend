@@ -26,7 +26,7 @@ export default function CartLineItem({ resolved }: Props) {
   return (
     <li className="flex flex-col gap-4 border-b border-line py-6 sm:flex-row sm:gap-6">
       <Link
-        href={`/product/${product.id}`}
+        href={`/product/${product.slug || product.id}`}
         className="relative h-28 w-24 shrink-0 overflow-hidden rounded-xl border border-line bg-ink-2 transition-all duration-300 hover:border-gold/60 hover:shadow-[0_20px_40px_-20px_rgba(139,30,45,0.25)] sm:h-32 sm:w-28"
       >
         <Image
@@ -42,7 +42,7 @@ export default function CartLineItem({ resolved }: Props) {
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="min-w-0">
             <Link
-              href={`/product/${product.id}`}
+              href={`/product/${product.slug || product.id}`}
               className="block truncate font-display text-sm font-medium text-paper transition-colors hover:text-gold sm:text-base"
             >
               {product.name}

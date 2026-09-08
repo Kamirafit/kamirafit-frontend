@@ -145,31 +145,21 @@ async function adminRequest<T>(
   data?: any,
   config?: any
 ): Promise<T> {
-  try {
-    if (method === "get") {
-      return await unwrapApiResponse<T>(apiClient.get("/v1/admin" + path, config));
-    }
-    if (method === "post") {
-      return await unwrapApiResponse<T>(apiClient.post("/v1/admin" + path, data, config));
-    }
-    if (method === "put") {
-      return await unwrapApiResponse<T>(apiClient.put("/v1/admin" + path, data, config));
-    }
-    if (method === "patch") {
-      return await unwrapApiResponse<T>(apiClient.patch("/v1/admin" + path, data, config));
-    }
-    if (method === "delete") {
-      return await unwrapApiResponse<T>(apiClient.delete("/v1/admin" + path, config));
-    }
-  } catch (err: any) {
-    if (err?.code === "404" || err?.message?.includes("404")) {
-      if (method === "get") return unwrapApiResponse<T>(apiClient.get("/admin" + path, config));
-      if (method === "post") return unwrapApiResponse<T>(apiClient.post("/admin" + path, data, config));
-      if (method === "put") return unwrapApiResponse<T>(apiClient.put("/admin" + path, data, config));
-      if (method === "patch") return unwrapApiResponse<T>(apiClient.patch("/admin" + path, data, config));
-      if (method === "delete") return unwrapApiResponse<T>(apiClient.delete("/admin" + path, config));
-    }
-    throw err;
+  const url = "/admin" + path;
+  if (method === "get") {
+    return unwrapApiResponse<T>(apiClient.get(url, config));
+  }
+  if (method === "post") {
+    return unwrapApiResponse<T>(apiClient.post(url, data, config));
+  }
+  if (method === "put") {
+    return unwrapApiResponse<T>(apiClient.put(url, data, config));
+  }
+  if (method === "patch") {
+    return unwrapApiResponse<T>(apiClient.patch(url, data, config));
+  }
+  if (method === "delete") {
+    return unwrapApiResponse<T>(apiClient.delete(url, config));
   }
   throw new Error("Invalid request method");
 }
@@ -271,17 +261,10 @@ export const adminService = {
   deleteQuery: (id: string) =>
     adminRequest<{ id: string }>("delete", "/queries/" + id).then((x) => x.id || id),
   getProductReviews: async (productId: string): Promise<AdminProductReview[]> => {
-    try {
-      const res = await unwrapApiResponse<any[]>(
-        apiClient.get("/v1/orders/reviews", { params: { productId } })
-      );
-      return (Array.isArray(res) ? res : []).map(adaptAdminProductReview);
-    } catch {
-      const res = await unwrapApiResponse<any[]>(
-        apiClient.get("/orders/reviews", { params: { productId } })
-      );
-      return (Array.isArray(res) ? res : []).map(adaptAdminProductReview);
-    }
+    const res = await unwrapApiResponse<any[]>(
+      apiClient.get("/orders/reviews", { params: { productId } })
+    );
+    return (Array.isArray(res) ? res : []).map(adaptAdminProductReview);
   },
   getAnalytics: (timeframe: string = "30d") =>
     adminRequest<BusinessAnalytics>("get", "/analytics", undefined, { params: { timeframe } }),

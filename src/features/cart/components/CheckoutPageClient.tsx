@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { useState, useRef, type FormEvent } from "react";
 import { buttonClasses } from "@/components/ui/Button";
 import Container from "@/components/ui/Container";
 import SectionHeader from "@/components/ui/SectionHeader";
@@ -72,6 +72,54 @@ function validate(values: ShippingDetails): ShippingErrors {
   return errors;
 }
 
+function mapCheckoutErrorMessage(err: unknown): string {
+  if (!err) return "Unable to place the order. Please try again.";
+  const anyErr = err as {
+    code?: string;
+    message?: string;
+    response?: { data?: { code?: string; message?: string } };
+  };
+  const code = anyErr.code || anyErr.response?.data?.code || "";
+  const msg = (anyErr.message || anyErr.response?.data?.message || "").toLowerCase();
+
+  if (
+    code === "OUT_OF_STOCK" ||
+    msg.includes("stock") ||
+    msg.includes("claimed by another customer") ||
+    msg.includes("insufficient stock")
+  ) {
+    return "One or more items in your cart are no longer available in the requested quantity. Please review your cart.";
+  }
+  if (code === "PRICE_CHANGED" || msg.includes("price")) {
+    return "Prices have updated for one or more items. Please review your order summary.";
+  }
+  if (code === "COUPON_INVALID" || msg.includes("coupon")) {
+    return "The applied coupon is invalid, expired, or has already been used.";
+  }
+  if (code === "ORDER_EXPIRED" || msg.includes("expired")) {
+    return "This order reservation window has expired. Please try placing your order again.";
+  }
+  if (
+    code === "PAYMENT_INITIALIZATION_FAILED" ||
+    msg.includes("gateway") ||
+    msg.includes("razorpay")
+  ) {
+    return "Unable to initialize payment gateway. Please try again or select another payment method.";
+  }
+  if (
+    code === "NETWORK_ERROR" ||
+    code === "ERR_NETWORK" ||
+    code === "ECONNABORTED" ||
+    msg.includes("network") ||
+    msg.includes("timeout") ||
+    msg.includes("failed to fetch")
+  ) {
+    return "Network connection error. Please check your internet connection and try again.";
+  }
+
+  return anyErr.message || anyErr.response?.data?.message || "Unable to place the order. Please try again.";
+}
+
 export default function CheckoutPageClient() {
   const { data: products = [], isLoading, isError, refetch } = useProducts();
   const isOnline = useOnlineStatus();
@@ -83,9 +131,16 @@ export default function CheckoutPageClient() {
 
   const [values, setValues] = useState<ShippingDetails>(INITIAL_VALUES);
   const [errors, setErrors] = useState<ShippingErrors>({});
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [placedOrderTotal, setPlacedOrderTotal] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const checkoutMutation = useCheckout();
+
+  const idempotencyKeyRef = useRef<string>(
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : `idem_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
+  );
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -94,6 +149,7 @@ export default function CheckoutPageClient() {
     setValues(cleanedValues);
     const nextErrors = validate(cleanedValues);
     setErrors(nextErrors);
+    setCheckoutError(null);
     if (Object.keys(nextErrors).length > 0) return;
 
     setIsSubmitting(true);
@@ -113,11 +169,12 @@ export default function CheckoutPageClient() {
           country: cleanedValues.country || "India",
         },
         paymentMethod: "ONLINE",
+        idempotencyKey: idempotencyKeyRef.current,
       });
       setPlacedOrderTotal(result.order.totalAmount);
       dispatch(clearCart());
-    } catch {
-      setErrors({ address: "Unable to place the order. Please try again." });
+    } catch (err: unknown) {
+      setCheckoutError(mapCheckoutErrorMessage(err));
     } finally {
       setIsSubmitting(false);
     }
@@ -206,6 +263,28 @@ export default function CheckoutPageClient() {
         className="mb-12"
       />
 
+      {checkoutError && (
+        <div
+          role="alert"
+          className="mb-8 flex items-start gap-3 rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-200"
+        >
+          <svg
+            className="mt-0.5 h-5 w-5 shrink-0 text-rose-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
+          </svg>
+          <div className="flex-1 font-medium">{checkoutError}</div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_380px] lg:gap-12">
         <section aria-label="Shipping address" className="min-w-0">
           <h2 className="mb-5 font-display text-lg font-semibold text-paper">
@@ -237,7 +316,7 @@ export default function CheckoutPageClient() {
             {checkoutMutation.isPending ? "Placing order…" : `Pay Now · ${formatPrice(total)}`}
           </button>
           <p className="text-xs text-paper-muted/80">
-            Payment gateway not connected — this is a UI-only flow.
+            Guaranteed 256-bit SSL encrypted & secure checkout.
           </p>
         </div>
       </div>

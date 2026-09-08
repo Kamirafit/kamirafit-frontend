@@ -37,7 +37,7 @@ export default function CartSummary({
         <div className="flex items-center justify-between">
           <dt>Delivery fee</dt>
           <dd className="font-medium text-paper">
-            {disabled ? "—" : formatPrice(delivery)}
+            {disabled ? "—" : delivery === 0 ? "FREE" : formatPrice(delivery)}
           </dd>
         </div>
         <div className="mt-2 flex items-center justify-between border-t border-line pt-4 text-base">

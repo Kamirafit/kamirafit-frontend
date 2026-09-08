@@ -61,7 +61,7 @@ export default function SearchSuggestions({
         return (
           <li key={product.id} data-index={i}>
             <Link
-              href={`/product/${product.id}`}
+              href={`/product/${product.slug || product.id}`}
               onMouseEnter={() => onHover(i)}
               onClick={onSelect}
               className={`flex items-center gap-4 px-4 py-3 transition-colors ${

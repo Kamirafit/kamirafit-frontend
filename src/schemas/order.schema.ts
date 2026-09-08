@@ -36,6 +36,8 @@ export const CheckoutRequestDtoSchema = z.object({
   items: z.array(CartItemSchema),
   shippingAddress: AddressSchema.omit({ id: true, isDefault: true }),
   paymentMethod: z.string(),
+  couponCode: z.string().optional(),
+  idempotencyKey: z.string().optional(),
 });
 
 export const CreateOrderRequestDtoSchema = OrderSchema.omit({

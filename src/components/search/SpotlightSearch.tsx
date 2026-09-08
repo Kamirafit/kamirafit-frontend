@@ -97,7 +97,7 @@ export default function SpotlightSearch() {
       if (product) {
         e.preventDefault();
         setOpen(false);
-        router.push(`/product/${product.id}`);
+        router.push(`/product/${product.slug || product.id}`);
       }
     }
   }
