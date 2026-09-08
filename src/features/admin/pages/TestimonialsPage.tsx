@@ -47,7 +47,9 @@ function StarIconFilled() {
 }
 
 export default function TestimonialsPage() {
-  const { data: serverTestimonials = [], isLoading } = useAdminTestimonials();
+  const testimonialsQuery = useAdminTestimonials();
+  const { data: serverTestimonials = [] } = testimonialsQuery;
+  const isLoading = testimonialsQuery.isLoading || (testimonialsQuery.isFetching && serverTestimonials.length === 0);
   const createMutation = useCreateTestimonial();
   const updateMutation = useUpdateTestimonial();
   const deleteMutation = useDeleteTestimonial();
@@ -139,22 +141,30 @@ export default function TestimonialsPage() {
 
   // ---------------- CRUD HANDLERS ----------------
   const handleFormSubmit = async (values: CreateTestimonialInput) => {
-    if (editing) {
-      await updateMutation.mutateAsync({
-        id: editing.id,
-        data: values,
-      });
-    } else {
-      await createMutation.mutateAsync(values);
+    try {
+      if (editing) {
+        await updateMutation.mutateAsync({
+          id: editing.id,
+          data: values,
+        });
+      } else {
+        await createMutation.mutateAsync(values);
+      }
+      setFormOpen(false);
+      setEditing(null);
+    } catch {
+      // Error handled by mutation state
     }
-    setFormOpen(false);
-    setEditing(null);
   };
 
   const handleDeleteConfirm = async () => {
     if (!deletingId) return;
-    await deleteMutation.mutateAsync(deletingId);
-    setDeletingId(null);
+    try {
+      await deleteMutation.mutateAsync(deletingId);
+      setDeletingId(null);
+    } catch {
+      // Error handled by mutation state
+    }
   };
 
   return (
@@ -330,6 +340,7 @@ export default function TestimonialsPage() {
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog
         open={Boolean(deletingId)}
+        loading={deleteMutation.isPending}
         onClose={() => setDeletingId(null)}
         onConfirm={handleDeleteConfirm}
         title="Delete Testimonial"

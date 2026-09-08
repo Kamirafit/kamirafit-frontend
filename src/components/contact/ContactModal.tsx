@@ -50,7 +50,7 @@ export default function ContactModal({ open, onClose }: Props) {
     document.body.style.overflow = "hidden";
 
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape" && !isSubmitting) onClose();
     }
     window.addEventListener("keydown", onKeyDown);
 
@@ -58,7 +58,7 @@ export default function ContactModal({ open, onClose }: Props) {
       document.body.style.overflow = prev;
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [open, onClose]);
+  }, [open, onClose, isSubmitting]);
 
   if (!open) return null;
 
@@ -213,7 +213,7 @@ export default function ContactModal({ open, onClose }: Props) {
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/65 backdrop-blur-md transition-opacity"
-        onClick={handleResetAndClose}
+        onClick={isSubmitting ? undefined : handleResetAndClose}
         aria-hidden="true"
       />
 
@@ -228,9 +228,10 @@ export default function ContactModal({ open, onClose }: Props) {
         {/* Close Button */}
         <button
           type="button"
-          onClick={handleResetAndClose}
+          onClick={isSubmitting ? undefined : handleResetAndClose}
+          disabled={isSubmitting}
           aria-label="Close modal"
-          className="absolute right-5 top-5 inline-flex h-8 w-8 items-center justify-center rounded-full border border-line text-paper-muted transition-colors hover:border-gold hover:text-gold"
+          className="absolute right-5 top-5 inline-flex h-8 w-8 items-center justify-center rounded-full border border-line text-paper-muted transition-colors hover:border-gold hover:text-gold disabled:opacity-40"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             <path d="m6 6 12 12M6 18 18 6" />

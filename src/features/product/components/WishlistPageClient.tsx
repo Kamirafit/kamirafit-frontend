@@ -13,7 +13,9 @@ import Button from "@/components/ui/Button";
 
 export default function WishlistPageClient() {
   const savedIds = useAppSelector((s) => s.wishlist.ids);
-  const { data: latestProducts = [], isLoading, isError, refetch } = useProducts();
+  const productsQuery = useProducts();
+  const { data: latestProducts = [], isError, refetch } = productsQuery;
+  const isLoading = productsQuery.isLoading || (productsQuery.isFetching && latestProducts.length === 0);
   const isOnline = useOnlineStatus();
 
   const savedProducts = useMemo(

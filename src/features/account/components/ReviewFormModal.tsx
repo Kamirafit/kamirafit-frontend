@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { DEFAULT_PRODUCT_IMAGE, getValidImageSrc } from "@/lib/format";
+import Button from "@/components/ui/Button";
 
 type ReviewSubmitData = {
   orderId: string;
@@ -21,9 +22,10 @@ type Props = {
   productImage: string;
   onClose: () => void;
   onSubmit: (review: ReviewSubmitData) => void;
+  isSubmitting?: boolean;
 };
 
-export default function ReviewFormModal({ orderId, productId, productName, productImage, onClose, onSubmit }: Props) {
+export default function ReviewFormModal({ orderId, productId, productName, productImage, onClose, onSubmit, isSubmitting = false }: Props) {
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [title, setTitle] = useState("");
@@ -66,13 +68,17 @@ export default function ReviewFormModal({ orderId, productId, productName, produ
 
   return (
     <div role="dialog" aria-modal="true" className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={isSubmitting ? undefined : onClose} />
       <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto modal-scrollbar-hidden rounded-2xl border border-line bg-ink shadow-2xl backdrop-blur-xl">
         <div className="sticky top-0 z-10 border-b border-line bg-ink/95 px-6 py-4 backdrop-blur-md flex justify-between items-center">
           <h2 className="font-display text-lg font-bold text-paper">
             Rate & Review Product
           </h2>
-          <button onClick={onClose} className="text-paper-muted hover:text-paper">
+          <button
+            onClick={isSubmitting ? undefined : onClose}
+            disabled={isSubmitting}
+            className="text-paper-muted hover:text-paper disabled:opacity-40"
+          >
             <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -181,19 +187,24 @@ export default function ReviewFormModal({ orderId, productId, productName, produ
           </div>
 
           <div className="mt-6 flex justify-end gap-3 border-t border-line pt-6">
-            <button
+            <Button
               type="button"
+              variant="secondary"
+              size="sm"
+              disabled={isSubmitting}
               onClick={onClose}
-              className="rounded-full px-5 py-2.5 text-[12px] font-semibold uppercase tracking-wider text-paper-muted hover:bg-ink-3 transition-colors"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
-              className="rounded-full bg-gold px-6 py-2.5 text-[12px] font-semibold uppercase tracking-wider text-white shadow-md hover:bg-gold-bright transition-colors"
+              variant="primary"
+              size="sm"
+              loading={isSubmitting}
+              disabled={isSubmitting}
             >
               Submit Review
-            </button>
+            </Button>
           </div>
         </form>
       </div>

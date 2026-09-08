@@ -11,11 +11,12 @@ type Props = {
   onClose: () => void;
   onSubmit: (values: Omit<AdminUser, "id">) => void;
   initial: AdminUser | null;
+  loading?: boolean;
 };
 
 const EMPTY = { name: "", email: "", phone: "", address: "" };
 
-export default function UserFormModal({ open, onClose, onSubmit, initial }: Props) {
+export default function UserFormModal({ open, onClose, onSubmit, initial, loading = false }: Props) {
   const [values, setValues] = useState(EMPTY);
   const [errors, setErrors] = useState<Partial<Record<keyof typeof EMPTY, string>>>({});
 
@@ -54,7 +55,7 @@ export default function UserFormModal({ open, onClose, onSubmit, initial }: Prop
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Edit user" maxWidth="md">
+    <Modal open={open} onClose={loading ? () => {} : onClose} title="Edit user" maxWidth="md">
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         <FormField label="Name" error={errors.name}>
           <input
@@ -62,6 +63,7 @@ export default function UserFormModal({ open, onClose, onSubmit, initial }: Prop
             value={values.name}
             onChange={(e) => set("name", e.target.value)}
             className={inputClass}
+            disabled={loading}
           />
         </FormField>
         <FormField label="Email" error={errors.email}>
@@ -70,6 +72,7 @@ export default function UserFormModal({ open, onClose, onSubmit, initial }: Prop
             value={values.email}
             onChange={(e) => set("email", e.target.value)}
             className={inputClass}
+            disabled={loading}
           />
         </FormField>
         <FormField label="Phone" error={errors.phone}>
@@ -78,6 +81,7 @@ export default function UserFormModal({ open, onClose, onSubmit, initial }: Prop
             value={values.phone}
             onChange={(e) => set("phone", e.target.value)}
             className={inputClass}
+            disabled={loading}
           />
         </FormField>
         <FormField label="Address" error={errors.address}>
@@ -85,14 +89,15 @@ export default function UserFormModal({ open, onClose, onSubmit, initial }: Prop
             value={values.address}
             onChange={(e) => set("address", e.target.value)}
             className={textareaClass}
+            disabled={loading}
           />
         </FormField>
 
         <div className="flex items-center justify-end gap-2 pt-3">
-          <Button variant="dark" size="sm" onClick={onClose}>
+          <Button variant="dark" size="sm" onClick={onClose} disabled={loading}>
             Cancel
           </Button>
-          <Button variant="primary" size="sm" type="submit">
+          <Button variant="primary" size="sm" type="submit" loading={loading} disabled={loading}>
             Save changes
           </Button>
         </div>

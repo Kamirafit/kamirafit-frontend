@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { DEFAULT_PRODUCT_IMAGE, formatPrice, getValidImageSrc } from "@/lib/format";
 import { useAppDispatch, useAppSelector } from "../hooks/redux";
 import { addToCart } from "../store/cartSlice";
@@ -48,7 +49,11 @@ export default function ProductCard({ product }: Props) {
   const inCart = useAppSelector((s) =>
     s.cart.items.some((it) => it.id === product.id),
   );
-  const imageSrc = getValidImageSrc(product.image, DEFAULT_PRODUCT_IMAGE);
+  const [imgSrc, setImgSrc] = useState(() => getValidImageSrc(product.image, DEFAULT_PRODUCT_IMAGE));
+
+  useEffect(() => {
+    setImgSrc(getValidImageSrc(product.image, DEFAULT_PRODUCT_IMAGE));
+  }, [product.image]);
 
   const handleActionWithAuth = (e: React.MouseEvent, action: () => void) => {
     e.preventDefault();
@@ -69,9 +74,11 @@ export default function ProductCard({ product }: Props) {
         className="relative block aspect-[4/5] w-full overflow-hidden bg-ink-2"
       >
         <Image
-          src={imageSrc}
+          src={imgSrc}
           alt={product.name}
           fill
+          unoptimized={imgSrc.startsWith("data:") || imgSrc.startsWith("blob:")}
+          onError={() => setImgSrc(DEFAULT_PRODUCT_IMAGE)}
           sizes="(min-width: 1280px) 22vw, (min-width: 1024px) 30vw, (min-width: 640px) 45vw, 50vw"
           className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
         />

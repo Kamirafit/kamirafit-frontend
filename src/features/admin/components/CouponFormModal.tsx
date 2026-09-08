@@ -198,7 +198,7 @@ export default function CouponFormModal({
   return (
     <Modal
       open={open}
-      onClose={onClose}
+      onClose={isSubmitting ? () => {} : onClose}
       title={initial ? `Edit Coupon: ${initial.code}` : "Create New Coupon"}
       maxWidth="lg"
     >
@@ -520,7 +520,7 @@ export default function CouponFormModal({
           <Button variant="dark" size="sm" onClick={onClose} disabled={isSubmitting}>
             Cancel
           </Button>
-          <Button variant="primary" size="sm" type="submit" disabled={isSubmitting}>
+          <Button variant="primary" size="sm" type="submit" loading={isSubmitting} disabled={isSubmitting}>
             {isSubmitting
               ? "Saving..."
               : initial

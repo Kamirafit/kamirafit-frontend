@@ -214,14 +214,21 @@ export default function OrderDetailsModal({ open, onClose, order }: Props) {
   };
 
   const handleDelete = () => {
-    deleteMutation.mutate(order.id, { onSuccess: onClose });
+    deleteMutation.mutate(order.id, {
+      onSuccess: () => {
+        setConfirmDelete(false);
+        onClose();
+      },
+    });
   };
+
+  const isBusy = updateMutation.isPending || deleteMutation.isPending;
 
   return (
     <>
       <Modal
         open={open}
-        onClose={onClose}
+        onClose={isBusy ? () => {} : onClose}
         title={`Order ${order.id}`}
         maxWidth="lg"
       >
@@ -573,16 +580,23 @@ export default function OrderDetailsModal({ open, onClose, order }: Props) {
             <Button
               variant="dark"
               size="sm"
+              disabled={isBusy}
               onClick={() => setConfirmDelete(true)}
               className="!bg-[#B3261E] !text-paper hover:!bg-[#92201A]"
             >
               Delete order
             </Button>
             <div className="flex items-center gap-2">
-              <Button variant="dark" size="sm" onClick={onClose}>
+              <Button variant="dark" size="sm" disabled={isBusy} onClick={onClose}>
                 Cancel
               </Button>
-              <Button variant="primary" size="sm" onClick={handleSave}>
+              <Button
+                variant="primary"
+                size="sm"
+                loading={updateMutation.isPending}
+                disabled={isBusy}
+                onClick={handleSave}
+              >
                 Save changes
               </Button>
             </div>
@@ -592,6 +606,7 @@ export default function OrderDetailsModal({ open, onClose, order }: Props) {
 
       <ConfirmDialog
         open={confirmDelete}
+        loading={deleteMutation.isPending}
         title="Delete this order?"
         description={`Order ${order.id} will be removed from the admin. This cannot be undone.`}
         confirmLabel="Delete order"

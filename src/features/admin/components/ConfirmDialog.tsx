@@ -12,6 +12,7 @@ type Props = {
   onConfirm: () => void;
   onClose: () => void;
   danger?: boolean;
+  loading?: boolean;
 };
 
 export default function ConfirmDialog({
@@ -23,23 +24,23 @@ export default function ConfirmDialog({
   onConfirm,
   onClose,
   danger = false,
+  loading = false,
 }: Props) {
   return (
-    <Modal open={open} onClose={onClose} title={title} maxWidth="sm">
+    <Modal open={open} onClose={loading ? () => {} : onClose} title={title} maxWidth="sm">
       <p className="text-[13.5px] leading-relaxed text-paper-muted">
         {description}
       </p>
       <div className="mt-7 flex items-center justify-end gap-2">
-        <Button variant="dark" size="sm" onClick={onClose}>
+        <Button variant="dark" size="sm" onClick={onClose} disabled={loading}>
           {cancelLabel}
         </Button>
         <Button
           variant="primary"
           size="sm"
-          onClick={() => {
-            onConfirm();
-            onClose();
-          }}
+          loading={loading}
+          disabled={loading}
+          onClick={onConfirm}
           className={
             danger
               ? "!bg-[#B3261E] !text-paper !shadow-[0_10px_30px_-12px_rgba(179,38,30,0.55)] hover:!bg-[#92201A] hover:!shadow-[0_14px_40px_-12px_rgba(179,38,30,0.7)]"

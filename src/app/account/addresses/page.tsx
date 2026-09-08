@@ -10,7 +10,9 @@ import { EmptyState, ErrorState, OfflineState } from "@/components/states";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 
 export default function AddressesPage() {
-  const { data: addresses = [], isLoading, isError, refetch } = useAddresses();
+  const addressesQuery = useAddresses();
+  const { data: addresses = [], isError, refetch } = addressesQuery;
+  const isLoading = addressesQuery.isLoading || (addressesQuery.isFetching && addresses.length === 0);
   const isOnline = useOnlineStatus();
   const createMutation = useCreateAddress();
   const updateMutation = useUpdateAddress();
@@ -21,32 +23,40 @@ export default function AddressesPage() {
   const [addressToDelete, setAddressToDelete] = useState<string | null>(null);
 
   const handleSave = async (address: Address) => {
-    if (isAdding) {
-      const addressData: Omit<Address, "id"> = {
-        type: address.type,
-        fullName: address.fullName,
-        phoneNumber: address.phoneNumber,
-        addressLine1: address.addressLine1,
-        addressLine2: address.addressLine2,
-        landmark: address.landmark,
-        city: address.city,
-        state: address.state,
-        pincode: address.pincode,
-        country: address.country || "India",
-        isDefault: address.isDefault,
-      };
-      await createMutation.mutateAsync(addressData);
-    } else {
-      await updateMutation.mutateAsync({ id: address.id, data: address });
+    try {
+      if (isAdding) {
+        const addressData: Omit<Address, "id"> = {
+          type: address.type,
+          fullName: address.fullName,
+          phoneNumber: address.phoneNumber,
+          addressLine1: address.addressLine1,
+          addressLine2: address.addressLine2,
+          landmark: address.landmark,
+          city: address.city,
+          state: address.state,
+          pincode: address.pincode,
+          country: address.country || "India",
+          isDefault: address.isDefault,
+        };
+        await createMutation.mutateAsync(addressData);
+      } else {
+        await updateMutation.mutateAsync({ id: address.id, data: address });
+      }
+      setIsAdding(false);
+      setEditingAddress(null);
+    } catch {
+      // Error handled by mutation state
     }
-    setIsAdding(false);
-    setEditingAddress(null);
   };
 
   const confirmDelete = async () => {
     if (!addressToDelete) return;
-    await deleteMutation.mutateAsync(addressToDelete);
-    setAddressToDelete(null);
+    try {
+      await deleteMutation.mutateAsync(addressToDelete);
+      setAddressToDelete(null);
+    } catch {
+      // Error handled
+    }
   };
 
   const handleSetDefault = (address: Address) => {
@@ -114,6 +124,7 @@ export default function AddressesPage() {
       {(isAdding || editingAddress) && (
         <AddressFormModal
           address={editingAddress || undefined}
+          isSubmitting={createMutation.isPending || updateMutation.isPending}
           onClose={() => {
             setIsAdding(false);
             setEditingAddress(null);
@@ -127,20 +138,21 @@ export default function AddressesPage() {
         <div role="dialog" aria-modal="true" className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-            onClick={() => setAddressToDelete(null)}
+            onClick={deleteMutation.isPending ? undefined : () => setAddressToDelete(null)}
           />
           <div className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-line bg-ink p-6 shadow-2xl backdrop-blur-xl modal-scrollbar-hidden">
             <h3 className="font-display text-xl font-bold text-paper">
               Delete Address
             </h3>
             <p className="mt-2 text-sm text-paper-muted">
-              Are you sure you want to remove this delivery address? This action cannot be undone.
+               Are you sure you want to remove this delivery address? This action cannot be undone.
             </p>
             <div className="mt-6 flex justify-end gap-3">
               <button
                 type="button"
+                disabled={deleteMutation.isPending}
                 onClick={() => setAddressToDelete(null)}
-                className="rounded-full px-5 py-2 text-[12px] font-semibold uppercase tracking-wider text-paper-muted hover:bg-ink-3 transition-colors"
+                className="rounded-full px-5 py-2 text-[12px] font-semibold uppercase tracking-wider text-paper-muted hover:bg-ink-3 transition-colors disabled:opacity-40"
               >
                 Cancel
               </button>

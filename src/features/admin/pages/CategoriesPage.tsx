@@ -28,7 +28,8 @@ function PlusIcon() {
 
 export default function CategoriesPage() {
   const categoriesQuery = useAdminCategories();
-  const { data: categories = [], isLoading } = categoriesQuery;
+  const { data: categories = [] } = categoriesQuery;
+  const isLoading = categoriesQuery.isLoading || (categoriesQuery.isFetching && categories.length === 0);
   const isOnline = useOnlineStatus();
   const createMutation = useCreateAdminCategory();
   const updateMutation = useUpdateAdminCategory();
@@ -133,6 +134,7 @@ export default function CategoriesPage() {
 
       <CategoryFormModal
         open={formOpen}
+        loading={createMutation.isPending || updateMutation.isPending}
         onClose={() => {
           setFormOpen(false);
           setEditing(null);
@@ -140,25 +142,42 @@ export default function CategoriesPage() {
         initial={editing}
         onSubmit={(values) => {
           if (editing) {
-            updateMutation.mutate({ id: editing.id, patch: values });
+            updateMutation.mutate(
+              { id: editing.id, patch: values },
+              {
+                onSuccess: () => {
+                  setFormOpen(false);
+                  setEditing(null);
+                },
+              }
+            );
           } else {
-            createMutation.mutate(values);
+            createMutation.mutate(values, {
+              onSuccess: () => {
+                setFormOpen(false);
+                setEditing(null);
+              },
+            });
           }
-          setFormOpen(false);
-          setEditing(null);
         }}
       />
 
       <ConfirmDialog
         open={deletingId !== null}
+        loading={deleteMutation.isPending}
         onClose={() => setDeletingId(null)}
         title="Delete category"
         description={`Remove "${deletingCategory?.name ?? "the category"}" and its subcategories. Products already using this category are not touched, but you won't be able to pick it on new products.`}
         confirmLabel="Delete"
         danger
         onConfirm={() => {
-          if (deletingId) deleteMutation.mutate(deletingId);
-          setDeletingId(null);
+          if (deletingId) {
+            deleteMutation.mutate(deletingId, {
+              onSuccess: () => {
+                setDeletingId(null);
+              },
+            });
+          }
         }}
       />
     </div>

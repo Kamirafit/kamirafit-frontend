@@ -68,7 +68,8 @@ export default function ShopPageClient({ initialCategorySlug, initialProducts = 
   const [sort, setSort] = useState<SortKey>("popular");
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const { data: latestProducts = [], isLoading, isError, refetch } = useProducts();
+  const productsQuery = useProducts();
+  const { data: latestProducts = [], isError, refetch } = productsQuery;
   const isOnline = useOnlineStatus();
 
   const activeProducts = useMemo(() => {
@@ -78,6 +79,7 @@ export default function ShopPageClient({ initialCategorySlug, initialProducts = 
 
   const products = useFilteredSortedProducts(activeProducts, filters, sort);
   const hasInitialData = initialProducts.length > 0;
+  const isLoading = (productsQuery.isLoading || (productsQuery.isFetching && latestProducts.length === 0)) && !hasInitialData;
 
   // Counts are computed from the full *active* product set so users can see how
   // many items each option would add — not the already-filtered subset.

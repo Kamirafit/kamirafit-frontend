@@ -6,21 +6,33 @@ import OrderDetailsModal from "@/features/account/components/OrderDetailsModal";
 import ReviewFormModal from "@/features/account/components/ReviewFormModal";
 import { Order } from "@/features/account/types";
 import { useOrders } from "@/services/order";
+import { useCreateReview } from "@/services/review";
 import OrderSkeleton from "@/components/skeleton/OrderSkeleton";
 import { EmptyState, ErrorState, OfflineState } from "@/components/states";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 
 export default function OrdersPage() {
-  const { data: orders = [], isLoading, isError, refetch } = useOrders();
+  const ordersQuery = useOrders();
+  const { data: orders = [], isError, refetch } = ordersQuery;
+  const isLoading = ordersQuery.isLoading || (ordersQuery.isFetching && orders.length === 0);
   const isOnline = useOnlineStatus();
+  const createReviewMutation = useCreateReview();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [reviewItem, setReviewItem] = useState<{orderId: string, productId: string, productName: string, productImage: string} | null>(null);
 
-  const handleReviewSubmit = (review: { rating: number; comment: string }) => {
-    console.log("Submitted Review:", review);
-    // TODO: Send to API
-    setReviewItem(null);
-    alert("Thank you! Your review has been submitted.");
+  const handleReviewSubmit = async (review: { orderId: string; productId: string; rating: number; title: string; comment: string; images: string[] }) => {
+    try {
+      await createReviewMutation.mutateAsync({
+        productId: review.productId,
+        rating: review.rating,
+        title: review.title,
+        comment: review.comment,
+        images: review.images,
+      });
+      setReviewItem(null);
+    } catch {
+      // Error handled by mutation state
+    }
   };
 
   return (
@@ -70,6 +82,7 @@ export default function OrdersPage() {
           productId={reviewItem.productId}
           productName={reviewItem.productName}
           productImage={reviewItem.productImage}
+          isSubmitting={createReviewMutation.isPending}
           onClose={() => setReviewItem(null)}
           onSubmit={handleReviewSubmit}
         />

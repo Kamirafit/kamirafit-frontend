@@ -9,6 +9,7 @@ type Props = {
   address?: Address; // If provided, we're editing. If not, adding.
   onClose: () => void;
   onSave: (address: Address) => void;
+  isSubmitting?: boolean;
 };
 
 interface FormErrors {
@@ -18,7 +19,7 @@ interface FormErrors {
   pincode?: string;
 }
 
-export default function AddressFormModal({ address, onClose, onSave }: Props) {
+export default function AddressFormModal({ address, onClose, onSave, isSubmitting = false }: Props) {
   const [formData, setFormData] = useState<Partial<Address>>(
     address || { type: "Home", isDefault: false }
   );
@@ -150,13 +151,17 @@ export default function AddressFormModal({ address, onClose, onSave }: Props) {
 
   return (
     <div role="dialog" aria-modal="true" className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={isSubmitting ? undefined : onClose} />
       <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto modal-scrollbar-hidden rounded-2xl border border-line bg-ink shadow-2xl backdrop-blur-xl">
         <div className="sticky top-0 z-10 border-b border-line bg-ink/95 px-6 py-4 backdrop-blur-md flex justify-between items-center">
           <h2 className="font-display text-lg font-bold text-paper">
             {address ? "Edit Address" : "Add New Address"}
           </h2>
-          <button onClick={onClose} className="text-paper-muted hover:text-paper">
+          <button
+            onClick={isSubmitting ? undefined : onClose}
+            disabled={isSubmitting}
+            className="text-paper-muted hover:text-paper disabled:opacity-40"
+          >
             <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -315,6 +320,7 @@ export default function AddressFormModal({ address, onClose, onSave }: Props) {
               type="button"
               variant="secondary"
               size="sm"
+              disabled={isSubmitting}
               onClick={onClose}
             >
               Cancel
@@ -323,6 +329,8 @@ export default function AddressFormModal({ address, onClose, onSave }: Props) {
               type="submit"
               variant="primary"
               size="sm"
+              loading={isSubmitting}
+              disabled={isSubmitting}
             >
               Save Address
             </Button>

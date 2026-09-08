@@ -39,7 +39,7 @@ const contentSecurityPolicy = [
     isDev ? " 'unsafe-eval'" : ""
   }`,
   "style-src 'self' 'unsafe-inline' https://www.gstatic.com",
-  `img-src 'self' data: blob: https://www.google.com https://www.gstatic.com ${productImageHosts
+  `img-src 'self' data: blob: https: https://www.google.com https://www.gstatic.com ${productImageHosts
     .map((host) => `https://${host}`)
     .join(" ")}`,
   "font-src 'self' data: https://fonts.gstatic.com",
@@ -98,6 +98,14 @@ const nextConfig: NextConfig = {
     contentDispositionType: "attachment",
     dangerouslyAllowSVG: false,
     remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "**",
+      },
+      {
+        protocol: "http",
+        hostname: "localhost",
+      },
       ...productImageHosts.map((hostname) => ({
         protocol: "https" as const,
         hostname,

@@ -22,7 +22,8 @@ function initials(name: string) {
 
 export default function UsersPage() {
   const usersQuery = useAdminUsers();
-  const { data: users = [], isLoading } = usersQuery;
+  const { data: users = [] } = usersQuery;
+  const isLoading = usersQuery.isLoading || (usersQuery.isFetching && users.length === 0);
   const isOnline = useOnlineStatus();
   const updateMutation = useUpdateAdminUser();
 
@@ -122,12 +123,19 @@ export default function UsersPage() {
       <UserFormModal
         open={editing !== null}
         initial={editing}
+        loading={updateMutation.isPending}
         onClose={() => setEditing(null)}
         onSubmit={(values) => {
           if (editing) {
-            updateMutation.mutate({ id: editing.id, patch: values });
+            updateMutation.mutate(
+              { id: editing.id, patch: values },
+              {
+                onSuccess: () => {
+                  setEditing(null);
+                },
+              }
+            );
           }
-          setEditing(null);
         }}
       />
     </div>

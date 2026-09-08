@@ -11,6 +11,7 @@ type Props = {
   onClose: () => void;
   onSubmit: (values: Omit<AdminCategory, "id">) => void;
   initial: AdminCategory | null;
+  loading?: boolean;
 };
 
 const EMPTY: Omit<AdminCategory, "id"> = { name: "", description: "", subcategories: [] };
@@ -20,6 +21,7 @@ export default function CategoryFormModal({
   onClose,
   onSubmit,
   initial,
+  loading = false,
 }: Props) {
   const [values, setValues] = useState<Omit<AdminCategory, "id">>(EMPTY);
   const [subInput, setSubInput] = useState("");
@@ -77,7 +79,7 @@ export default function CategoryFormModal({
   return (
     <Modal
       open={open}
-      onClose={onClose}
+      onClose={loading ? () => {} : onClose}
       title={initial ? "Edit category" : "Add category"}
       maxWidth="md"
     >
@@ -157,10 +159,10 @@ export default function CategoryFormModal({
         </FormField>
 
         <div className="flex items-center justify-end gap-2 pt-3">
-          <Button variant="dark" size="sm" onClick={onClose}>
+          <Button variant="dark" size="sm" onClick={onClose} disabled={loading}>
             Cancel
           </Button>
-          <Button variant="primary" size="sm" type="submit">
+          <Button variant="primary" size="sm" type="submit" loading={loading} disabled={loading}>
             {initial ? "Save changes" : "Create category"}
           </Button>
         </div>

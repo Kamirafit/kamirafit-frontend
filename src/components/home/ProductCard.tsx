@@ -31,6 +31,7 @@ export default function ProductCard({ product }: Props) {
           src={imageSrc}
           alt={product.name}
           fill
+          unoptimized={imageSrc.startsWith("data:") || imageSrc.startsWith("blob:")}
           sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
           className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.05]"
         />

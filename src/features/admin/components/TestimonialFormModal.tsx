@@ -78,7 +78,7 @@ export default function TestimonialFormModal({
   return (
     <Modal
       open={open}
-      onClose={onClose}
+      onClose={isSubmitting ? () => {} : onClose}
       title={initial ? "Edit Testimonial" : "Add Testimonial"}
       maxWidth="md"
     >
@@ -177,7 +177,7 @@ export default function TestimonialFormModal({
           <Button variant="dark" size="sm" onClick={onClose} disabled={isSubmitting}>
             Cancel
           </Button>
-          <Button variant="primary" size="sm" type="submit" disabled={isSubmitting}>
+          <Button variant="primary" size="sm" type="submit" loading={isSubmitting} disabled={isSubmitting}>
             {isSubmitting
               ? "Saving..."
               : initial

@@ -54,7 +54,7 @@ export default function ProductsPage() {
   const toggleStatusMutation = useToggleAdminProductStatus();
   const deleteMutation = useDeleteAdminProduct();
 
-  const isLoading = productsLoading || categoriesLoading;
+  const isLoading = productsLoading || categoriesLoading || (productsQuery.isFetching && products.length === 0);
 
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<ProductStatusFilter>("all");
@@ -122,16 +122,28 @@ export default function ProductsPage() {
     };
 
     if (editing && !duplicating) {
-      updateMutation.mutate({
-        id: editing.id,
-        patch: payload,
-      });
+      updateMutation.mutate(
+        {
+          id: editing.id,
+          patch: payload,
+        },
+        {
+          onSuccess: () => {
+            setFormOpen(false);
+            setEditing(null);
+            setDuplicating(null);
+          },
+        }
+      );
     } else {
-      createMutation.mutate(payload);
+      createMutation.mutate(payload, {
+        onSuccess: () => {
+          setFormOpen(false);
+          setEditing(null);
+          setDuplicating(null);
+        },
+      });
     }
-    setFormOpen(false);
-    setEditing(null);
-    setDuplicating(null);
   };
 
   const deletingProduct = deletingId
@@ -321,6 +333,7 @@ export default function ProductsPage() {
         initial={duplicating ?? editing}
         duplicate={Boolean(duplicating)}
         categories={categories}
+        loading={createMutation.isPending || updateMutation.isPending}
       />
 
       <ConfirmDialog
@@ -330,9 +343,15 @@ export default function ProductsPage() {
         description={`This removes "${deletingProduct?.name ?? "the product"}" from admin and the storefront. You can't undo this in-session.`}
         confirmLabel="Delete"
         danger
+        loading={deleteMutation.isPending}
         onConfirm={() => {
-          if (deletingId) deleteMutation.mutate(deletingId);
-          setDeletingId(null);
+          if (deletingId) {
+            deleteMutation.mutate(deletingId, {
+              onSuccess: () => {
+                setDeletingId(null);
+              },
+            });
+          }
         }}
       />
 

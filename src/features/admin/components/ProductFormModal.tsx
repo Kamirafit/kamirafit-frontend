@@ -15,6 +15,7 @@ import {
 import { useAdminCategories } from "@/services/admin";
 import type { AdminCategory } from "@/types/entities";
 import Button from "@/components/ui/Button";
+import { compressImageToDataUrl } from "@/lib/format";
 import FormField, { inputClass, selectClass, textareaClass } from "./FormField";
 import Modal from "./Modal";
 import MultiSelectChips from "./MultiSelectChips";
@@ -45,6 +46,7 @@ type Props = {
   categoryOptions?: string[];
   categories?: AdminCategory[];
   duplicate?: boolean;
+  loading?: boolean;
 };
 
 export type FormValues = {
@@ -181,7 +183,7 @@ function Toggle({ label, checked, onChange, disabled = false }: { label: string;
   </button>;
 }
 
-export default function ProductFormModal({ open, onClose, onSubmit, initial, categories: categoriesProp, duplicate = false }: Props) {
+export default function ProductFormModal({ open, onClose, onSubmit, initial, categories: categoriesProp, duplicate = false, loading = false }: Props) {
   const categoriesQuery = useAdminCategories();
 
   const [values, setValues] = useState<FormValues>(EMPTY);
@@ -199,6 +201,8 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
   const [adjustmentNote, setAdjustmentNote] = useState("");
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [draggedImage, setDraggedImage] = useState<string | null>(null);
+  const [isProcessingImages, setIsProcessingImages] = useState(false);
+  const [imageUrlInput, setImageUrlInput] = useState("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const objectUrlsRef = useRef<string[]>([]);
 
@@ -342,21 +346,70 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
 
   const applyBulk = () => setVariants((previous) => previous.map((variant) => ({ ...variant, stock: bulkStock, threshold: bulkThreshold })));
 
-  const handleFiles = (files: FileList | null) => {
+  const handleFiles = async (files: FileList | null) => {
     if (!files) return;
-    const valid = Array.from(files).filter((file) => file.type.startsWith("image/") && file.size <= 8 * 1024 * 1024).slice(0, MAX_IMAGES - images.length);
-    const next = valid.map((file, index) => {
-      const src = URL.createObjectURL(file);
-      objectUrlsRef.current.push(src);
-      return { id: "upload-" + Date.now() + "-" + index, src, color: "" as Color | "" };
-    });
-    if (!next.length) {
-      setErrors((previous) => ({ ...previous, images: "Use image files under 8 MB (up to " + MAX_IMAGES + " images)." }));
+    const valid = Array.from(files)
+      .filter((file) => file.type.startsWith("image/") && file.size <= 12 * 1024 * 1024)
+      .slice(0, MAX_IMAGES - images.length);
+
+    if (!valid.length) {
+      setErrors((previous) => ({
+        ...previous,
+        images: "Please select valid image files under 12 MB (up to " + MAX_IMAGES + " images total).",
+      }));
       return;
     }
-    setImages((previous) => [...previous, ...next]);
+
+    setIsProcessingImages(true);
     setErrors((previous) => ({ ...previous, images: "" }));
-    if (fileInputRef.current) fileInputRef.current.value = "";
+
+    try {
+      const next = await Promise.all(
+        valid.map(async (file, index) => {
+          const dataUrl = await compressImageToDataUrl(file);
+          return {
+            id: "upload-" + Date.now() + "-" + index,
+            src: dataUrl,
+            color: "" as Color | "",
+          };
+        })
+      );
+      setImages((previous) => [...previous, ...next]);
+    } catch (err) {
+      console.error("Image processing error:", err);
+      setErrors((previous) => ({
+        ...previous,
+        images: "Failed to process image file. Please try a different image.",
+      }));
+    } finally {
+      setIsProcessingImages(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleAddImageUrl = () => {
+    const trimmed = imageUrlInput.trim();
+    if (!trimmed) return;
+    if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://") && !trimmed.startsWith("data:image/")) {
+      setErrors((previous) => ({
+        ...previous,
+        images: "Please enter a valid HTTP, HTTPS, or data image URL.",
+      }));
+      return;
+    }
+    if (images.length >= MAX_IMAGES) {
+      setErrors((previous) => ({
+        ...previous,
+        images: "Maximum of " + MAX_IMAGES + " images allowed per product.",
+      }));
+      return;
+    }
+    setImages((previous) => [
+      ...previous,
+      { id: "url-" + Date.now(), src: trimmed, color: "" as Color | "" },
+    ]);
+    setImageUrlInput("");
+    setErrors((previous) => ({ ...previous, images: "" }));
   };
 
   const removeImage = (id: string) => setImages((previous) => {
@@ -450,7 +503,7 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
   };
 
   return (
-    <Modal open={open} onClose={onClose} title={duplicate ? "Duplicate product" : initial ? "Edit product" : "Add product"} maxWidth="xl">
+    <Modal open={open} onClose={loading ? () => {} : onClose} title={duplicate ? "Duplicate product" : initial ? "Edit product" : "Add product"} maxWidth="xl">
       <form onSubmit={handleSubmit} className="flex flex-col gap-8">
         <Section title="Product">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -596,12 +649,146 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
         </Section>
 
         <Section title="Media">
-          <div onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); handleFiles(event.dataTransfer.files); }} className="rounded-2xl border border-dashed border-line bg-ink-2/40 p-4">
-            <label htmlFor="product-images-upload" className="flex cursor-pointer items-center justify-between gap-3 text-[13px] text-paper-muted"><span><span className="font-semibold text-paper">Click to upload</span> or drop image files here</span><span className="rounded-full border border-line px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em]">Browse</span></label>
-            <input ref={fileInputRef} id="product-images-upload" type="file" accept="image/*" multiple className="sr-only" onChange={(event) => handleFiles(event.target.files)} />
+          <div className="flex flex-col gap-3">
+            <div
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={(event) => {
+                event.preventDefault();
+                handleFiles(event.dataTransfer.files);
+              }}
+              className="rounded-2xl border border-dashed border-line bg-ink-2/40 p-4"
+            >
+              <label
+                htmlFor="product-images-upload"
+                className="flex cursor-pointer items-center justify-between gap-3 text-[13px] text-paper-muted"
+              >
+                <span>
+                  {isProcessingImages ? (
+                    <span className="flex items-center gap-2 text-gold">
+                      <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-gold border-t-transparent" />
+                      Optimizing image files for fast loading…
+                    </span>
+                  ) : (
+                    <>
+                      <span className="font-semibold text-paper">Click to upload</span> or drop image files here
+                    </>
+                  )}
+                </span>
+                <span className="rounded-full border border-line px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em]">
+                  {isProcessingImages ? "Processing…" : "Browse"}
+                </span>
+              </label>
+              <input
+                ref={fileInputRef}
+                id="product-images-upload"
+                type="file"
+                accept="image/*"
+                multiple
+                disabled={isProcessingImages}
+                className="sr-only"
+                onChange={(event) => handleFiles(event.target.files)}
+              />
+            </div>
+
+            {/* URL input fallback */}
+            <div className="flex gap-2">
+              <input
+                type="url"
+                value={imageUrlInput}
+                placeholder="Or paste an image web URL (e.g. https://...)"
+                onChange={(e) => setImageUrlInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddImageUrl();
+                  }
+                }}
+                className={inputClass}
+              />
+              <Button type="button" size="sm" variant="dark" onClick={handleAddImageUrl}>
+                Add URL
+              </Button>
+            </div>
           </div>
           {errors.images ? <p className="text-[12px] text-[#B3261E]">{errors.images}</p> : null}
-          {images.length ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{images.map((image, index) => <div key={image.id} draggable onDragStart={() => setDraggedImage(image.id)} onDragOver={(event) => event.preventDefault()} onDrop={() => { if (draggedImage) moveImage(draggedImage, image.id); setDraggedImage(null); }} className="group relative aspect-square overflow-hidden rounded-2xl border border-line bg-ink-2"><Image src={image.src} alt={"Product image " + (index + 1)} fill sizes="160px" className="object-cover" unoptimized={image.src.startsWith("blob:")} /><div className="absolute inset-x-1 bottom-1 flex gap-1"><select aria-label="Assign image color" value={image.color} onChange={(event) => { const chosen = event.target.value as Color | ""; setImages((previous) => previous.map((item) => item.id === image.id ? { ...item, color: chosen } : item)); if (chosen && !values.color.includes(chosen)) { set("color", [...values.color, chosen]); } }} className="min-w-0 flex-1 rounded-lg bg-ink/85 px-1 py-1 text-[10px] text-paper"><option value="">All colors</option>{Array.from(new Set([...values.color, ...(image.color ? [image.color] : []), ...variants.map((v) => v.color)])).filter(Boolean).map((color) => <option key={color} value={color}>{color}</option>)}</select></div>{index === 0 ? <span className="absolute left-1 top-1 rounded-full bg-gold px-2 py-1 text-[9px] font-semibold uppercase text-white">Primary</span> : <button type="button" onClick={() => moveImage(image.id, images[0].id)} className="absolute left-1 top-1 rounded-full bg-ink/80 px-2 py-1 text-[9px] font-semibold uppercase text-paper">Set primary</button>}<button type="button" onClick={() => removeImage(image.id)} className="absolute right-1 top-1 h-7 w-7 rounded-full bg-ink/85 text-paper hover:text-[#B3261E]" aria-label="Remove image">×</button></div>)}</div> : null}
+          {images.length ? (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {images.map((image, index) => (
+                <div
+                  key={image.id}
+                  draggable
+                  onDragStart={() => setDraggedImage(image.id)}
+                  onDragOver={(event) => event.preventDefault()}
+                  onDrop={() => {
+                    if (draggedImage) moveImage(draggedImage, image.id);
+                    setDraggedImage(null);
+                  }}
+                  className="group relative aspect-square overflow-hidden rounded-2xl border border-line bg-ink-2"
+                >
+                  <Image
+                    src={image.src}
+                    alt={"Product image " + (index + 1)}
+                    fill
+                    sizes="160px"
+                    className="object-cover"
+                    unoptimized={image.src.startsWith("data:") || image.src.startsWith("blob:")}
+                  />
+                  <div className="absolute inset-x-1 bottom-1 flex gap-1">
+                    <select
+                      aria-label="Assign image color"
+                      value={image.color}
+                      onChange={(event) => {
+                        const chosen = event.target.value as Color | "";
+                        setImages((previous) =>
+                          previous.map((item) => (item.id === image.id ? { ...item, color: chosen } : item))
+                        );
+                        if (chosen && !values.color.includes(chosen)) {
+                          set("color", [...values.color, chosen]);
+                        }
+                      }}
+                      className="min-w-0 flex-1 rounded-lg bg-ink/85 px-1 py-1 text-[10px] text-paper"
+                    >
+                      <option value="">All colors</option>
+                      {Array.from(
+                        new Set([
+                          ...values.color,
+                          ...(image.color ? [image.color] : []),
+                          ...variants.map((v) => v.color),
+                        ])
+                      )
+                        .filter(Boolean)
+                        .map((color) => (
+                          <option key={color} value={color}>
+                            {color}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                  {index === 0 ? (
+                    <span className="absolute left-1 top-1 rounded-full bg-gold px-2 py-1 text-[9px] font-semibold uppercase text-white">
+                      Primary
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => moveImage(image.id, images[0].id)}
+                      className="absolute left-1 top-1 rounded-full bg-ink/80 px-2 py-1 text-[9px] font-semibold uppercase text-paper"
+                    >
+                      Set primary
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => removeImage(image.id)}
+                    className="absolute right-1 top-1 h-7 w-7 rounded-full bg-ink/85 text-paper hover:text-[#B3261E]"
+                    aria-label="Remove image"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : null}
         </Section>
 
         <Section title="Shipping">
@@ -620,8 +807,10 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
         </Section>
 
         <div className="sticky bottom-0 -mx-6 flex items-center justify-end gap-2 border-t border-line bg-ink/95 px-6 py-4 backdrop-blur">
-          <Button variant="dark" size="sm" onClick={onClose}>Cancel</Button>
-          <Button variant="primary" size="sm" type="submit">{duplicate ? "Create duplicate" : initial ? "Save changes" : "Create product"}</Button>
+          <Button variant="dark" size="sm" onClick={onClose} disabled={loading}>Cancel</Button>
+          <Button variant="primary" size="sm" type="submit" loading={loading} disabled={loading}>
+            {duplicate ? "Create duplicate" : initial ? "Save changes" : "Create product"}
+          </Button>
         </div>
       </form>
     </Modal>

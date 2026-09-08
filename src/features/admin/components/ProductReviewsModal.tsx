@@ -14,7 +14,9 @@ type Props = {
 
 export default function ProductReviewsModal({ product, open, onClose }: Props) {
   const productId = product?.id || "";
-  const { data: reviews = [], isLoading, isError } = useProductReviews(productId);
+  const reviewsQuery = useProductReviews(productId);
+  const { data: reviews = [], isError } = reviewsQuery;
+  const isLoading = reviewsQuery.isLoading || (reviewsQuery.isFetching && reviews.length === 0);
 
   const stats = useMemo(() => {
     if (!reviews || reviews.length === 0) {

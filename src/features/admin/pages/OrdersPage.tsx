@@ -23,7 +23,8 @@ type PaymentFilter = "all" | PaymentStatus;
 
 export default function OrdersPage() {
   const ordersQuery = useAdminOrders();
-  const { data: orders = [], isLoading } = ordersQuery;
+  const { data: orders = [] } = ordersQuery;
+  const isLoading = ordersQuery.isLoading || (ordersQuery.isFetching && orders.length === 0);
   const isOnline = useOnlineStatus();
 
   const [query, setQuery] = useState("");

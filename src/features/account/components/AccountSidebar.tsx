@@ -68,7 +68,7 @@ export default function AccountSidebar() {
         <div role="dialog" aria-modal="true" className="fixed inset-0 z-[100] flex items-center justify-center px-4">
           <div
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-            onClick={() => setShowLogoutModal(false)}
+            onClick={logoutMutation.isPending ? undefined : () => setShowLogoutModal(false)}
           />
           <div className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-line bg-ink p-6 shadow-2xl backdrop-blur-xl">
             <h3 className="font-display text-xl font-bold text-paper">
@@ -79,20 +79,35 @@ export default function AccountSidebar() {
             </p>
             <div className="mt-6 flex justify-end gap-3">
               <button
+                type="button"
+                disabled={logoutMutation.isPending}
                 onClick={() => setShowLogoutModal(false)}
-                className="rounded-full px-5 py-2 text-[12px] font-semibold uppercase tracking-wider text-paper-muted hover:bg-ink-3"
+                className="rounded-full px-5 py-2 text-[12px] font-semibold uppercase tracking-wider text-paper-muted hover:bg-ink-3 disabled:opacity-40"
               >
                 Cancel
               </button>
               <button
+                type="button"
+                disabled={logoutMutation.isPending}
                 onClick={async () => {
-                  setShowLogoutModal(false);
-                  await logoutMutation.mutateAsync();
-                  window.location.href = "/";
+                  try {
+                    await logoutMutation.mutateAsync();
+                    setShowLogoutModal(false);
+                    window.location.href = "/";
+                  } catch {
+                    // Handled by mutation error
+                  }
                 }}
-                className="rounded-full bg-[#DC2626] px-5 py-2 text-[12px] font-semibold uppercase tracking-wider text-white shadow-md transition-colors hover:bg-[#B91C1C]"
+                className="rounded-full bg-[#DC2626] px-5 py-2 text-[12px] font-semibold uppercase tracking-wider text-white shadow-md transition-colors hover:bg-[#B91C1C] disabled:opacity-50 inline-flex items-center gap-2"
               >
-                Logout
+                {logoutMutation.isPending ? (
+                  <>
+                    <span className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    Logging out...
+                  </>
+                ) : (
+                  "Logout"
+                )}
               </button>
             </div>
           </div>

@@ -314,6 +314,8 @@ export default function CouponsPage() {
     }
   };
 
+  const isLoading = couponsQuery.isLoading || (couponsQuery.isFetching && coupons.length === 0);
+
   return (
     <div className="flex flex-col gap-8">
       <SectionHeader
@@ -406,7 +408,7 @@ export default function CouponsPage() {
       {/* Main Content / Table */}
       {!isOnline && coupons.length === 0 ? (
         <OfflineState onRetry={() => void couponsQuery.refetch()} />
-      ) : couponsQuery.isLoading ? (
+      ) : isLoading ? (
         <AdminTableSkeleton />
       ) : couponsQuery.isError ? (
         <ErrorState
@@ -477,6 +479,7 @@ export default function CouponsPage() {
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog
         open={deletingId !== null}
+        loading={deleteMutation.isPending}
         onClose={() => setDeletingId(null)}
         title="Delete Coupon"
         description={`Are you sure you want to permanently delete coupon "${

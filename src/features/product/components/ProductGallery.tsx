@@ -11,8 +11,11 @@ type Props = {
 
 export default function ProductGallery({ images, alt }: Props) {
   const [active, setActive] = useState(0);
+  const [failedSrcs, setFailedSrcs] = useState<Record<string, boolean>>({});
+
   const rawActiveSrc = images[active] ?? images[0];
-  const activeSrc = getValidImageSrc(rawActiveSrc, DEFAULT_PRODUCT_IMAGE);
+  const activeValid = getValidImageSrc(rawActiveSrc, DEFAULT_PRODUCT_IMAGE);
+  const activeSrc = failedSrcs[activeValid] ? DEFAULT_PRODUCT_IMAGE : activeValid;
 
   return (
     <div className="flex flex-col gap-4">
@@ -24,6 +27,10 @@ export default function ProductGallery({ images, alt }: Props) {
           fill
           sizes="(min-width: 1024px) 600px, 100vw"
           priority
+          unoptimized={activeSrc.startsWith("data:") || activeSrc.startsWith("blob:")}
+          onError={() => {
+            setFailedSrcs((prev) => ({ ...prev, [activeValid]: true }));
+          }}
           className="object-cover"
         />
       </div>
@@ -36,7 +43,8 @@ export default function ProductGallery({ images, alt }: Props) {
         >
           {images.slice(0, 4).map((src, i) => {
             const selected = i === active;
-            const thumbSrc = getValidImageSrc(src, DEFAULT_PRODUCT_IMAGE);
+            const validThumb = getValidImageSrc(src, DEFAULT_PRODUCT_IMAGE);
+            const thumbSrc = failedSrcs[validThumb] ? DEFAULT_PRODUCT_IMAGE : validThumb;
             return (
               <button
                 key={src + i}
@@ -56,6 +64,10 @@ export default function ProductGallery({ images, alt }: Props) {
                   alt={`${alt} thumbnail ${i + 1}`}
                   fill
                   sizes="120px"
+                  unoptimized={thumbSrc.startsWith("data:") || thumbSrc.startsWith("blob:")}
+                  onError={() => {
+                    setFailedSrcs((prev) => ({ ...prev, [validThumb]: true }));
+                  }}
                   className="object-cover"
                 />
               </button>
