@@ -236,7 +236,7 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
   useEffect(() => {
     if (!open) return;
     if (initial) {
-      const colorMap = (initial as any).imageColorMap || {};
+      const colorMap = initial.imageColorMap || {};
       const singleProductColor = initial.color && initial.color.length === 1 ? initial.color[0] : "";
       const initialImages = initial.images.map((src, index) => {
         const assignedColor = colorMap[src] || colorMap[String(index)] || "";
@@ -257,11 +257,11 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
         stock: variant.inventory?.available ?? variant.stock ?? 0,
         threshold: 5,
         mrp: variant.mrp || initial.mrp || initial.baseMrp || initial.price,
-        offerPrice: (variant as any).offerPrice || variant.price || initial.price,
+        offerPrice: variant.offerPrice || variant.price || initial.price,
         price: variant.price || initial.price,
-        hsnCode: (variant as any).hsnCode || "61091000",
-        gstPercentage: (variant as any).gstPercentage || 12,
-        weight: (variant as any).weight || 0.2,
+        hsnCode: variant.hsnCode || "61091000",
+        gstPercentage: variant.gstPercentage || 12,
+        weight: variant.weight || 0.2,
       }));
       setValues({
         ...EMPTY,
