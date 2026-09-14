@@ -87,7 +87,7 @@ export function adaptProduct(raw: any): Product {
   const createdAt = p.createdAt || p.metadata?.createdAt || new Date().toISOString();
   const updatedAt = p.updatedAt || p.metadata?.updatedAt || undefined;
 
-  let imageColorMap: Record<string, string> = {};
+  const imageColorMap: Record<string, string> = {};
   if (Array.isArray(p.imageColorMap)) {
     p.imageColorMap.forEach((item: any) => {
       if (item && item.src && item.color) imageColorMap[item.src] = item.color;

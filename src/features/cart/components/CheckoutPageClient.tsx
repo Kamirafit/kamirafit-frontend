@@ -21,7 +21,7 @@ import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 function loadRazorpayScript(): Promise<boolean> {
   return new Promise((resolve) => {
     if (typeof window === "undefined") return resolve(false);
-    if ((window as any).Razorpay) return resolve(true);
+    if ((window as unknown as { Razorpay?: unknown }).Razorpay) return resolve(true);
     const existing = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
     if (existing) {
       existing.addEventListener("load", () => resolve(true));
@@ -161,8 +161,9 @@ export default function CheckoutPageClient() {
         })),
       });
       setAppliedCoupon(res);
-    } catch (err: any) {
-      const msg = err?.response?.data?.message || err?.message || "Invalid or expired coupon code";
+    } catch (err: unknown) {
+      const errorObj = err as { response?: { data?: { message?: string } }; message?: string };
+      const msg = errorObj?.response?.data?.message || errorObj?.message || "Invalid or expired coupon code";
       setCouponError(msg);
     } finally {
       setIsApplyingCoupon(false);
@@ -278,7 +279,7 @@ export default function CheckoutPageClient() {
 
       const paymentInfo = result.payment as { orderId?: string; amount?: number; currency?: string; keyId?: string } | undefined;
       const keyId = paymentInfo?.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_placeholder";
-      const orderNumber = (result.order as any).orderNumber || result.order.id;
+      const orderNumber = (result.order as { orderNumber?: string }).orderNumber || result.order.id;
 
       const rzpOptions = {
         key: keyId,
@@ -321,7 +322,7 @@ export default function CheckoutPageClient() {
             setPlacedRecipientPhone(selectedAddress.phoneNumber);
             setPlacedPaymentMethod("ONLINE");
             dispatch(clearCart());
-          } catch (err: unknown) {
+          } catch {
             setCheckoutError(
               "Payment verification failed. If money was debited from your account, your order will be verified automatically, or please contact support."
             );
@@ -331,9 +332,22 @@ export default function CheckoutPageClient() {
         },
       };
 
-      const rzp = new (window as any).Razorpay(rzpOptions);
+      type RazorpayInstance = {
+        open: () => void;
+        on: (event: string, callback: (response: { error?: { description?: string; reason?: string } }) => void) => void;
+      };
+      type RazorpayConstructor = new (options: Record<string, unknown>) => RazorpayInstance;
 
-      rzp.on("payment.failed", function (response: any) {
+      const RazorpayClass = (window as unknown as { Razorpay?: RazorpayConstructor }).Razorpay;
+      if (!RazorpayClass) {
+        setIsSubmitting(false);
+        setCheckoutError("Payment gateway could not be loaded. Please select Cash on Delivery or retry.");
+        return;
+      }
+
+      const rzp = new RazorpayClass(rzpOptions as unknown as Record<string, unknown>);
+
+      rzp.on("payment.failed", function (response: { error?: { description?: string; reason?: string } }) {
         setIsSubmitting(false);
         const description = response?.error?.description || response?.error?.reason || "Payment transaction was declined";
         setCheckoutError(`${description}. Your order was not placed. Please try again or choose Cash on Delivery.`);
@@ -341,7 +355,7 @@ export default function CheckoutPageClient() {
 
       try {
         rzp.open();
-      } catch (openErr: any) {
+      } catch {
         setIsSubmitting(false);
         setCheckoutError("Payment gateway could not be launched. Please try again or select Cash on Delivery.");
       }

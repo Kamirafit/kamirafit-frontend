@@ -47,7 +47,7 @@ export const orderService = {
   downloadInvoice: (orderId: string) => apiClient.get(`/orders/${orderId}/invoice`, { responseType: "blob" }),
   getDeliveryEstimate: (params: { postalCode: string; country?: string; weight?: number; isCod?: boolean }) =>
     unwrapApiResponse<DeliveryEstimateResult>(apiClient.post("/orders/delivery-estimate", params)),
-  validateCoupon: (params: { code: string; subtotal: number; items?: any[] }) =>
+  validateCoupon: (params: { code: string; subtotal: number; items?: unknown[] }) =>
     unwrapApiResponse<CouponValidationResult>(apiClient.post("/orders/validate-coupon", params)),
   verifyPayment: (params: VerifyPaymentPayload) =>
     unwrapApiResponse<Order>(apiClient.post("/orders/verify-payment", params)),

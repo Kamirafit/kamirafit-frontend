@@ -27,13 +27,6 @@ function GlobeIcon() {
   );
 }
 
-function BoltIcon() {
-  return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-    </svg>
-  );
-}
 
 function LocationPinIcon() {
   return (
@@ -228,8 +221,9 @@ export default function ProductDetails({ product }: Props) {
         localStorage.setItem("kamirafit_postal_code", clean);
         localStorage.setItem("kamirafit_country", countryToUse);
       }
-    } catch (err: any) {
-      const msg = err?.response?.data?.message || err?.message || "Delivery estimate not available for this area.";
+    } catch (err: unknown) {
+      const errorObj = err as { response?: { data?: { message?: string } }; message?: string };
+      const msg = errorObj?.response?.data?.message || errorObj?.message || "Delivery estimate not available for this area.";
       setDeliveryError(msg);
       setDeliveryResult(null);
     } finally {
