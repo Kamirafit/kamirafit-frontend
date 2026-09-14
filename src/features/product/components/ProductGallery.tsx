@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DEFAULT_PRODUCT_IMAGE, getValidImageSrc } from "@/lib/format";
 
 type Props = {
@@ -12,6 +12,10 @@ type Props = {
 export default function ProductGallery({ images, alt }: Props) {
   const [active, setActive] = useState(0);
   const [failedSrcs, setFailedSrcs] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    setActive(0);
+  }, [images]);
 
   const rawActiveSrc = images[active] ?? images[0];
   const activeValid = getValidImageSrc(rawActiveSrc, DEFAULT_PRODUCT_IMAGE);
@@ -39,9 +43,9 @@ export default function ProductGallery({ images, alt }: Props) {
         <div
           role="tablist"
           aria-label="Product images"
-          className="grid grid-cols-4 gap-3"
+          className="grid grid-cols-4 gap-3 sm:grid-cols-6"
         >
-          {images.slice(0, 4).map((src, i) => {
+          {images.slice(0, 8).map((src, i) => {
             const selected = i === active;
             const validThumb = getValidImageSrc(src, DEFAULT_PRODUCT_IMAGE);
             const thumbSrc = failedSrcs[validThumb] ? DEFAULT_PRODUCT_IMAGE : validThumb;

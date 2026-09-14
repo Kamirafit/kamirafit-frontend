@@ -29,7 +29,13 @@ export default function CheckoutOrderSummary({
       <ul className="flex flex-col divide-y divide-line">
         {resolved.map((r) => {
           const { item, product, lineTotal } = r;
-          const imageSrc = getValidImageSrc(product.image, DEFAULT_PRODUCT_IMAGE);
+          let imageSrc = getValidImageSrc(product.image, DEFAULT_PRODUCT_IMAGE);
+          if (item.color && product.imageColorMap && product.images) {
+            const match = product.images.find(
+              (src) => product.imageColorMap?.[src]?.trim().toLowerCase() === item.color?.trim().toLowerCase()
+            );
+            if (match) imageSrc = getValidImageSrc(match, DEFAULT_PRODUCT_IMAGE);
+          }
           return (
             <li
               key={`${item.id}-${item.size ?? "-"}-${item.color ?? "-"}`}

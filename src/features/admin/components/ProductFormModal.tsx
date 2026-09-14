@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   CATEGORY_OPTIONS,
   COLOR_OPTIONS,
+  COLOR_SWATCH,
   SIZE_OPTIONS,
   type Category,
   type Color,
@@ -61,7 +62,7 @@ export type FormValues = {
   size: Size[];
   color: Color[];
   images: string[];
-  imageColorMap?: Record<string, string>;
+  imageColorMap?: Record<string, string> | Array<{ src: string; color: string }>;
   image: string;
   status: ProductStatus;
   tags: string[];
@@ -95,7 +96,14 @@ export type FormValues = {
 };
 
 const ADJUSTMENT_REASONS = ["Stock received", "Damaged", "Returned", "Manual adjustment", "Lost", "Order cancellation", "Stock correction"];
-const MAX_IMAGES = 8;
+const MAX_IMAGES = 50;
+
+export const DEFAULT_PRODUCT_DESCRIPTION = `Natural linen drop-shoulder shirt paired with wide-leg trousers.
+
+· Premium combed cotton blend
+· Reinforced shoulder seams
+· Pre-washed for minimal shrinkage
+· Relaxed, true-to-size fit`;
 
 const SUBCATEGORY_MAP: Record<string, string[]> = {
   "T-Shirts": ["Oversized T-Shirts", "Regular Fit", "Graphic Print", "Polo T-Shirts"],
@@ -111,7 +119,7 @@ const EMPTY: FormValues = {
   price: 0,
   costPrice: 0,
   mrp: 0,
-  description: "",
+  description: DEFAULT_PRODUCT_DESCRIPTION,
   category: "T-Shirts",
   subcategory: "",
   size: [],
@@ -203,6 +211,7 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
   const [draggedImage, setDraggedImage] = useState<string | null>(null);
   const [isProcessingImages, setIsProcessingImages] = useState(false);
   const [imageUrlInput, setImageUrlInput] = useState("");
+  const [activeMediaColor, setActiveMediaColor] = useState<string>("all");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const objectUrlsRef = useRef<string[]>([]);
 
@@ -227,12 +236,21 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
     [selectedCategoryObj, values.category]
   );
 
+  const displayedImages = useMemo(() => {
+    if (activeMediaColor === "all") return images;
+    if (activeMediaColor === "unassigned") return images.filter((img) => !img.color || !values.color.includes(img.color as Color));
+    return images.filter((img) => img.color === activeMediaColor);
+  }, [images, activeMediaColor, values.color]);
+
   const handleAddCustomColor = () => {
     const trimmed = customColorInput.trim();
     if (!trimmed) return;
     const formatted = trimmed.replace(/\b\w/g, (char) => char.toUpperCase());
     if (!values.color.includes(formatted)) {
       set("color", [...values.color, formatted]);
+      if (activeMediaColor === "all" && values.color.length === 0) {
+        setActiveMediaColor(formatted);
+      }
     }
     setCustomColorInput("");
   };
@@ -273,7 +291,7 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
         price: initial.price,
         costPrice: initial.costPrice ?? 0,
         mrp: initial.mrp || initial.baseMrp || initial.price,
-        description: initial.description,
+        description: initial.description || DEFAULT_PRODUCT_DESCRIPTION,
         category: initial.category,
         categoryId: initial.categoryId,
         subcategory: initial.subcategory || "",
@@ -290,12 +308,19 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
       setImages(initialImages);
       setVariants(duplicate ? [] : seededVariants);
       setHistory([]);
+      setActiveMediaColor("all");
     } else {
-      setValues({ ...EMPTY, category: "" as Category, subcategory: "" });
+      setValues({
+        ...EMPTY,
+        description: DEFAULT_PRODUCT_DESCRIPTION,
+        category: "" as Category,
+        subcategory: "",
+      });
       setProductState("draft");
       setImages([]);
       setVariants([]);
       setHistory([]);
+      setActiveMediaColor("all");
     }
     setErrors({});
     setAdvancedOpen(false);
@@ -363,6 +388,13 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
     setIsProcessingImages(true);
     setErrors((previous) => ({ ...previous, images: "" }));
 
+    const defaultAssignedColor =
+      activeMediaColor !== "all" && activeMediaColor !== "unassigned"
+        ? (activeMediaColor as Color)
+        : values.color.length === 1
+        ? values.color[0]
+        : ("" as Color | "");
+
     try {
       const next = await Promise.all(
         valid.map(async (file, index) => {
@@ -370,7 +402,7 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
           return {
             id: "upload-" + Date.now() + "-" + index,
             src: dataUrl,
-            color: "" as Color | "",
+            color: defaultAssignedColor,
           };
         })
       );
@@ -404,9 +436,17 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
       }));
       return;
     }
+
+    const defaultAssignedColor =
+      activeMediaColor !== "all" && activeMediaColor !== "unassigned"
+        ? (activeMediaColor as Color)
+        : values.color.length === 1
+        ? values.color[0]
+        : ("" as Color | "");
+
     setImages((previous) => [
       ...previous,
-      { id: "url-" + Date.now(), src: trimmed, color: "" as Color | "" },
+      { id: "url-" + Date.now(), src: trimmed, color: defaultAssignedColor },
     ]);
     setImageUrlInput("");
     setErrors((previous) => ({ ...previous, images: "" }));
@@ -418,16 +458,48 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
     return previous.filter((image) => image.id !== id);
   });
 
-  const moveImage = (from: string, to: string) => setImages((previous) => {
-    const fromIndex = previous.findIndex((image) => image.id === from);
-    const toIndex = previous.findIndex((image) => image.id === to);
-    if (fromIndex < 0 || toIndex < 0) return previous;
-    const next = [...previous];
-    const [item] = next.splice(fromIndex, 1);
-    next.splice(toIndex, 0, item);
-    return next;
-  });
+  const setPrimaryForColor = (imageId: string, targetColor: string) => {
+    setImages((previous) => {
+      if (targetColor) {
+        const forColor = previous.filter((img) => img.color === targetColor);
+        const others = previous.filter((img) => img.color !== targetColor);
+        const idx = forColor.findIndex((img) => img.id === imageId);
+        if (idx <= 0) return previous;
+        const [target] = forColor.splice(idx, 1);
+        forColor.unshift(target);
+        return [...forColor, ...others];
+      }
+      const idx = previous.findIndex((img) => img.id === imageId);
+      if (idx <= 0) return previous;
+      const next = [...previous];
+      const [target] = next.splice(idx, 1);
+      next.unshift(target);
+      return next;
+    });
+  };
 
+  const moveImageWithinColor = (fromId: string, toId: string, colorFilter?: string) => {
+    setImages((previous) => {
+      if (colorFilter && colorFilter !== "all") {
+        const scope = previous.filter((img) => (colorFilter === "unassigned" ? !img.color : img.color === colorFilter));
+        const others = previous.filter((img) => (colorFilter === "unassigned" ? Boolean(img.color) : img.color !== colorFilter));
+        const fromIdx = scope.findIndex((img) => img.id === fromId);
+        const toIdx = scope.findIndex((img) => img.id === toId);
+        if (fromIdx < 0 || toIdx < 0) return previous;
+        const next = [...scope];
+        const [item] = next.splice(fromIdx, 1);
+        next.splice(toIdx, 0, item);
+        return [...next, ...others];
+      }
+      const fromIndex = previous.findIndex((image) => image.id === fromId);
+      const toIndex = previous.findIndex((image) => image.id === toId);
+      if (fromIndex < 0 || toIndex < 0) return previous;
+      const next = [...previous];
+      const [item] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, item);
+      return next;
+    });
+  };
 
   const adjustStock = () => {
     const variant = variants.find((item) => item.id === adjustmentVariant);
@@ -455,6 +527,14 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
     if ([values.length, values.width, values.height].some((value) => value < 0 || !Number.isFinite(value))) nextErrors.dimensions = "Dimensions must be non-negative numbers.";
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(values.slug || slugify(values.name))) nextErrors.slug = "Use lowercase letters, numbers, and hyphens only.";
     if (!images.length) nextErrors.images = "Add at least one product image.";
+
+    if (values.color.length > 0) {
+      const missingColors = values.color.filter((c) => !images.some((img) => img.color === c));
+      if (missingColors.length > 0) {
+        nextErrors.images = `Please add at least one image for: ${missingColors.join(", ")}. Every product color must have its own primary image.`;
+      }
+    }
+
     if (values.size.length || values.color.length) {
       if (!values.size.length || !values.color.length) nextErrors.variants = "Select at least one size and color.";
       if (!variants.length) nextErrors.variants = "Generate variants before saving.";
@@ -468,12 +548,29 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) return;
 
-    const imageColorMap: Record<string, string> = {};
-    images.forEach((img) => {
+    // Gather images grouped by color, with each color's primary image first
+    // And with the primary color (first in values.color) placed first
+    const orderedImages: ImageDraft[] = [];
+    const assignedColors = Array.from(new Set(values.color));
+
+    assignedColors.forEach((col) => {
+      const colImgs = images.filter((img) => img.color === col);
+      orderedImages.push(...colImgs);
+    });
+
+    const remainingImgs = images.filter(
+      (img) => !assignedColors.includes(img.color as Color)
+    );
+    orderedImages.push(...remainingImgs);
+
+    const imageColorMap: Array<{ src: string; color: string }> = [];
+    orderedImages.forEach((img) => {
       if (img.src && img.color) {
-        imageColorMap[img.src] = img.color;
+        imageColorMap.push({ src: img.src, color: img.color });
       }
     });
+
+    const finalImageUrls = orderedImages.map((image) => image.src);
 
     onSubmit({
       ...values,
@@ -481,9 +578,9 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
       slug: values.slug || slugify(values.name),
       description: values.description.trim(),
       costPrice: values.costPrice,
-      images: images.map((image) => image.src),
+      images: finalImageUrls,
       imageColorMap,
-      image: images[0]?.src || "",
+      image: finalImageUrls[0] || "",
       status: productState === "active" ? "active" : "inactive",
       variants: variants.map((v) => ({
         id: v.id.startsWith("variant-") || (v.id.includes("-") && v.id.length < 20) ? undefined : v.id,
@@ -547,7 +644,16 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
               </select>
             </FormField>
           </div>
-          <FormField label="Description" error={errors.description}><textarea value={values.description} onChange={(event) => set("description", event.target.value)} maxLength={600} className={textareaClass} placeholder="Fabric, fit, feel — in a sentence or two." /></FormField>
+          <FormField label="Description" error={errors.description}>
+            <textarea
+              rows={5}
+              value={values.description}
+              onChange={(event) => set("description", event.target.value)}
+              maxLength={5000}
+              className={textareaClass}
+              placeholder="Enter product description, styling notes, and specifications..."
+            />
+          </FormField>
           <div className="rounded-2xl border border-line bg-ink-2/40 p-4">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <FormField label="Product lifecycle" hint="Draft and archived products are hidden. Active products are published to the storefront.">
@@ -648,7 +754,95 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
           </> : null}
         </Section>
 
-        <Section title="Media">
+        <Section title="Media & Color Images">
+          {/* Color Tabs when product has colors */}
+          {values.color.length > 0 ? (
+            <div className="flex flex-col gap-3 rounded-2xl border border-line bg-ink-2/30 p-3.5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-paper-muted">
+                  Images by Product Color:
+                </span>
+                <span className="text-[11px] text-paper-muted">
+                  Each color has its own primary image & gallery set
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {values.color.map((col, idx) => {
+                  const count = images.filter((img) => img.color === col).length;
+                  const isSelected = activeMediaColor === col || (activeMediaColor === "all" && idx === 0 && values.color.length === 1);
+                  return (
+                    <button
+                      key={col}
+                      type="button"
+                      onClick={() => setActiveMediaColor(col)}
+                      className={`inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[11.5px] font-semibold uppercase tracking-[0.12em] transition-all duration-200 ${
+                        isSelected
+                          ? "border-gold bg-gold text-ink shadow-[0_4px_12px_-4px_rgba(139,30,45,0.5)] font-bold"
+                          : "border-line bg-ink text-paper hover:border-gold/60"
+                      }`}
+                    >
+                      <span
+                        className="inline-block h-2.5 w-2.5 rounded-full border border-black/20"
+                        style={{ backgroundColor: COLOR_SWATCH[col] || "#888888" }}
+                      />
+                      <span>{col}</span>
+                      <span
+                        className={`rounded-full px-1.5 py-0.5 text-[10px] font-mono ${
+                          isSelected ? "bg-ink/15 text-ink" : count > 0 ? "bg-emerald-500/15 text-emerald-400" : "bg-amber-500/15 text-amber-400"
+                        }`}
+                      >
+                        {count} {count === 1 ? "img" : "imgs"}
+                      </span>
+                    </button>
+                  );
+                })}
+
+                <button
+                  type="button"
+                  onClick={() => setActiveMediaColor("all")}
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] transition-all ${
+                    activeMediaColor === "all"
+                      ? "border-gold bg-gold/15 text-gold"
+                      : "border-line bg-ink text-paper-muted hover:text-paper"
+                  }`}
+                >
+                  All Images ({images.length})
+                </button>
+
+                {images.some((img) => !img.color || !values.color.includes(img.color as Color)) && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveMediaColor("unassigned")}
+                    className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] transition-all ${
+                      activeMediaColor === "unassigned"
+                        ? "border-gold bg-gold/15 text-gold"
+                        : "border-line bg-ink text-paper-muted hover:text-paper"
+                    }`}
+                  >
+                    Unassigned ({images.filter((img) => !img.color || !values.color.includes(img.color as Color)).length})
+                  </button>
+                )}
+              </div>
+            </div>
+          ) : null}
+
+          {/* Active color notice banner */}
+          {activeMediaColor !== "all" && activeMediaColor !== "unassigned" ? (
+            <div className="flex items-center justify-between rounded-xl border border-gold/30 bg-gold/5 px-3.5 py-2 text-[12px]">
+              <div className="flex items-center gap-2 text-gold">
+                <span
+                  className="inline-block h-3 w-3 rounded-full border border-line"
+                  style={{ backgroundColor: COLOR_SWATCH[activeMediaColor] || "#888888" }}
+                />
+                <span className="font-semibold">Managing images for: {activeMediaColor}</span>
+              </div>
+              <span className="text-[11px] text-paper-muted">
+                First image below is the ⭐ Primary image for {activeMediaColor}
+              </span>
+            </div>
+          ) : null}
+
+          {/* Dropzone */}
           <div className="flex flex-col gap-3">
             <div
               onDragOver={(event) => event.preventDefault()}
@@ -656,7 +850,7 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
                 event.preventDefault();
                 handleFiles(event.dataTransfer.files);
               }}
-              className="rounded-2xl border border-dashed border-line bg-ink-2/40 p-4"
+              className="rounded-2xl border border-dashed border-line bg-ink-2/40 p-4 transition-colors hover:border-gold/50"
             >
               <label
                 htmlFor="product-images-upload"
@@ -670,7 +864,12 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
                     </span>
                   ) : (
                     <>
-                      <span className="font-semibold text-paper">Click to upload</span> or drop image files here
+                      <span className="font-semibold text-paper">Click to upload</span> or drop image files{" "}
+                      {activeMediaColor !== "all" && activeMediaColor !== "unassigned" ? (
+                        <span className="text-gold font-medium">for {activeMediaColor}</span>
+                      ) : (
+                        "here"
+                      )}
                     </>
                   )}
                 </span>
@@ -695,7 +894,11 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
               <input
                 type="url"
                 value={imageUrlInput}
-                placeholder="Or paste an image web URL (e.g. https://...)"
+                placeholder={
+                  activeMediaColor !== "all" && activeMediaColor !== "unassigned"
+                    ? `Paste web image URL for ${activeMediaColor} (e.g. https://...)`
+                    : "Or paste an image web URL (e.g. https://...)"
+                }
                 onChange={(e) => setImageUrlInput(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
@@ -710,85 +913,112 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
               </Button>
             </div>
           </div>
+
           {errors.images ? <p className="text-[12px] text-[#B3261E]">{errors.images}</p> : null}
-          {images.length ? (
+
+          {/* Render image grid filtered by activeMediaColor */}
+          {displayedImages.length ? (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {images.map((image, index) => (
-                <div
-                  key={image.id}
-                  draggable
-                  onDragStart={() => setDraggedImage(image.id)}
-                  onDragOver={(event) => event.preventDefault()}
-                  onDrop={() => {
-                    if (draggedImage) moveImage(draggedImage, image.id);
-                    setDraggedImage(null);
-                  }}
-                  className="group relative aspect-square overflow-hidden rounded-2xl border border-line bg-ink-2"
-                >
-                  <Image
-                    src={image.src}
-                    alt={"Product image " + (index + 1)}
-                    fill
-                    sizes="160px"
-                    className="object-cover"
-                    unoptimized={image.src.startsWith("data:") || image.src.startsWith("blob:")}
-                  />
-                  <div className="absolute inset-x-1 bottom-1 flex gap-1">
-                    <select
-                      aria-label="Assign image color"
-                      value={image.color}
-                      onChange={(event) => {
-                        const chosen = event.target.value as Color | "";
-                        setImages((previous) =>
-                          previous.map((item) => (item.id === image.id ? { ...item, color: chosen } : item))
-                        );
-                        if (chosen && !values.color.includes(chosen)) {
-                          set("color", [...values.color, chosen]);
-                        }
-                      }}
-                      className="min-w-0 flex-1 rounded-lg bg-ink/85 px-1 py-1 text-[10px] text-paper"
-                    >
-                      <option value="">All colors</option>
-                      {Array.from(
-                        new Set([
-                          ...values.color,
-                          ...(image.color ? [image.color] : []),
-                          ...variants.map((v) => v.color),
-                        ])
-                      )
-                        .filter(Boolean)
-                        .map((color) => (
-                          <option key={color} value={color}>
-                            {color}
-                          </option>
-                        ))}
-                    </select>
-                  </div>
-                  {index === 0 ? (
-                    <span className="absolute left-1 top-1 rounded-full bg-gold px-2 py-1 text-[9px] font-semibold uppercase text-white">
-                      Primary
-                    </span>
-                  ) : (
+              {displayedImages.map((image, index) => {
+                const isPrimaryForCurrentScope = index === 0;
+                return (
+                  <div
+                    key={image.id}
+                    draggable
+                    onDragStart={() => setDraggedImage(image.id)}
+                    onDragOver={(event) => event.preventDefault()}
+                    onDrop={() => {
+                      if (draggedImage) moveImageWithinColor(draggedImage, image.id, activeMediaColor);
+                      setDraggedImage(null);
+                    }}
+                    className={`group relative aspect-square overflow-hidden rounded-2xl border transition-all ${
+                      isPrimaryForCurrentScope ? "border-gold ring-1 ring-gold shadow-md shadow-gold/20 bg-ink-2" : "border-line bg-ink-2"
+                    }`}
+                  >
+                    <Image
+                      src={image.src}
+                      alt={"Product image " + (index + 1)}
+                      fill
+                      sizes="160px"
+                      className="object-cover"
+                      unoptimized={image.src.startsWith("data:") || image.src.startsWith("blob:")}
+                    />
+
+                    {/* Color Tag / Selector */}
+                    <div className="absolute inset-x-1 bottom-1 flex gap-1">
+                      <select
+                        aria-label="Assign image color"
+                        value={image.color}
+                        onChange={(event) => {
+                          const chosen = event.target.value as Color | "";
+                          setImages((previous) =>
+                            previous.map((item) => (item.id === image.id ? { ...item, color: chosen } : item))
+                          );
+                          if (chosen && !values.color.includes(chosen)) {
+                            set("color", [...values.color, chosen]);
+                          }
+                        }}
+                        className="min-w-0 flex-1 rounded-lg bg-ink/90 backdrop-blur px-1.5 py-1 text-[10px] font-medium text-paper focus:outline-none focus:ring-1 focus:ring-gold"
+                      >
+                        <option value="">Unassigned</option>
+                        {Array.from(
+                          new Set([
+                            ...values.color,
+                            ...(image.color ? [image.color] : []),
+                            ...variants.map((v) => v.color),
+                          ])
+                        )
+                          .filter(Boolean)
+                          .map((color) => (
+                            <option key={color} value={color}>
+                              {color}
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+
+                    {/* Primary Badge or Set Primary Action */}
+                    {isPrimaryForCurrentScope ? (
+                      <span className="absolute left-1.5 top-1.5 rounded-full bg-gold px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-ink shadow">
+                        ⭐ Primary {image.color ? `(${image.color})` : ""}
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setPrimaryForColor(image.id, image.color || (activeMediaColor !== "all" ? activeMediaColor : ""))}
+                        className="absolute left-1.5 top-1.5 rounded-full bg-ink/85 backdrop-blur px-2 py-0.5 text-[9px] font-semibold uppercase text-paper hover:bg-gold hover:text-ink transition-all shadow"
+                        title="Set as primary image for this color"
+                      >
+                        Set primary
+                      </button>
+                    )}
+
+                    {/* Delete button */}
                     <button
                       type="button"
-                      onClick={() => moveImage(image.id, images[0].id)}
-                      className="absolute left-1 top-1 rounded-full bg-ink/80 px-2 py-1 text-[9px] font-semibold uppercase text-paper"
+                      onClick={() => removeImage(image.id)}
+                      className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-ink/85 backdrop-blur text-paper hover:bg-[#B3261E] hover:text-white transition-all shadow text-xs font-bold"
+                      aria-label="Remove image"
                     >
-                      Set primary
+                      ×
                     </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => removeImage(image.id)}
-                    className="absolute right-1 top-1 h-7 w-7 rounded-full bg-ink/85 text-paper hover:text-[#B3261E]"
-                    aria-label="Remove image"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
+                  </div>
+                );
+              })}
             </div>
-          ) : null}
+          ) : (
+            <div className="rounded-2xl border border-line/60 bg-ink-2/20 p-6 text-center text-[12.5px] text-paper-muted">
+              {activeMediaColor !== "all" && activeMediaColor !== "unassigned" ? (
+                <>
+                  No images uploaded for <span className="font-semibold text-paper">{activeMediaColor}</span> yet.
+                  <br />
+                  Upload images above — the first one will become the primary storefront image for {activeMediaColor}.
+                </>
+              ) : (
+                "No images added yet. Click browse or drop image files above."
+              )}
+            </div>
+          )}
         </Section>
 
         <Section title="Shipping">

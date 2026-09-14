@@ -88,12 +88,20 @@ export function adaptProduct(raw: any): Product {
   const updatedAt = p.updatedAt || p.metadata?.updatedAt || undefined;
 
   let imageColorMap: Record<string, string> = {};
-  if (p.imageColorMap && typeof p.imageColorMap === "object" && !Array.isArray(p.imageColorMap)) {
-    imageColorMap = p.imageColorMap;
-  } else if (Array.isArray(p.imageColorMap)) {
+  if (Array.isArray(p.imageColorMap)) {
     p.imageColorMap.forEach((item: any) => {
       if (item && item.src && item.color) imageColorMap[item.src] = item.color;
     });
+  } else if (p.imageColorMap && typeof p.imageColorMap === "object") {
+    for (const [k, v] of Object.entries(p.imageColorMap)) {
+      if (Array.isArray(v)) {
+        v.forEach((url: any) => {
+          if (typeof url === "string") imageColorMap[url] = k;
+        });
+      } else if (typeof v === "string") {
+        imageColorMap[k] = v;
+      }
+    }
   }
 
   const resolvedCatName = p.categoryName || (typeof p.category === "string" ? p.category : p.category?.name) || "T-Shirts";

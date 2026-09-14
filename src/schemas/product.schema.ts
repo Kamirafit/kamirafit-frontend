@@ -103,7 +103,7 @@ export const CreateProductRequestDtoSchema = ProductEntitySchema.omit({
     color: z.array(ColorSchema).optional(),
     image: z.string().optional(),
     images: z.array(z.string()).optional(),
-    imageColorMap: z.record(z.string(), z.string()).optional(),
+    imageColorMap: z.union([z.record(z.string(), z.string()), z.array(z.any()), z.record(z.string(), z.array(z.string()))]).optional(),
   });
 
 export const UpdateProductRequestDtoSchema = z.object({
@@ -118,6 +118,6 @@ export const UpdateProductRequestDtoSchema = z.object({
       color: z.array(ColorSchema).optional(),
       image: z.string().optional(),
       images: z.array(z.string()).optional(),
-      imageColorMap: z.record(z.string(), z.string()).optional(),
+      imageColorMap: z.union([z.record(z.string(), z.string()), z.array(z.any()), z.record(z.string(), z.array(z.string()))]).optional(),
     }),
 });

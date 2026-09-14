@@ -1,5 +1,4 @@
-"use client";
-
+import { useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useAppDispatch } from "@/features/product/hooks/redux";
@@ -21,7 +20,16 @@ export default function CartLineItem({ resolved }: Props) {
   const dispatch = useAppDispatch();
   const { item, product, lineTotal } = resolved;
   const key = { id: item.id, size: item.size, color: item.color };
-  const imageSrc = getValidImageSrc(product.image, DEFAULT_PRODUCT_IMAGE);
+
+  const imageSrc = useMemo(() => {
+    if (item.color && product.imageColorMap && product.images) {
+      const match = product.images.find(
+        (src) => product.imageColorMap?.[src]?.trim().toLowerCase() === item.color?.trim().toLowerCase()
+      );
+      if (match) return getValidImageSrc(match, DEFAULT_PRODUCT_IMAGE);
+    }
+    return getValidImageSrc(product.image, DEFAULT_PRODUCT_IMAGE);
+  }, [item.color, product.image, product.imageColorMap, product.images]);
 
   return (
     <li className="flex flex-col gap-4 border-b border-line py-6 sm:flex-row sm:gap-6">

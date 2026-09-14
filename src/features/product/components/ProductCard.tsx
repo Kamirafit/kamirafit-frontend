@@ -8,7 +8,7 @@ import { DEFAULT_PRODUCT_IMAGE, formatPrice, getValidImageSrc } from "@/lib/form
 import { useAppDispatch, useAppSelector } from "../hooks/redux";
 import { addToCart } from "../store/cartSlice";
 import { useOptimisticWishlist } from "@/services/wishlist";
-import type { Product } from "../types";
+import { COLOR_SWATCH, type Product } from "../types";
 import { HeartIcon } from "./icons";
 
 type Props = {
@@ -49,11 +49,21 @@ export default function ProductCard({ product }: Props) {
   const inCart = useAppSelector((s) =>
     s.cart.items.some((it) => it.id === product.id),
   );
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [imgSrc, setImgSrc] = useState(() => getValidImageSrc(product.image, DEFAULT_PRODUCT_IMAGE));
 
   useEffect(() => {
+    if (selectedColor && product.imageColorMap && product.images) {
+      const match = product.images.find(
+        (src) => product.imageColorMap?.[src]?.trim().toLowerCase() === selectedColor.trim().toLowerCase()
+      );
+      if (match) {
+        setImgSrc(getValidImageSrc(match, DEFAULT_PRODUCT_IMAGE));
+        return;
+      }
+    }
     setImgSrc(getValidImageSrc(product.image, DEFAULT_PRODUCT_IMAGE));
-  }, [product.image]);
+  }, [selectedColor, product.image, product.imageColorMap, product.images]);
 
   const handleActionWithAuth = (e: React.MouseEvent, action: () => void) => {
     e.preventDefault();
@@ -66,10 +76,29 @@ export default function ProductCard({ product }: Props) {
     action();
   };
 
+  const productHref = selectedColor
+    ? `/product/${product.slug || product.id}?color=${encodeURIComponent(selectedColor)}`
+    : `/product/${product.slug || product.id}`;
+
+  const handleCardClick = (e: React.MouseEvent<HTMLElement>) => {
+    const target = e.target as HTMLElement;
+    if (target.closest("button")) {
+      return;
+    }
+    if (e.metaKey || e.ctrlKey) {
+      window.open(productHref, "_blank");
+    } else {
+      router.push(productHref);
+    }
+  };
+
   return (
-    <article className="group flex flex-col overflow-hidden rounded-2xl border border-line bg-ink transition-all duration-300 hover:-translate-y-0.5 hover:border-gold/40 hover:shadow-[0_30px_60px_-30px_rgba(74,14,26,0.25)]">
+    <article
+      onClick={handleCardClick}
+      className="group flex flex-col overflow-hidden rounded-2xl border border-line bg-ink transition-all duration-300 hover:-translate-y-0.5 hover:border-gold/40 hover:shadow-[0_30px_60px_-30px_rgba(74,14,26,0.25)] cursor-pointer"
+    >
       <Link
-        href={`/product/${product.slug || product.id}`}
+        href={productHref}
         aria-label={`View ${product.name}`}
         className="relative block aspect-[4/5] w-full overflow-hidden bg-ink-2"
       >
@@ -86,7 +115,7 @@ export default function ProductCard({ product }: Props) {
 
       <div className="flex flex-1 flex-col gap-1.5 p-4 sm:p-5">
         <Link
-          href={`/product/${product.slug || product.id}`}
+          href={productHref}
           className="font-display text-[17px] font-semibold leading-tight text-paper transition-colors hover:text-gold"
         >
           {product.name}
@@ -94,6 +123,35 @@ export default function ProductCard({ product }: Props) {
         <p className="line-clamp-2 text-[13px] leading-snug text-paper-muted">
           {product.description}
         </p>
+
+        {product.color && product.color.length > 1 ? (
+          <div className="flex items-center gap-1.5 pt-0.5">
+            {product.color.slice(0, 5).map((c) => {
+              const isSelected = selectedColor === c;
+              return (
+                <button
+                  key={c}
+                  type="button"
+                  aria-label={`Select ${c}`}
+                  title={c}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setSelectedColor(isSelected ? null : c);
+                  }}
+                  onMouseEnter={() => setSelectedColor(c)}
+                  className={`h-3 w-3 rounded-full border transition-all ${
+                    isSelected ? "ring-2 ring-gold scale-125" : "border-line/70 hover:scale-115"
+                  }`}
+                  style={{ backgroundColor: COLOR_SWATCH[c] || "#888888" }}
+                />
+              );
+            })}
+            {product.color.length > 5 ? (
+              <span className="text-[9.5px] text-paper-muted">+{product.color.length - 5}</span>
+            ) : null}
+          </div>
+        ) : null}
 
         <div className="mt-auto flex items-center justify-between gap-3 pt-3">
           <p className="font-display text-[17px] font-semibold tracking-wide text-paper">

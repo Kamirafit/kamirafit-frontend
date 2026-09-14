@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect, type ReactNode } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useState, useEffect, useMemo, type ReactNode } from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { formatPrice } from "@/lib/format";
 import { useAppDispatch, useAppSelector } from "../hooks/redux";
 import { addToCart } from "../store/cartSlice";
 import { useOptimisticWishlist } from "@/services/wishlist";
+import { orderService, type DeliveryEstimateResult } from "@/services/order";
 import type { Color, Product, Size } from "../types";
 import ColorSelector from "./ColorSelector";
 import { HeartIcon, StarIcon } from "./icons";
@@ -15,6 +16,24 @@ import SizeSelector from "./SizeSelector";
 type Props = {
   product: Product;
 };
+
+function GlobeIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+      <path d="M2 12h20" />
+    </svg>
+  );
+}
+
+function BoltIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+    </svg>
+  );
+}
 
 function LocationPinIcon() {
   return (
@@ -118,68 +137,128 @@ function Accordion({ title, defaultOpen = false, children }: AccordionProps) {
   );
 }
 
+const POPULAR_COUNTRIES = [
+  { name: "India", code: "IN", placeholder: "e.g. 560038" },
+  { name: "United States", code: "US", placeholder: "e.g. 90210" },
+  { name: "United Kingdom", code: "GB", placeholder: "e.g. SW1A 1AA" },
+  { name: "United Arab Emirates", code: "AE", placeholder: "e.g. 00000" },
+  { name: "Canada", code: "CA", placeholder: "e.g. M5V 2T6" },
+  { name: "Australia", code: "AU", placeholder: "e.g. 2000" },
+  { name: "Germany", code: "DE", placeholder: "e.g. 10115" },
+  { name: "Singapore", code: "SG", placeholder: "e.g. 018956" },
+  { name: "France", code: "FR", placeholder: "e.g. 75001" },
+  { name: "Other Country", code: "OTHER", placeholder: "Postal / ZIP code" },
+];
+
 export default function ProductDetails({ product }: Props) {
+  const dispatch = useAppDispatch();
   const router = useRouter();
   const pathname = usePathname();
-  const dispatch = useAppDispatch();
-  const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
+  const searchParams = useSearchParams();
+  const { isAuthenticated } = useAppSelector((s) => s.auth);
   const { isSaved, toggle: toggleWishlistOptimistic } = useOptimisticWishlist();
   const saved = isSaved(product.id);
 
-  const [selectedSize, setSelectedSize] = useState<Size | null>(
-    product.size[0] ?? null,
-  );
-  const [selectedColor, setSelectedColor] = useState<Color | null>(
-    product.color[0] ?? null,
-  );
+  // Initialize selected color from URL query param ?color= if valid, else first available
+  const initialColor = useMemo(() => {
+    const queryColor = searchParams?.get("color");
+    if (queryColor && product.color.includes(queryColor as Color)) {
+      return queryColor as Color;
+    }
+    return product.color[0] ?? null;
+  }, [searchParams, product.color]);
+
+  const [selectedColor, setSelectedColor] = useState<Color | null>(initialColor);
+  const [selectedSize, setSelectedSize] = useState<Size | null>(product.size[0] ?? null);
+
+  // Sync color state when URL ?color changes
+  useEffect(() => {
+    const queryColor = searchParams?.get("color");
+    if (queryColor && product.color.includes(queryColor as Color)) {
+      setSelectedColor(queryColor as Color);
+    }
+  }, [searchParams, product.color]);
+
+  // Filter gallery images by currently selected color using product.imageColorMap
+  const colorImages = useMemo(() => {
+    if (!product.images || product.images.length === 0) return [];
+    if (!selectedColor || !product.imageColorMap) return product.images;
+
+    const filtered = product.images.filter((img) => {
+      const mappedColor = product.imageColorMap?.[img];
+      return mappedColor === selectedColor;
+    });
+
+    if (filtered.length > 0) return filtered;
+    return product.images;
+  }, [product.images, product.imageColorMap, selectedColor]);
+
   const [sizeError, setSizeError] = useState(false);
   const [added, setAdded] = useState(false);
 
-  // ---------------- PINCODE DELIVERY ESTIMATOR STATE ----------------
-  const [pincode, setPincode] = useState("");
-  const [pincodeResult, setPincodeResult] = useState<{
-    status: "valid" | "invalid";
-    estimatedDate?: string;
-    message?: string;
-  } | null>(null);
+  // ---------------- WORLDWIDE DELIVERY ESTIMATOR STATE ----------------
+  const [selectedCountry, setSelectedCountry] = useState("India");
+  const [postalCode, setPostalCode] = useState("");
+  const [isCheckingDelivery, setIsCheckingDelivery] = useState(false);
+  const [deliveryResult, setDeliveryResult] = useState<DeliveryEstimateResult | null>(null);
+  const [deliveryError, setDeliveryError] = useState<string | null>(null);
+  const [selectedTier, setSelectedTier] = useState<"STANDARD" | "PRIME">("STANDARD");
+
+  const currentCountryConfig = useMemo(() => {
+    return POPULAR_COUNTRIES.find((c) => c.name === selectedCountry) || POPULAR_COUNTRIES[0];
+  }, [selectedCountry]);
+
+  const handleFetchEstimate = async (codeToUse: string, countryToUse: string) => {
+    const clean = codeToUse.trim();
+    if (!clean || clean.length < 2) {
+      setDeliveryError("Please enter a valid postal or PIN code.");
+      setDeliveryResult(null);
+      return;
+    }
+
+    setIsCheckingDelivery(true);
+    setDeliveryError(null);
+    try {
+      const res = await orderService.getDeliveryEstimate({
+        postalCode: clean,
+        country: countryToUse,
+      });
+      setDeliveryResult(res);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("kamirafit_postal_code", clean);
+        localStorage.setItem("kamirafit_country", countryToUse);
+      }
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || "Delivery estimate not available for this area.";
+      setDeliveryError(msg);
+      setDeliveryResult(null);
+    } finally {
+      setIsCheckingDelivery(false);
+    }
+  };
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const savedPin = localStorage.getItem("kamirafit_pincode");
-      if (savedPin && savedPin.length === 6) {
-        setPincode(savedPin);
-        calculateDelivery();
+      const savedPin =
+        localStorage.getItem("kamirafit_postal_code") ||
+        localStorage.getItem("kamirafit_pincode") ||
+        "560038";
+      const savedCountry = localStorage.getItem("kamirafit_country") || "India";
+      const savedTier = (localStorage.getItem("kamirafit_shipping_tier") as "STANDARD" | "PRIME") || "STANDARD";
+
+      setPostalCode(savedPin);
+      setSelectedCountry(savedCountry);
+      setSelectedTier(savedTier);
+
+      if (savedPin) {
+        handleFetchEstimate(savedPin, savedCountry);
       }
     }
   }, []);
 
-  const calculateDelivery = () => {
-    const deliveryDate = new Date();
-    deliveryDate.setDate(deliveryDate.getDate() + 3);
-    const options: Intl.DateTimeFormatOptions = { weekday: "long", day: "numeric", month: "short" };
-    const formattedDate = deliveryDate.toLocaleDateString("en-IN", options);
-
-    setPincodeResult({
-      status: "valid",
-      estimatedDate: formattedDate,
-    });
-  };
-
-  const handleCheckPincode = (e: React.FormEvent) => {
+  const handleCheckDelivery = (e: React.FormEvent) => {
     e.preventDefault();
-    const clean = pincode.trim().replace(/\D/g, "");
-    if (clean.length !== 6) {
-      setPincodeResult({
-        status: "invalid",
-        message: "Please enter a valid 6-digit postal pincode.",
-      });
-      return;
-    }
-
-    calculateDelivery();
-    if (typeof window !== "undefined") {
-      localStorage.setItem("kamirafit_pincode", clean);
-    }
+    handleFetchEstimate(postalCode, selectedCountry);
   };
 
   const handleAddToCart = () => {
@@ -212,7 +291,7 @@ export default function ProductDetails({ product }: Props) {
   return (
     <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-16">
       <div>
-        <ProductGallery images={product.images} alt={product.name} />
+        <ProductGallery images={colorImages} alt={product.name} />
       </div>
 
       <div className="flex flex-col gap-7">
@@ -255,62 +334,191 @@ export default function ProductDetails({ product }: Props) {
           </p>
         </div>
 
-        {/* ---------------- PINCODE DELIVERY ESTIMATOR ---------------- */}
-        <div className="rounded-2xl border border-line bg-ink p-4 space-y-3">
+        {/* ---------------- WORLDWIDE DELIVERY ESTIMATOR ---------------- */}
+        <div className="rounded-2xl border border-line bg-ink p-4 space-y-3.5">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-paper-muted flex items-center gap-1.5">
               <LocationPinIcon />
-              Delivery & Pincode Check
+              Worldwide Delivery & Speed Estimator
             </span>
-            {pincodeResult?.status === "valid" && (
-              <span className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider">
-                Serviceable Area
-              </span>
-            )}
+            <span className="text-[10px] font-semibold text-gold/90 bg-gold/10 px-2 py-0.5 rounded-full border border-gold/20 flex items-center gap-1">
+              <GlobeIcon />
+              Ships Worldwide
+            </span>
           </div>
 
-          <form onSubmit={handleCheckPincode} className="flex gap-2">
-            <div className="relative flex-1">
-              <input
-                type="text"
-                maxLength={6}
-                value={pincode}
-                onChange={(e) => {
-                  setPincode(e.target.value.replace(/\D/g, ""));
-                  if (pincodeResult) setPincodeResult(null);
-                }}
-                placeholder="Enter 6-digit Pincode"
-                className="w-full rounded-xl border border-line bg-ink-2 px-3.5 py-2.5 text-xs text-paper placeholder-paper-muted/50 focus:border-gold focus:outline-none tracking-widest font-mono transition-colors"
-              />
+          <form onSubmit={handleCheckDelivery} className="space-y-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-[140px_1fr_auto] gap-2">
+              {/* Country Selector */}
+              <div className="relative">
+                <select
+                  value={selectedCountry}
+                  onChange={(e) => {
+                    const nextCountry = e.target.value;
+                    setSelectedCountry(nextCountry);
+                    if (postalCode.trim().length >= 2) {
+                      handleFetchEstimate(postalCode, nextCountry);
+                    }
+                  }}
+                  className="w-full appearance-none rounded-xl border border-line bg-ink-2 px-3 py-2.5 text-xs text-paper focus:border-gold focus:outline-none transition-colors cursor-pointer pr-7"
+                >
+                  {POPULAR_COUNTRIES.map((c) => (
+                    <option key={c.code} value={c.name} className="bg-ink text-paper">
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-paper-muted">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
+                </div>
+              </div>
+
+              {/* Postal Code Input */}
+              <div className="relative">
+                <input
+                  type="text"
+                  maxLength={12}
+                  value={postalCode}
+                  onChange={(e) => {
+                    setPostalCode(e.target.value);
+                    if (deliveryError) setDeliveryError(null);
+                  }}
+                  placeholder={currentCountryConfig.placeholder}
+                  className="w-full rounded-xl border border-line bg-ink-2 px-3.5 py-2.5 text-xs text-paper placeholder-paper-muted/50 focus:border-gold focus:outline-none tracking-wider font-mono transition-colors"
+                />
+              </div>
+
+              {/* Check Button */}
+              <button
+                type="submit"
+                disabled={isCheckingDelivery || postalCode.trim().length < 2}
+                className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wider rounded-xl border border-gold bg-gold/15 text-gold hover:bg-gold hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed shrink-0 flex items-center justify-center gap-1.5"
+              >
+                {isCheckingDelivery ? (
+                  <div className="w-3.5 h-3.5 border-2 border-gold border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  "Estimate"
+                )}
+              </button>
             </div>
-            <button
-              type="submit"
-              disabled={!pincode || pincode.length < 6}
-              className="px-4 py-2.5 text-xs font-semibold uppercase tracking-wider rounded-xl border border-gold bg-gold/15 text-gold hover:bg-gold hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-            >
-              Check
-            </button>
           </form>
 
-          {/* Green Response Banner on Successful Check */}
-          {pincodeResult?.status === "valid" && (
-            <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-400 space-y-1 animate-fadeIn">
-              <p className="font-semibold flex items-center gap-1.5 text-emerald-300">
-                <svg className="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
-                </svg>
-                Estimated Delivery by {pincodeResult.estimatedDate} (3–4 business days)
-              </p>
-              <p className="text-[11px] text-emerald-400/90 pl-5">
-                ✓ Free Express Delivery • Cash on Delivery (COD) Available
-              </p>
-            </div>
+          {/* Error Message */}
+          {deliveryError && (
+            <p className="text-xs text-red-400 font-medium animate-fadeIn">
+              {deliveryError}
+            </p>
           )}
 
-          {pincodeResult?.status === "invalid" && (
-            <p className="text-xs text-red-400 font-medium">
-              {pincodeResult.message}
-            </p>
+          {/* Delivery Options (Standard vs Prime) */}
+          {deliveryResult && (
+            <div className="space-y-3 pt-1 animate-fadeIn">
+              <div className="flex items-center justify-between text-[11px] text-paper-muted">
+                <span className="flex items-center gap-1">
+                  <span className="text-paper font-medium">Destination:</span> {deliveryResult.country} ({deliveryResult.postalCode})
+                </span>
+                <span className="text-[10px] uppercase font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                  {deliveryResult.isDomestic ? "Domestic Express" : "International Express"}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {/* Standard Delivery Option (Least Expensive) */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedTier("STANDARD");
+                    if (typeof window !== "undefined") localStorage.setItem("kamirafit_shipping_tier", "STANDARD");
+                  }}
+                  className={`relative flex flex-col justify-between text-left p-3.5 rounded-xl border transition-all ${
+                    selectedTier === "STANDARD"
+                      ? "border-gold bg-gold/10 shadow-[0_0_15px_rgba(201,162,77,0.15)] ring-1 ring-gold"
+                      : "border-line bg-ink-2/60 hover:border-line-strong hover:bg-ink-2"
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-1 mb-1.5">
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-white/5 text-paper-muted border border-line">
+                        Least Expensive
+                      </span>
+                      <span className="text-xs font-semibold text-emerald-400">
+                        {deliveryResult.standard.isFree ? "FREE" : `₹${deliveryResult.standard.rate.toLocaleString()}`}
+                      </span>
+                    </div>
+                    <p className="text-xs font-semibold text-paper flex items-center gap-1.5">
+                      {deliveryResult.standard.title}
+                    </p>
+                    <p className="text-[11px] text-paper-muted mt-0.5">
+                      via {deliveryResult.standard.courierName}
+                    </p>
+                  </div>
+                  <div className="mt-2.5 pt-2 border-t border-line/50 flex items-center justify-between text-[11px]">
+                    <span className="text-paper font-medium">
+                      Arrives: <strong className="text-gold">{deliveryResult.standard.estimatedDate}</strong>
+                    </span>
+                    <span className="text-[10px] text-paper-muted">
+                      {deliveryResult.standard.estimatedDays} days
+                    </span>
+                  </div>
+                </button>
+
+                {/* Prime Delivery Option (Quickest) */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedTier("PRIME");
+                    if (typeof window !== "undefined") localStorage.setItem("kamirafit_shipping_tier", "PRIME");
+                  }}
+                  className={`relative flex flex-col justify-between text-left p-3.5 rounded-xl border transition-all ${
+                    selectedTier === "PRIME"
+                      ? "border-amber-400 bg-amber-500/10 shadow-[0_0_20px_rgba(251,191,36,0.2)] ring-1 ring-amber-400"
+                      : "border-line bg-ink-2/60 hover:border-amber-400/40 hover:bg-ink-2"
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-1 mb-1.5">
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-amber-400/20 text-amber-300 border border-amber-400/30 flex items-center gap-1">
+                        <BoltIcon />
+                        ⚡ Prime Quickest
+                      </span>
+                      <span className="text-xs font-bold text-amber-300">
+                        {deliveryResult.prime.isFree ? "FREE" : `₹${deliveryResult.prime.rate.toLocaleString()}`}
+                      </span>
+                    </div>
+                    <p className="text-xs font-semibold text-paper flex items-center gap-1.5">
+                      {deliveryResult.prime.title}
+                    </p>
+                    <p className="text-[11px] text-paper-muted mt-0.5">
+                      via {deliveryResult.prime.courierName}
+                    </p>
+                  </div>
+                  <div className="mt-2.5 pt-2 border-t border-line/50 flex items-center justify-between text-[11px]">
+                    <span className="text-paper font-medium">
+                      Arrives: <strong className="text-amber-300">{deliveryResult.prime.estimatedDate}</strong>
+                    </span>
+                    <span className="text-[10px] font-semibold text-amber-300">
+                      ⚡ {deliveryResult.prime.estimatedDays} days
+                    </span>
+                  </div>
+                </button>
+              </div>
+
+              {/* Active Selection Banner */}
+              <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-400 space-y-1">
+                <p className="font-semibold flex items-center gap-1.5 text-emerald-300">
+                  <svg className="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                  </svg>
+                  Selected: {selectedTier === "PRIME" ? deliveryResult.prime.title : deliveryResult.standard.title}
+                </p>
+                <p className="text-[11px] text-emerald-400/90 pl-5">
+                  ✓ Estimated arrival by <strong className="underline">{selectedTier === "PRIME" ? deliveryResult.prime.estimatedDate : deliveryResult.standard.estimatedDate}</strong> via {selectedTier === "PRIME" ? deliveryResult.prime.courierName : deliveryResult.standard.courierName}
+                  {deliveryResult.isDomestic ? " • Cash on Delivery (COD) Available" : " • Full International Tracking Included"}
+                </p>
+              </div>
+            </div>
           )}
         </div>
 
@@ -356,13 +564,9 @@ export default function ProductDetails({ product }: Props) {
 
         <div>
           <Accordion title="Description & Fit" defaultOpen>
-            <p className="max-w-prose">{product.description}</p>
-            <ul className="mt-3 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
-              <li>· Premium combed cotton blend</li>
-              <li>· Reinforced shoulder seams</li>
-              <li>· Pre-washed for minimal shrinkage</li>
-              <li>· Relaxed, true-to-size fit</li>
-            </ul>
+            <div className="max-w-prose whitespace-pre-line leading-relaxed text-paper">
+              {product.description}
+            </div>
           </Accordion>
 
           <Accordion title="Shipping & Returns">
