@@ -223,6 +223,7 @@ export default function OrderDetailsModal({ open, onClose, order }: Props) {
   };
 
   const isBusy = updateMutation.isPending || deleteMutation.isPending;
+  const isCod = (order.paymentMethod || "").toUpperCase() === "COD";
 
   return (
     <>
@@ -268,6 +269,21 @@ export default function OrderDetailsModal({ open, onClose, order }: Props) {
                   </svg>
                   {syncMutation.isPending ? "Syncing..." : "Sync Shiprocket"}
                 </button>
+                <span
+                  className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] border ${
+                    isCod
+                      ? "border-amber-500/40 bg-amber-500/15 text-amber-300"
+                      : "border-sky-500/40 bg-sky-500/15 text-sky-300"
+                  }`}
+                  title={`Payment Mode: ${isCod ? "COD" : "UPI"}`}
+                >
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full ${
+                      isCod ? "bg-amber-400" : "bg-sky-400"
+                    }`}
+                  />
+                  {isCod ? "COD" : "UPI"}
+                </span>
                 <StatusBadge kind="payment" status={draft.paymentStatus} />
                 <StatusBadge kind="order" status={draft.orderStatus} />
               </div>
@@ -286,6 +302,27 @@ export default function OrderDetailsModal({ open, onClose, order }: Props) {
                 <span className="text-[13px] text-paper">
                   {formatDate(order.createdAt)}
                 </span>
+              </div>
+              <div className="flex flex-col gap-1 sm:col-span-2">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-paper-muted">
+                  Payment Mode
+                </span>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span
+                    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11.5px] font-medium tracking-wide uppercase border ${
+                      isCod
+                        ? "border-amber-500/40 bg-amber-500/10 text-amber-300"
+                        : "border-sky-500/40 bg-sky-500/10 text-sky-300"
+                    }`}
+                  >
+                    <span
+                      className={`h-1.5 w-1.5 rounded-full ${
+                        isCod ? "bg-amber-400" : "bg-sky-400"
+                      }`}
+                    />
+                    {isCod ? "Cash on Delivery (COD)" : "UPI"}
+                  </span>
+                </div>
               </div>
               <FormField label="Payment status">
                 <select
@@ -564,6 +601,10 @@ export default function OrderDetailsModal({ open, onClose, order }: Props) {
               <SummaryRow
                 label="Delivery fee"
                 value={formatPrice(totals.delivery)}
+              />
+              <SummaryRow
+                label="Payment mode"
+                value={isCod ? "COD (Cash on Delivery)" : "UPI"}
               />
               <SummaryRow
                 label="Total"

@@ -136,6 +136,7 @@ export function adaptOrder(raw: any): Order {
     total,
     totalAmount: total,
     paymentStatus: o.paymentStatus || (o.isPaid ? "Paid" : "Pending"),
+    paymentMethod: o.paymentMethod || "ONLINE",
     orderStatus: o.orderStatus || o.status || "CONFIRMED",
     trackingCode: o.trackingCode || o.trackingNumber,
     courierName: o.courierName || o.carrier,

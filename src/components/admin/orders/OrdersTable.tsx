@@ -72,7 +72,23 @@ export default function OrdersTable({ rows, onView, emptyLabel }: Props) {
     {
       key: "paymentStatus",
       label: "Payment",
-      render: (o) => <StatusBadge kind="payment" status={o.paymentStatus} />,
+      render: (o) => {
+        const isCod = (o.paymentMethod || "").toUpperCase() === "COD";
+        return (
+          <div className="flex flex-col gap-1 items-start">
+            <StatusBadge kind="payment" status={o.paymentStatus} />
+            <span
+              className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9.5px] font-semibold tracking-wider uppercase border ${
+                isCod
+                  ? "border-amber-500/30 bg-amber-500/10 text-amber-300"
+                  : "border-sky-500/30 bg-sky-500/10 text-sky-300"
+              }`}
+            >
+              {isCod ? "COD" : "UPI"}
+            </span>
+          </div>
+        );
+      },
     },
     {
       key: "orderStatus",

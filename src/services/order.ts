@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiClient, unwrapApiResponse } from "@/api/client";
 import type { Order } from "@/types/entities";
 
@@ -34,6 +34,13 @@ export interface CouponValidationResult {
   minOrderVal?: number | null;
 }
 
+export interface VerifyPaymentPayload {
+  orderId: string;
+  razorpayOrderId: string;
+  razorpayPaymentId: string;
+  razorpaySignature: string;
+}
+
 export const orderService = {
   getOrders: () => unwrapApiResponse<Order[]>(apiClient.get("/orders")),
   getOrder: (id: string) => unwrapApiResponse<Order>(apiClient.get("/orders/" + id)),
@@ -42,9 +49,17 @@ export const orderService = {
     unwrapApiResponse<DeliveryEstimateResult>(apiClient.post("/orders/delivery-estimate", params)),
   validateCoupon: (params: { code: string; subtotal: number; items?: any[] }) =>
     unwrapApiResponse<CouponValidationResult>(apiClient.post("/orders/validate-coupon", params)),
+  verifyPayment: (params: VerifyPaymentPayload) =>
+    unwrapApiResponse<Order>(apiClient.post("/orders/verify-payment", params)),
 };
 
 export function useOrders() {
   return useQuery<Order[]>({ queryKey: ["orders"], queryFn: orderService.getOrders, staleTime: 60000 });
+}
+
+export function useVerifyPayment() {
+  return useMutation({
+    mutationFn: orderService.verifyPayment,
+  });
 }
 

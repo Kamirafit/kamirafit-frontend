@@ -61,6 +61,7 @@ export const AdminOrderSchema = z.object({
   total: z.number(),
   totalAmount: z.number().optional(),
   paymentStatus: PaymentStatusSchema,
+  paymentMethod: z.string().optional(),
   orderStatus: AdminOrderStatusSchema,
   createdAt: ISODateStringSchema,
   courierName: z.string().optional(),

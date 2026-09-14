@@ -14,9 +14,28 @@ import { useCheckout } from "@/services/checkout";
 import { useAddresses, useCreateAddress, useUpdateAddress } from "@/services/address";
 import AddressFormModal from "@/features/account/components/AddressFormModal";
 import type { Address } from "@/features/account/types";
-import { orderService, type CouponValidationResult } from "@/services/order";
+import { orderService, useVerifyPayment, type CouponValidationResult } from "@/services/order";
 import { ErrorState, OfflineState } from "@/components/states";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+
+function loadRazorpayScript(): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (typeof window === "undefined") return resolve(false);
+    if ((window as any).Razorpay) return resolve(true);
+    const existing = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+    if (existing) {
+      existing.addEventListener("load", () => resolve(true));
+      existing.addEventListener("error", () => resolve(false));
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+}
 
 function mapCheckoutErrorMessage(err: unknown): string {
   if (!err) return "Unable to place the order. Please try again.";
@@ -92,11 +111,14 @@ export default function CheckoutPageClient() {
 
   // Checkout submission state
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<"COD" | "ONLINE">("ONLINE");
   const [placedOrderTotal, setPlacedOrderTotal] = useState<number | null>(null);
   const [placedRecipientName, setPlacedRecipientName] = useState<string>("");
   const [placedRecipientPhone, setPlacedRecipientPhone] = useState<string>("");
+  const [placedPaymentMethod, setPlacedPaymentMethod] = useState<"COD" | "ONLINE">("ONLINE");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const checkoutMutation = useCheckout();
+  const verifyPaymentMutation = useVerifyPayment();
 
   const idempotencyKeyRef = useRef<string>(
     typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
@@ -195,9 +217,26 @@ export default function CheckoutPageClient() {
 
     setCheckoutError(null);
     setIsSubmitting(true);
+
     try {
-      const result = await checkoutMutation.mutateAsync({
-        items,
+      const formattedItems = items.map((it) => {
+        const prod = products.find((p) => p.id === it.id);
+        const matchedVariant =
+          prod?.variants?.find(
+            (v) => (!it.size || v.size === it.size) && (!it.color || v.color === it.color)
+          ) || prod?.variants?.[0];
+
+        return {
+          id: it.id,
+          variantId: matchedVariant?.id || it.id,
+          quantity: it.quantity,
+          size: it.size,
+          color: it.color,
+        };
+      });
+
+      const checkoutPayload = {
+        items: formattedItems,
         shippingAddressId: selectedAddress.id,
         shippingAddress: {
           type: selectedAddress.type,
@@ -211,19 +250,104 @@ export default function CheckoutPageClient() {
           pincode: selectedAddress.pincode,
           country: selectedAddress.country || "India",
         },
-        paymentMethod: "ONLINE",
+        paymentMethod,
         couponCode: appliedCoupon?.code,
         idempotencyKey: idempotencyKeyRef.current,
+      };
+
+      const result = await checkoutMutation.mutateAsync(checkoutPayload);
+
+      // --- FLOW A: CASH ON DELIVERY (COD) ---
+      if (paymentMethod === "COD") {
+        setPlacedOrderTotal(result.order.totalAmount);
+        setPlacedRecipientName(selectedAddress.fullName);
+        setPlacedRecipientPhone(selectedAddress.phoneNumber);
+        setPlacedPaymentMethod("COD");
+        dispatch(clearCart());
+        setIsSubmitting(false);
+        return;
+      }
+
+      // --- FLOW B: UPI / ONLINE VIA RAZORPAY ---
+      const isLoaded = await loadRazorpayScript();
+      if (!isLoaded) {
+        setIsSubmitting(false);
+        setCheckoutError("Could not load payment gateway. Please check your internet connection or choose Cash on Delivery.");
+        return;
+      }
+
+      const paymentInfo = result.payment as { orderId?: string; amount?: number; currency?: string; keyId?: string } | undefined;
+      const keyId = paymentInfo?.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_placeholder";
+      const orderNumber = (result.order as any).orderNumber || result.order.id;
+
+      const rzpOptions = {
+        key: keyId,
+        amount: paymentInfo?.amount || Math.round(result.order.totalAmount * 100),
+        currency: paymentInfo?.currency || "INR",
+        name: "KamiraFit",
+        description: `Order #${orderNumber}`,
+        order_id: paymentInfo?.orderId,
+        prefill: {
+          name: selectedAddress.fullName,
+          contact: selectedAddress.phoneNumber,
+        },
+        notes: {
+          orderId: result.order.id,
+          orderNumber: orderNumber,
+        },
+        theme: {
+          color: "#C9A24D",
+        },
+        modal: {
+          ondismiss: function () {
+            setIsSubmitting(false);
+            setCheckoutError("Payment was cancelled or closed. Your order was not placed. Please try again or select Cash on Delivery.");
+          },
+        },
+        handler: async function (response: {
+          razorpay_payment_id: string;
+          razorpay_order_id: string;
+          razorpay_signature: string;
+        }) {
+          try {
+            await verifyPaymentMutation.mutateAsync({
+              orderId: result.order.id,
+              razorpayOrderId: response.razorpay_order_id || paymentInfo?.orderId || "",
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
+            });
+            setPlacedOrderTotal(result.order.totalAmount);
+            setPlacedRecipientName(selectedAddress.fullName);
+            setPlacedRecipientPhone(selectedAddress.phoneNumber);
+            setPlacedPaymentMethod("ONLINE");
+            dispatch(clearCart());
+          } catch (err: unknown) {
+            setCheckoutError(
+              "Payment verification failed. If money was debited from your account, your order will be verified automatically, or please contact support."
+            );
+          } finally {
+            setIsSubmitting(false);
+          }
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(rzpOptions);
+
+      rzp.on("payment.failed", function (response: any) {
+        setIsSubmitting(false);
+        const description = response?.error?.description || response?.error?.reason || "Payment transaction was declined";
+        setCheckoutError(`${description}. Your order was not placed. Please try again or choose Cash on Delivery.`);
       });
 
-      setPlacedOrderTotal(result.order.totalAmount);
-      setPlacedRecipientName(selectedAddress.fullName);
-      setPlacedRecipientPhone(selectedAddress.phoneNumber);
-      dispatch(clearCart());
+      try {
+        rzp.open();
+      } catch (openErr: any) {
+        setIsSubmitting(false);
+        setCheckoutError("Payment gateway could not be launched. Please try again or select Cash on Delivery.");
+      }
     } catch (err: unknown) {
-      setCheckoutError(mapCheckoutErrorMessage(err));
-    } finally {
       setIsSubmitting(false);
+      setCheckoutError(mapCheckoutErrorMessage(err));
     }
   };
 
@@ -244,7 +368,7 @@ export default function CheckoutPageClient() {
           <span className="font-semibold text-gold">
             {formatPrice(placedOrderTotal)}
           </span>{" "}
-          has been placed. A confirmation will reach {placedRecipientPhone || "you"}{" "}
+          has been placed {placedPaymentMethod === "COD" ? "via Cash on Delivery" : "and payment confirmed"}. A confirmation will reach {placedRecipientPhone || "you"}{" "}
           shortly.
         </p>
         <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
@@ -284,7 +408,10 @@ export default function CheckoutPageClient() {
   if (isError && products.length === 0 && items.length > 0) {
     return (
       <Container width="narrow" className="py-20">
-        <ErrorState message="We couldn’t prepare checkout." onRetry={() => void refetch()} />
+        <ErrorState
+          message="We couldn’t load checkout details. Please try again."
+          onRetry={() => void refetch()}
+        />
       </Container>
     );
   }
@@ -292,11 +419,11 @@ export default function CheckoutPageClient() {
   if (resolved.length === 0) {
     return (
       <Container width="narrow" className="py-20 text-center lg:py-28">
-        <h1 className="font-display text-4xl font-semibold tracking-tight text-paper sm:text-5xl">
-          Nothing to check out
+        <h1 className="font-display text-3xl font-semibold text-paper sm:text-4xl">
+          Your cart is empty
         </h1>
-        <p className="mx-auto mt-4 max-w-md text-sm text-paper-muted">
-          Your cart is empty. Add something you love before heading to checkout.
+        <p className="mx-auto mt-3 max-w-sm text-sm text-paper-muted">
+          Add some items to your bag before checking out.
         </p>
         <Link href="/shop" className={`${buttonClasses("primary", "md")} mt-8`}>
           Browse shop
@@ -311,7 +438,7 @@ export default function CheckoutPageClient() {
         size="lg"
         eyebrow="Checkout"
         title="Complete your order"
-        description="Choose your delivery address and review your order."
+        description="Choose your delivery address, select payment method, and review your order."
         className="mb-12"
       />
 
@@ -339,11 +466,16 @@ export default function CheckoutPageClient() {
 
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_380px] lg:gap-12">
         {/* Shipping Address Selection Section */}
-        <section aria-label="Shipping address" className="min-w-0">
-          <div className="flex items-center justify-between mb-5">
+        <section aria-label="Shipping address and payment" className="min-w-0">
+          <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="font-display text-lg font-semibold text-paper">
+              <h2 className="font-display text-lg font-semibold text-paper flex items-center gap-2">
                 Shipping address
+                {addresses.length > 0 && (
+                  <span className="text-xs font-normal text-paper-muted">
+                    ({addresses.length} saved)
+                  </span>
+                )}
               </h2>
               <p className="text-xs text-paper-muted mt-0.5">
                 Select where you want your order delivered
@@ -356,38 +488,37 @@ export default function CheckoutPageClient() {
                   setEditingAddress(null);
                   setIsAddressModalOpen(true);
                 }}
-                className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-gold/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-gold hover:bg-gold hover:text-white transition-all duration-200 cursor-pointer"
+                className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-gold/10 px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-gold hover:bg-gold hover:text-white transition-all duration-200 cursor-pointer"
               >
                 <span>+</span> Add New Address
               </button>
             )}
           </div>
 
-          {/* If user has addresses */}
+          {/* If user has addresses: Scrollable list showing 3 cards at once */}
           {addresses.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {addresses.map((addr) => {
-                const isSelected = addr.id === selectedAddressId;
-                return (
-                  <div
-                    key={addr.id}
-                    onClick={() => setSelectedAddressId(addr.id)}
-                    className={`relative flex flex-col justify-between rounded-2xl border p-5 cursor-pointer transition-all duration-300 ${
-                      isSelected
-                        ? "border-gold bg-gold/10 shadow-[0_0_20px_rgba(201,162,77,0.15)] ring-1 ring-gold"
-                        : "border-line bg-ink hover:border-gold/40 hover:bg-ink-2/60"
-                    }`}
-                  >
-                    <div>
-                      {/* Top Header */}
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
+            <div className="space-y-2">
+              <div className="max-h-[440px] overflow-y-auto space-y-3 pr-2 scrollbar-thin scrollbar-thumb-gold/30 hover:scrollbar-thumb-gold/60 scrollbar-track-ink-2/30 rounded-2xl">
+                {addresses.map((addr) => {
+                  const isSelected = addr.id === selectedAddressId;
+                  return (
+                    <div
+                      key={addr.id}
+                      onClick={() => setSelectedAddressId(addr.id)}
+                      className={`group relative flex flex-col justify-between rounded-2xl border p-4 sm:p-5 cursor-pointer transition-all duration-200 ${
+                        isSelected
+                          ? "border-gold bg-gold/10 shadow-[0_0_20px_rgba(201,162,77,0.15)] ring-1 ring-gold"
+                          : "border-line bg-ink hover:border-gold/40 hover:bg-ink-2/60"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-3 min-w-0">
                           {/* Radio Checkmark */}
                           <div
-                            className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-all ${
+                            className={`mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-all ${
                               isSelected
                                 ? "border-gold bg-gold text-ink"
-                                : "border-paper-muted/50 bg-transparent"
+                                : "border-paper-muted/50 bg-transparent group-hover:border-gold/50"
                             }`}
                           >
                             {isSelected && (
@@ -396,76 +527,63 @@ export default function CheckoutPageClient() {
                               </svg>
                             )}
                           </div>
-                          <span className="inline-flex rounded bg-ink-3 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-paper-muted">
-                            {addr.type}
-                          </span>
-                        </div>
-                        {addr.isDefault && (
-                          <span className="inline-flex rounded-full bg-gold/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-gold border border-gold/30">
-                            Default
-                          </span>
-                        )}
-                      </div>
 
-                      {/* Address Info */}
-                      <div className="mt-3">
-                        <p className="font-display text-[15px] font-semibold text-paper">
-                          {addr.fullName}
-                        </p>
-                        <p className="text-xs text-paper-muted mt-0.5">
-                          {addr.phoneNumber}
-                        </p>
-                        <div className="mt-2 text-xs leading-relaxed text-paper-muted">
-                          <p>{addr.addressLine1}</p>
-                          {addr.addressLine2 && <p>{addr.addressLine2}</p>}
-                          {addr.landmark && <p className="text-paper-muted/70">Landmark: {addr.landmark}</p>}
-                          <p className="text-paper font-medium mt-1">
-                            {addr.city}, {addr.state} - {addr.pincode}
-                          </p>
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="font-display text-[15px] font-semibold text-paper">
+                                {addr.fullName}
+                              </span>
+                              <span className="inline-flex rounded bg-ink-3 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-paper-muted">
+                                {addr.type}
+                              </span>
+                              {addr.isDefault && (
+                                <span className="inline-flex rounded-full bg-gold/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-gold border border-gold/30">
+                                  Default
+                                </span>
+                              )}
+                            </div>
+
+                            <p className="text-xs text-paper-muted mt-0.5 font-mono">
+                              {addr.phoneNumber}
+                            </p>
+
+                            <p className="mt-1.5 text-xs text-paper-muted leading-relaxed">
+                              {addr.addressLine1}
+                              {addr.addressLine2 ? `, ${addr.addressLine2}` : ""}
+                              {addr.landmark ? ` (Landmark: ${addr.landmark})` : ""}
+                              {`, ${addr.city}, ${addr.state} - ${addr.pincode}`}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col items-end gap-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingAddress(addr);
+                              setIsAddressModalOpen(true);
+                            }}
+                            className="rounded px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-gold hover:bg-gold/10 transition-colors cursor-pointer"
+                          >
+                            Edit
+                          </button>
+                          {isSelected && (
+                            <span className="text-[11px] font-semibold text-emerald-400">
+                              ✓ Deliver here
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
-
-                    {/* Card Footer Actions */}
-                    <div className="mt-4 pt-3 border-t border-line/60 flex items-center justify-between text-xs">
-                      <span className={`text-[11px] font-medium ${isSelected ? "text-emerald-400 font-semibold" : "text-paper-muted"}`}>
-                        {isSelected ? "✓ Deliver to this address" : "Click to deliver here"}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditingAddress(addr);
-                          setIsAddressModalOpen(true);
-                        }}
-                        className="text-[11px] font-semibold uppercase tracking-wider text-gold hover:underline transition-colors cursor-pointer"
-                      >
-                        Edit
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-
-              {/* Add New Address Card in Grid */}
-              <button
-                type="button"
-                onClick={() => {
-                  setEditingAddress(null);
-                  setIsAddressModalOpen(true);
-                }}
-                className="flex flex-col items-center justify-center min-h-[180px] rounded-2xl border-2 border-dashed border-line hover:border-gold bg-ink/40 hover:bg-gold/5 p-6 text-center transition-all group cursor-pointer"
-              >
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gold/10 text-gold group-hover:scale-110 group-hover:bg-gold group-hover:text-ink transition-all mb-2">
-                  <span className="text-xl font-bold">+</span>
-                </div>
-                <p className="font-display text-sm font-semibold text-paper group-hover:text-gold transition-colors">
-                  Add New Address
+                  );
+                })}
+              </div>
+              {addresses.length > 3 && (
+                <p className="text-[11px] text-paper-muted/80 text-right pr-2">
+                  Showing 3 of {addresses.length} addresses. Scroll to view all.
                 </p>
-                <p className="text-xs text-paper-muted mt-1">
-                  Deliver to another location
-                </p>
-              </button>
+              )}
             </div>
           ) : (
             /* Empty State when no addresses exist */
@@ -493,6 +611,107 @@ export default function CheckoutPageClient() {
               </button>
             </div>
           )}
+
+          {/* Payment Method Selection Section */}
+          <div className="mt-8 pt-6 border-t border-line">
+            <div className="mb-4">
+              <h2 className="font-display text-lg font-semibold text-paper">
+                Payment method
+              </h2>
+              <p className="text-xs text-paper-muted mt-0.5">
+                Choose between Cash on Delivery and instant online payment
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              {/* Cash on Delivery (COD) */}
+              <div
+                onClick={() => setPaymentMethod("COD")}
+                className={`relative flex flex-col justify-between rounded-2xl border p-4 sm:p-5 cursor-pointer transition-all duration-200 ${
+                  paymentMethod === "COD"
+                    ? "border-gold bg-gold/10 shadow-[0_0_20px_rgba(201,162,77,0.15)] ring-1 ring-gold"
+                    : "border-line bg-ink hover:border-gold/40 hover:bg-ink-2/60"
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <div
+                    className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-all ${
+                      paymentMethod === "COD"
+                        ? "border-gold bg-gold text-ink"
+                        : "border-paper-muted/50 bg-transparent"
+                    }`}
+                  >
+                    {paymentMethod === "COD" && (
+                      <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-display text-[15px] font-semibold text-paper">
+                        Cash on Delivery (COD)
+                      </span>
+                      <span className="inline-flex items-center rounded-full bg-gold/15 border border-gold/30 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-gold">
+                        Doorstep
+                      </span>
+                    </div>
+                    <p className="text-xs text-paper-muted mt-1 leading-relaxed">
+                      Pay with cash or UPI directly when your package is delivered at your doorstep.
+                    </p>
+                    <div className="mt-3 flex flex-wrap items-center gap-1.5 text-[10px] font-medium text-paper-muted/80">
+                      <span className="rounded bg-ink-3 px-2 py-0.5 border border-line">Cash</span>
+                      <span className="rounded bg-ink-3 px-2 py-0.5 border border-line">Doorstep QR</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* UPI / Online via Razorpay */}
+              <div
+                onClick={() => setPaymentMethod("ONLINE")}
+                className={`relative flex flex-col justify-between rounded-2xl border p-4 sm:p-5 cursor-pointer transition-all duration-200 ${
+                  paymentMethod === "ONLINE"
+                    ? "border-gold bg-gold/10 shadow-[0_0_20px_rgba(201,162,77,0.15)] ring-1 ring-gold"
+                    : "border-line bg-ink hover:border-gold/40 hover:bg-ink-2/60"
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <div
+                    className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-all ${
+                      paymentMethod === "ONLINE"
+                        ? "border-gold bg-gold text-ink"
+                        : "border-paper-muted/50 bg-transparent"
+                    }`}
+                  >
+                    {paymentMethod === "ONLINE" && (
+                      <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-display text-[15px] font-semibold text-paper">
+                        UPI / Cards / Net Banking
+                      </span>
+                      <span className="inline-flex items-center rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-400">
+                        Razorpay
+                      </span>
+                    </div>
+                    <p className="text-xs text-paper-muted mt-1 leading-relaxed">
+                      Pay securely with Google Pay, PhonePe, Paytm, BHIM, Cards or Net Banking.
+                    </p>
+                    <div className="mt-3 flex flex-wrap items-center gap-1.5 text-[10px] font-medium text-paper-muted/80">
+                      <span className="rounded bg-ink-3 px-2 py-0.5 border border-line">UPI</span>
+                      <span className="rounded bg-ink-3 px-2 py-0.5 border border-line">GPay / PhonePe</span>
+                      <span className="rounded bg-ink-3 px-2 py-0.5 border border-line">Cards</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
 
         {/* Order Summary Column */}
@@ -514,10 +733,16 @@ export default function CheckoutPageClient() {
             disabled={isSubmitting || checkoutMutation.isPending || !selectedAddress}
             className={buttonClasses("primary", "lg")}
           >
-            {isSubmitting || checkoutMutation.isPending ? "Placing order…" : `Pay Now · ${formatPrice(finalTotal)}`}
+            {paymentMethod === "COD"
+              ? (isSubmitting || checkoutMutation.isPending ? "Placing order…" : "Place Order")
+              : (isSubmitting || checkoutMutation.isPending ? "Opening payment gateway…" : `Pay Now · ${formatPrice(finalTotal)}`)
+            }
           </button>
           <p className="text-xs text-paper-muted/80">
-            Guaranteed 256-bit SSL encrypted & secure checkout.
+            {paymentMethod === "COD"
+              ? "Pay comfortably upon delivery at your doorstep."
+              : "Guaranteed 256-bit SSL encrypted & secure Razorpay checkout."
+            }
           </p>
         </div>
       </div>

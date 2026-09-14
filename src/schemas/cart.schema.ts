@@ -4,6 +4,7 @@ import { SizeSchema, ColorSchema } from "./product.schema";
 
 export const CartItemSchema = z.object({
   id: EntityIdSchema,
+  variantId: z.string().optional(),
   size: SizeSchema.optional(),
   color: ColorSchema.optional(),
   quantity: z.number().int().positive(),
