@@ -425,7 +425,7 @@ export default function ProductDetails({ product }: Props) {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {/* Standard Delivery Option (Least Expensive) */}
+                {/* Standard Delivery Option */}
                 <button
                   type="button"
                   onClick={() => {
@@ -438,21 +438,13 @@ export default function ProductDetails({ product }: Props) {
                       : "border-line bg-ink-2/60 hover:border-line-strong hover:bg-ink-2"
                   }`}
                 >
-                  <div>
-                    <div className="flex items-center justify-between gap-1 mb-1.5">
-                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-white/5 text-paper-muted border border-line">
-                        Least Expensive
-                      </span>
-                      <span className="text-xs font-semibold text-emerald-400">
-                        {deliveryResult.standard.isFree ? "FREE" : `₹${deliveryResult.standard.rate.toLocaleString()}`}
-                      </span>
-                    </div>
-                    <p className="text-xs font-semibold text-paper flex items-center gap-1.5">
-                      {deliveryResult.standard.title}
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs font-semibold text-paper">
+                      Standard Delivery
                     </p>
-                    <p className="text-[11px] text-paper-muted mt-0.5">
-                      via {deliveryResult.standard.courierName}
-                    </p>
+                    <span className={`text-xs font-semibold ${deliveryResult.standard.isFree ? "text-emerald-400" : "text-paper"}`}>
+                      {deliveryResult.standard.isFree ? "FREE" : `₹${deliveryResult.standard.rate.toLocaleString()}`}
+                    </span>
                   </div>
                   <div className="mt-2.5 pt-2 border-t border-line/50 flex items-center justify-between text-[11px]">
                     <span className="text-paper font-medium">
@@ -464,7 +456,7 @@ export default function ProductDetails({ product }: Props) {
                   </div>
                 </button>
 
-                {/* Prime Delivery Option (Quickest) */}
+                {/* Prime Delivery Option */}
                 <button
                   type="button"
                   onClick={() => {
@@ -477,29 +469,20 @@ export default function ProductDetails({ product }: Props) {
                       : "border-line bg-ink-2/60 hover:border-amber-400/40 hover:bg-ink-2"
                   }`}
                 >
-                  <div>
-                    <div className="flex items-center justify-between gap-1 mb-1.5">
-                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-amber-400/20 text-amber-300 border border-amber-400/30 flex items-center gap-1">
-                        <BoltIcon />
-                        ⚡ Prime Quickest
-                      </span>
-                      <span className="text-xs font-bold text-amber-300">
-                        {deliveryResult.prime.isFree ? "FREE" : `₹${deliveryResult.prime.rate.toLocaleString()}`}
-                      </span>
-                    </div>
-                    <p className="text-xs font-semibold text-paper flex items-center gap-1.5">
-                      {deliveryResult.prime.title}
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs font-semibold text-paper">
+                      Prime Delivery
                     </p>
-                    <p className="text-[11px] text-paper-muted mt-0.5">
-                      via {deliveryResult.prime.courierName}
-                    </p>
+                    <span className={`text-xs font-semibold ${deliveryResult.prime.isFree ? "text-emerald-400" : "text-paper"}`}>
+                      {deliveryResult.prime.isFree ? "FREE" : `₹${deliveryResult.prime.rate.toLocaleString()}`}
+                    </span>
                   </div>
                   <div className="mt-2.5 pt-2 border-t border-line/50 flex items-center justify-between text-[11px]">
                     <span className="text-paper font-medium">
-                      Arrives: <strong className="text-amber-300">{deliveryResult.prime.estimatedDate}</strong>
+                      Arrives: <strong className="text-gold">{deliveryResult.prime.estimatedDate}</strong>
                     </span>
-                    <span className="text-[10px] font-semibold text-amber-300">
-                      ⚡ {deliveryResult.prime.estimatedDays} days
+                    <span className="text-[10px] text-paper-muted">
+                      {deliveryResult.prime.estimatedDays} days
                     </span>
                   </div>
                 </button>
@@ -511,10 +494,10 @@ export default function ProductDetails({ product }: Props) {
                   <svg className="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
                   </svg>
-                  Selected: {selectedTier === "PRIME" ? deliveryResult.prime.title : deliveryResult.standard.title}
+                  Selected: {selectedTier === "PRIME" ? "Prime Delivery" : "Standard Delivery"}
                 </p>
                 <p className="text-[11px] text-emerald-400/90 pl-5">
-                  ✓ Estimated arrival by <strong className="underline">{selectedTier === "PRIME" ? deliveryResult.prime.estimatedDate : deliveryResult.standard.estimatedDate}</strong> via {selectedTier === "PRIME" ? deliveryResult.prime.courierName : deliveryResult.standard.courierName}
+                  ✓ Estimated arrival by <strong className="underline">{selectedTier === "PRIME" ? deliveryResult.prime.estimatedDate : deliveryResult.standard.estimatedDate}</strong>
                   {deliveryResult.isDomestic ? " • Cash on Delivery (COD) Available" : " • Full International Tracking Included"}
                 </p>
               </div>
