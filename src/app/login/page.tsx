@@ -44,7 +44,7 @@ function LoginContent() {
   const [emailVerificationToken, setEmailVerificationToken] = useState("");
   const [emailOtpError, setEmailOtpError] = useState("");
 
-  // ---------------- 60-SECOND COUNTDOWN TIMER ----------------
+  // ---------------- 30-SECOND COUNTDOWN TIMER ----------------
   useEffect(() => {
     if (emailTimer <= 0) return;
     const interval = setInterval(() => {
@@ -177,8 +177,9 @@ function LoginContent() {
       const res = await authService.sendEmailOtp(email.trim());
       const token = res.emailOtpToken || "";
       setEmailOtpToken(token);
+      setEmailOtp(""); // Clear any previous stale OTP code
       setIsEmailOtpSent(true);
-      setEmailTimer(60); // 1 minute countdown
+      setEmailTimer(30); // 30-second countdown for resend
     } catch (error: unknown) {
       const msg = getUserFriendlyError(error, "Failed to send verification email. Please try again.");
       setTouched((prev) => ({ ...prev, email: true }));
