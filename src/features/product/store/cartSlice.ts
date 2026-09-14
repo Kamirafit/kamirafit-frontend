@@ -19,8 +19,51 @@ type CartState = {
   items: CartItem[];
 };
 
+export const CART_STORAGE_KEY = "kamirafit_cart_items";
+
+export function loadCartFromStorage(): CartItem[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(CART_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      return parsed.filter(
+        (it): it is CartItem =>
+          typeof it === "object" &&
+          it !== null &&
+          typeof it.id === "string" &&
+          it.id.length > 0 &&
+          typeof it.quantity === "number" &&
+          it.quantity > 0
+      );
+    }
+    return [];
+  } catch {
+    return [];
+  }
+}
+
+export function persistCartToStorage(items: CartItem[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+  } catch {
+    // Gracefully handle storage errors
+  }
+}
+
+export function clearCartStorage(): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(CART_STORAGE_KEY);
+  } catch {
+    // Gracefully handle storage errors
+  }
+}
+
 const initialState: CartState = {
-  items: [],
+  items: typeof window !== "undefined" ? loadCartFromStorage() : [],
 };
 
 function matchesKey(item: CartItem, key: CartItemKey): boolean {
@@ -45,10 +88,12 @@ const cartSlice = createSlice({
       } else {
         state.items.push({ id, size, color, quantity });
       }
+      persistCartToStorage(state.items);
     },
     removeFromCart(state, action: PayloadAction<CartItemKey>) {
       const key = action.payload;
       state.items = state.items.filter((it) => !matchesKey(it, key));
+      persistCartToStorage(state.items);
     },
     updateQuantity(
       state,
@@ -57,18 +102,20 @@ const cartSlice = createSlice({
       const { quantity, ...key } = action.payload;
       if (quantity <= 0) {
         state.items = state.items.filter((it) => !matchesKey(it, key));
-        return;
+      } else {
+        const existing = state.items.find((it) => matchesKey(it, key));
+        if (existing) {
+          existing.quantity = quantity;
+        }
       }
-      const existing = state.items.find((it) => matchesKey(it, key));
-      if (existing) {
-        existing.quantity = quantity;
-      }
+      persistCartToStorage(state.items);
     },
     incrementQuantity(state, action: PayloadAction<CartItemKey>) {
       const existing = state.items.find((it) =>
         matchesKey(it, action.payload),
       );
       if (existing) existing.quantity += 1;
+      persistCartToStorage(state.items);
     },
     decrementQuantity(state, action: PayloadAction<CartItemKey>) {
       const key = action.payload;
@@ -79,12 +126,15 @@ const cartSlice = createSlice({
       } else {
         existing.quantity -= 1;
       }
+      persistCartToStorage(state.items);
     },
     replaceCart(state, action: PayloadAction<CartItem[]>) {
       state.items = action.payload;
+      persistCartToStorage(state.items);
     },
     clearCart(state) {
       state.items = [];
+      clearCartStorage();
     },
   },
 });

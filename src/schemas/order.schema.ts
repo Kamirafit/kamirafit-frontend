@@ -34,6 +34,7 @@ export const OrderSchema = z.object({
 
 export const CheckoutRequestDtoSchema = z.object({
   items: z.array(CartItemSchema),
+  shippingAddressId: z.string().optional(),
   shippingAddress: AddressSchema.omit({ id: true, isDefault: true }),
   paymentMethod: z.string(),
   couponCode: z.string().optional(),

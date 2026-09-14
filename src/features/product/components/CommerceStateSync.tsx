@@ -2,7 +2,12 @@
 
 import { useEffect, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "@/features/product/hooks/redux";
-import { replaceCart, type CartItem } from "@/features/product/store/cartSlice";
+import {
+  replaceCart,
+  loadCartFromStorage,
+  persistCartToStorage,
+  type CartItem,
+} from "@/features/product/store/cartSlice";
 import { replaceWishlist } from "@/features/product/store/wishlistSlice";
 import { useCart, useUpdateCart } from "@/services/cart";
 import { useWishlist } from "@/services/wishlist";
@@ -21,16 +26,33 @@ export default function CommerceStateSync() {
   const hasHydratedWishlistRef = useRef(false);
   const isHydratingCartRef = useRef(false);
   const lastSyncedCartJsonRef = useRef<string>("");
-  const localCartBeforeAuthRef = useRef<CartItem[]>([]);
+  const localCartBeforeAuthRef = useRef<CartItem[]>(loadCartFromStorage());
 
   // Keep a ref to the current cartItems so effects can read it without adding to dependencies
   const cartItemsRef = useRef(cartItems);
   cartItemsRef.current = cartItems;
 
+  // Hydrate Redux cart from localStorage on mount if Redux is empty
+  useEffect(() => {
+    const saved = loadCartFromStorage();
+    if (saved.length > 0 && cartItemsRef.current.length === 0) {
+      dispatch(replaceCart(saved));
+    }
+  }, [dispatch]);
+
+  // Keep localStorage always updated with Redux cart
+  useEffect(() => {
+    if (cartItems.length > 0) {
+      persistCartToStorage(cartItems);
+    }
+  }, [cartItems]);
+
   // Capture guest cart state when unauthenticated
   useEffect(() => {
     if (!isAuthenticated) {
-      localCartBeforeAuthRef.current = cartItems;
+      if (cartItems.length > 0) {
+        localCartBeforeAuthRef.current = cartItems;
+      }
       hasHydratedCartRef.current = false;
       hasHydratedWishlistRef.current = false;
       isHydratingCartRef.current = false;
@@ -53,7 +75,7 @@ export default function CommerceStateSync() {
     const serverItems: Array<Partial<CartItem> & { title?: string; images?: string[] }> = cartQuery.data?.items || [];
     const localItems = localCartBeforeAuthRef.current.length > 0
       ? localCartBeforeAuthRef.current
-      : cartItemsRef.current;
+      : (cartItemsRef.current.length > 0 ? cartItemsRef.current : loadCartFromStorage());
 
     // Deterministic Cart Merge Strategy:
     // 1. Initialize map with server items

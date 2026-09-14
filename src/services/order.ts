@@ -25,12 +25,23 @@ export interface DeliveryEstimateResult {
   fastestMethod: "STANDARD" | "PRIME";
 }
 
+export interface CouponValidationResult {
+  code: string;
+  discountType: "PERCENTAGE" | "FIXED_AMOUNT";
+  discountValue: number;
+  discountAmount: number;
+  maxDiscount?: number | null;
+  minOrderVal?: number | null;
+}
+
 export const orderService = {
   getOrders: () => unwrapApiResponse<Order[]>(apiClient.get("/orders")),
   getOrder: (id: string) => unwrapApiResponse<Order>(apiClient.get("/orders/" + id)),
   downloadInvoice: (orderId: string) => apiClient.get(`/orders/${orderId}/invoice`, { responseType: "blob" }),
   getDeliveryEstimate: (params: { postalCode: string; country?: string; weight?: number; isCod?: boolean }) =>
     unwrapApiResponse<DeliveryEstimateResult>(apiClient.post("/orders/delivery-estimate", params)),
+  validateCoupon: (params: { code: string; subtotal: number; items?: any[] }) =>
+    unwrapApiResponse<CouponValidationResult>(apiClient.post("/orders/validate-coupon", params)),
 };
 
 export function useOrders() {
