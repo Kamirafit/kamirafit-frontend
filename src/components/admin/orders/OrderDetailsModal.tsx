@@ -423,8 +423,10 @@ export default function OrderDetailsModal({ open, onClose, order }: Props) {
                           if (res?.labelUrl) {
                             window.open(res.labelUrl, "_blank", "noopener,noreferrer");
                           }
-                        } catch (err: any) {
-                          setLogisticsError(err?.message || "Failed to download shipping label");
+                        } catch (err: unknown) {
+                          setLogisticsError(
+                            err instanceof Error ? err.message : "Failed to download shipping label"
+                          );
                         }
                       }}
                     >
@@ -441,8 +443,10 @@ export default function OrderDetailsModal({ open, onClose, order }: Props) {
                           if (res?.manifestUrl) {
                             window.open(res.manifestUrl, "_blank", "noopener,noreferrer");
                           }
-                        } catch (err: any) {
-                          setLogisticsError(err?.message || "Failed to download manifest");
+                        } catch (err: unknown) {
+                          setLogisticsError(
+                            err instanceof Error ? err.message : "Failed to download manifest"
+                          );
                         }
                       }}
                     >

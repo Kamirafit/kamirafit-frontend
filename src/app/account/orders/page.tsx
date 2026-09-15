@@ -82,7 +82,7 @@ export default function OrdersPage() {
       {trackingOrder && (
         <OrderTrackingModal
           orderId={trackingOrder.id}
-          orderNumber={(trackingOrder as any).orderNumber}
+          orderNumber={(trackingOrder as { orderNumber?: string }).orderNumber}
           onClose={() => setTrackingOrder(null)}
         />
       )}
