@@ -3,6 +3,7 @@
 import { useState } from "react";
 import OrderCard from "@/features/account/components/OrderCard";
 import OrderDetailsModal from "@/features/account/components/OrderDetailsModal";
+import OrderTrackingModal from "@/features/account/components/OrderTrackingModal";
 import ReviewFormModal from "@/features/account/components/ReviewFormModal";
 import { Order } from "@/features/account/types";
 import { useOrders } from "@/services/order";
@@ -18,6 +19,7 @@ export default function OrdersPage() {
   const isOnline = useOnlineStatus();
   const createReviewMutation = useCreateReview();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [trackingOrder, setTrackingOrder] = useState<Order | null>(null);
   const [reviewItem, setReviewItem] = useState<{orderId: string, productId: string, productName: string, productImage: string} | null>(null);
 
   const handleReviewSubmit = async (review: { orderId: string; productId: string; rating: number; title: string; comment: string; images: string[] }) => {
@@ -58,6 +60,7 @@ export default function OrdersPage() {
               key={order.id}
               order={order}
               onViewDetails={setSelectedOrder}
+              onTrackPackage={setTrackingOrder}
               onReviewProduct={(orderId, item) => setReviewItem({
                 orderId,
                 productId: item.productId,
@@ -73,6 +76,14 @@ export default function OrdersPage() {
         <OrderDetailsModal
           order={selectedOrder}
           onClose={() => setSelectedOrder(null)}
+        />
+      )}
+
+      {trackingOrder && (
+        <OrderTrackingModal
+          orderId={trackingOrder.id}
+          orderNumber={(trackingOrder as any).orderNumber}
+          onClose={() => setTrackingOrder(null)}
         />
       )}
 

@@ -102,6 +102,12 @@ const ORDER_STATUS_TONE: Record<OrderStatus, Tone> = {
     text: "text-[#F97316]",
     dot: "bg-[#F97316]",
   },
+  "Return Approved": {
+    border: "border-[#D97706]/40",
+    bg: "bg-[#D97706]/10",
+    text: "text-[#F59E0B]",
+    dot: "bg-[#D97706]",
+  },
   Returned: {
     border: "border-[#EA580C]/40",
     bg: "bg-[#EA580C]/10",

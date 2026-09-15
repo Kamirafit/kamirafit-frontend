@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import { DEFAULT_PRODUCT_IMAGE, getValidImageSrc } from "@/lib/format";
 import { Order } from "../types";
 import { formatPrice } from "@/lib/format";
 import OrderStatusBadge from "./OrderStatusBadge";
+import OrderTrackingModal from "./OrderTrackingModal";
 
 type Props = {
   order: Order;
@@ -12,6 +14,7 @@ type Props = {
 };
 
 export default function OrderDetailsModal({ order, onClose }: Props) {
+  const [showTracking, setShowTracking] = useState(false);
   const customOrder = order as { createdAt?: string; orderNumber?: string } & Order;
   const dateValue = customOrder.createdAt || order.date;
   const dateStr = dateValue
@@ -51,10 +54,19 @@ export default function OrderDetailsModal({ order, onClose }: Props) {
               <OrderStatusBadge status={order.status} size="lg" />
             </div>
             {order.trackingNumber && (
-              <p className="text-sm text-paper">
-                <span className="text-paper-muted">Tracking ID: </span>
-                <span className="font-medium text-gold">{order.trackingNumber}</span>
-              </p>
+              <div className="flex items-center justify-between gap-4 rounded-xl border border-line bg-ink-2/40 p-3">
+                <p className="text-sm text-paper">
+                  <span className="text-paper-muted">Tracking ID: </span>
+                  <span className="font-mono font-medium text-gold">{order.trackingNumber}</span>
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowTracking(true)}
+                  className="rounded-full border border-gold/40 bg-gold/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-gold hover:bg-gold hover:text-ink transition-colors"
+                >
+                  Track Shipment
+                </button>
+              </div>
             )}
           </div>
 
@@ -140,6 +152,14 @@ export default function OrderDetailsModal({ order, onClose }: Props) {
 
         </div>
       </div>
+
+      {showTracking && (
+        <OrderTrackingModal
+          orderId={order.id}
+          orderNumber={orderNum}
+          onClose={() => setShowTracking(false)}
+        />
+      )}
     </div>
   );
 }

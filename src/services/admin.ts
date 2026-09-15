@@ -335,6 +335,10 @@ export const adminService = {
     adminRequest<Order>("patch", "/orders/" + id + "/fulfill", x).then(adaptOrder),
   syncShiprocket: (id: string) =>
     adminRequest<Order>("post", "/orders/" + id + "/sync-shiprocket").then(adaptOrder),
+  getShippingLabel: (id: string) =>
+    adminRequest<{ labelUrl: string }>("get", "/orders/" + id + "/shipping-label"),
+  getManifest: (id: string) =>
+    adminRequest<{ manifestUrl: string }>("get", "/orders/" + id + "/manifest"),
   deleteOrder: (id: string) =>
     adminRequest<{ id: string }>("delete", "/orders/" + id).then((x) => x.id),
   getQueries: (params?: { search?: string; status?: string; page?: number; limit?: number }) =>
@@ -522,6 +526,16 @@ export function useSyncAdminOrderWithShiprocket() {
       q.invalidateQueries({ queryKey: ["admin", "orders"] });
       q.invalidateQueries({ queryKey: ["admin", "stats"] });
     },
+  });
+}
+export function useGetAdminOrderShippingLabel() {
+  return useMutation({
+    mutationFn: (id: string) => adminService.getShippingLabel(id),
+  });
+}
+export function useGetAdminOrderManifest() {
+  return useMutation({
+    mutationFn: (id: string) => adminService.getManifest(id),
   });
 }
 export function useDeleteAdminOrder() {

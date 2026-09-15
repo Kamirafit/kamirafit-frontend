@@ -16,6 +16,7 @@ export const ADMIN_ORDER_STATUSES = [
   "RTO Initiated",
   "RTO Delivered",
   "Return Requested",
+  "Return Approved",
   "Returned",
   "Refunded",
 ] as const;

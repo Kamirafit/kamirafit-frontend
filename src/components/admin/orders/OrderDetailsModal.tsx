@@ -23,6 +23,8 @@ import {
   useDeleteAdminOrder,
   useFulfillAdminOrder,
   useSyncAdminOrderWithShiprocket,
+  useGetAdminOrderShippingLabel,
+  useGetAdminOrderManifest,
 } from "@/services/admin";
 import { COLOR_OPTIONS, SIZE_OPTIONS } from "@/features/product/types";
 import StatusBadge from "./StatusBadge";
@@ -130,6 +132,11 @@ export default function OrderDetailsModal({ open, onClose, order }: Props) {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [showFulfillSection, setShowFulfillSection] = useState(false);
+  const [logisticsError, setLogisticsError] = useState<string | null>(null);
+
+  const syncShiprocketMutation = useSyncAdminOrderWithShiprocket();
+  const getShippingLabelMutation = useGetAdminOrderShippingLabel();
+  const getManifestMutation = useGetAdminOrderManifest();
 
   useEffect(() => {
     if (open && order) {
@@ -363,6 +370,11 @@ export default function OrderDetailsModal({ open, onClose, order }: Props) {
                 </select>
               </FormField>
             </div>
+            {(draft.orderStatus === "Return Approved" || (draft.orderStatus as string) === "RETURN_APPROVED") && (
+              <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-[12.5px] text-amber-300">
+                <span className="font-semibold">Reverse Logistics Notice:</span> Saving as &quot;Return Approved&quot; automatically triggers reverse pickup creation in Shiprocket from the customer&apos;s address to your returns warehouse.
+              </div>
+            )}
           </section>
 
           <section className="flex flex-col gap-4">
@@ -397,16 +409,75 @@ export default function OrderDetailsModal({ open, onClose, order }: Props) {
           <section className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <SectionTitle>Fulfillment & Tracking</SectionTitle>
-              {!showFulfillSection && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setShowFulfillSection(true)}
-                >
-                  Attach Tracking
-                </Button>
-              )}
+              <div className="flex items-center gap-2">
+                {(order.trackingCode || draft.trackingCode) && (
+                  <>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled={getShippingLabelMutation.isPending}
+                      onClick={async () => {
+                        setLogisticsError(null);
+                        try {
+                          const res = await getShippingLabelMutation.mutateAsync(order.id);
+                          if (res?.labelUrl) {
+                            window.open(res.labelUrl, "_blank", "noopener,noreferrer");
+                          }
+                        } catch (err: any) {
+                          setLogisticsError(err?.message || "Failed to download shipping label");
+                        }
+                      }}
+                    >
+                      {getShippingLabelMutation.isPending ? "Generating..." : "Print Label"}
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled={getManifestMutation.isPending}
+                      onClick={async () => {
+                        setLogisticsError(null);
+                        try {
+                          const res = await getManifestMutation.mutateAsync(order.id);
+                          if (res?.manifestUrl) {
+                            window.open(res.manifestUrl, "_blank", "noopener,noreferrer");
+                          }
+                        } catch (err: any) {
+                          setLogisticsError(err?.message || "Failed to download manifest");
+                        }
+                      }}
+                    >
+                      {getManifestMutation.isPending ? "Generating..." : "Print Manifest"}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={syncShiprocketMutation.isPending}
+                      onClick={() => {
+                        setLogisticsError(null);
+                        syncShiprocketMutation.mutate(order.id);
+                      }}
+                    >
+                      {syncShiprocketMutation.isPending ? "Syncing..." : "Sync Tracking"}
+                    </Button>
+                  </>
+                )}
+                {!showFulfillSection && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setShowFulfillSection(true)}
+                  >
+                    Attach Tracking
+                  </Button>
+                )}
+              </div>
             </div>
+
+            {logisticsError && (
+              <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-[12.5px] text-red-300">
+                {logisticsError}
+              </div>
+            )}
 
             {showFulfillSection && (
               <div className="rounded-2xl border border-line bg-ink-2/40 p-4 space-y-4">

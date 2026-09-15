@@ -51,7 +51,40 @@ export const orderService = {
     unwrapApiResponse<CouponValidationResult>(apiClient.post("/orders/validate-coupon", params)),
   verifyPayment: (params: VerifyPaymentPayload) =>
     unwrapApiResponse<Order>(apiClient.post("/orders/verify-payment", params)),
+  getTracking: (id: string) =>
+    unwrapApiResponse<OrderTrackingResponse>(apiClient.get(`/orders/${id}/tracking`)),
 };
+
+export interface TrackingMilestone {
+  name: string;
+  statusKey: string;
+  completed: boolean;
+  current: boolean;
+  date?: string | null;
+  description: string;
+}
+
+export interface TrackingScan {
+  date?: string;
+  activity?: string;
+  location?: string;
+  status?: string;
+  "sr-status-label"?: string;
+}
+
+export interface OrderTrackingResponse {
+  orderId: string;
+  orderNumber: string;
+  orderStatus: string;
+  courierName?: string | null;
+  trackingCode?: string | null;
+  trackingUrl?: string | null;
+  currentStatus: string;
+  etd?: string | null;
+  destination?: string | null;
+  milestones: TrackingMilestone[];
+  scans: TrackingScan[];
+}
 
 export function useOrders() {
   return useQuery<Order[]>({ queryKey: ["orders"], queryFn: orderService.getOrders, staleTime: 60000 });
@@ -60,6 +93,15 @@ export function useOrders() {
 export function useVerifyPayment() {
   return useMutation({
     mutationFn: orderService.verifyPayment,
+  });
+}
+
+export function useOrderTracking(id: string | null | undefined) {
+  return useQuery<OrderTrackingResponse>({
+    queryKey: ["orders", id, "tracking"],
+    queryFn: () => orderService.getTracking(id!),
+    enabled: Boolean(id),
+    staleTime: 30000,
   });
 }
 

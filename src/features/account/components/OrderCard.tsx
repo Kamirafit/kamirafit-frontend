@@ -8,9 +8,10 @@ type Props = {
   order: Order;
   onViewDetails: (order: Order) => void;
   onReviewProduct: (orderId: string, item: OrderItem) => void;
+  onTrackPackage?: (order: Order) => void;
 };
 
-export default function OrderCard({ order, onViewDetails, onReviewProduct }: Props) {
+export default function OrderCard({ order, onViewDetails, onReviewProduct, onTrackPackage }: Props) {
   const customOrder = order as { createdAt?: string; orderNumber?: string } & Order;
   const dateValue = customOrder.createdAt || order.date;
   const dateStr = dateValue
@@ -74,7 +75,8 @@ export default function OrderCard({ order, onViewDetails, onReviewProduct }: Pro
                   </p>
                   <div className="mt-2 flex items-center gap-4">
                     <button
-                      onClick={() => onViewDetails(order)}
+                      type="button"
+                      onClick={() => onTrackPackage ? onTrackPackage(order) : onViewDetails(order)}
                       className="text-[12px] font-semibold uppercase tracking-wider text-gold hover:text-gold-bright"
                     >
                       Track Package
