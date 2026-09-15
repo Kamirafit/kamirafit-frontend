@@ -8,11 +8,12 @@ import { useAddresses, useCreateAddress, useUpdateAddress, useDeleteAddress } fr
 import AddressSkeleton from "@/components/skeleton/AddressSkeleton";
 import { EmptyState, ErrorState, OfflineState } from "@/components/states";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import Button from "@/components/ui/Button";
 
 export default function AddressesPage() {
   const addressesQuery = useAddresses();
   const { data: addresses = [], isError, refetch } = addressesQuery;
-  const isLoading = addressesQuery.isLoading || (addressesQuery.isFetching && addresses.length === 0);
+  const isLoading = addressesQuery.isLoading || addressesQuery.isFetching;
   const isOnline = useOnlineStatus();
   const createMutation = useCreateAddress();
   const updateMutation = useUpdateAddress();
@@ -148,22 +149,24 @@ export default function AddressesPage() {
                Are you sure you want to remove this delivery address? This action cannot be undone.
             </p>
             <div className="mt-6 flex justify-end gap-3">
-              <button
-                type="button"
+              <Button
+                variant="dark"
+                size="sm"
                 disabled={deleteMutation.isPending}
                 onClick={() => setAddressToDelete(null)}
-                className="rounded-full px-5 py-2 text-[12px] font-semibold uppercase tracking-wider text-paper-muted hover:bg-ink-3 transition-colors disabled:opacity-40"
               >
                 Cancel
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                loading={deleteMutation.isPending}
                 disabled={deleteMutation.isPending}
                 onClick={confirmDelete}
-                className="rounded-full bg-[#DC2626] px-5 py-2 text-[12px] font-semibold uppercase tracking-wider text-white shadow-md transition-colors hover:bg-[#B91C1C] disabled:opacity-50"
+                className="!bg-[#DC2626] hover:!bg-[#B91C1C]"
               >
-                {deleteMutation.isPending ? "Deleting..." : "Delete"}
-              </button>
+                Delete
+              </Button>
             </div>
           </div>
         </div>

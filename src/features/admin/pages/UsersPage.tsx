@@ -23,7 +23,7 @@ function initials(name: string) {
 export default function UsersPage() {
   const usersQuery = useAdminUsers();
   const { data: users = [] } = usersQuery;
-  const isLoading = usersQuery.isLoading || (usersQuery.isFetching && users.length === 0);
+  const isLoading = usersQuery.isLoading || usersQuery.isFetching;
   const isOnline = useOnlineStatus();
   const updateMutation = useUpdateAdminUser();
 

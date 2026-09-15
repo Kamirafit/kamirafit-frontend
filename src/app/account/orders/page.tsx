@@ -14,7 +14,7 @@ import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 export default function OrdersPage() {
   const ordersQuery = useOrders();
   const { data: orders = [], isError, refetch } = ordersQuery;
-  const isLoading = ordersQuery.isLoading || (ordersQuery.isFetching && orders.length === 0);
+  const isLoading = ordersQuery.isLoading || ordersQuery.isFetching;
   const isOnline = useOnlineStatus();
   const createReviewMutation = useCreateReview();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);

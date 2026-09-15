@@ -30,7 +30,7 @@ function PlusIcon() {
 export default function CategoriesPage() {
   const categoriesQuery = useAdminCategories();
   const { data: categories = [] } = categoriesQuery;
-  const isLoading = categoriesQuery.isLoading || (categoriesQuery.isFetching && categories.length === 0);
+  const isLoading = categoriesQuery.isLoading || categoriesQuery.isFetching;
   const isOnline = useOnlineStatus();
   const createMutation = useCreateAdminCategory();
   const updateMutation = useUpdateAdminCategory();

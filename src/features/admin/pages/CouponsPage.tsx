@@ -314,7 +314,7 @@ export default function CouponsPage() {
     }
   };
 
-  const isLoading = couponsQuery.isLoading || (couponsQuery.isFetching && coupons.length === 0);
+  const isLoading = couponsQuery.isLoading || couponsQuery.isFetching;
 
   return (
     <div className="flex flex-col gap-8">

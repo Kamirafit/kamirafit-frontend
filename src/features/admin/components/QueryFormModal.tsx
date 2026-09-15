@@ -157,7 +157,7 @@ export default function QueryFormModal({
     <Modal
       open={open}
       title={isEditing ? "Modify Customer Query" : "Create New Customer Query"}
-      onClose={onClose}
+      onClose={loading ? () => {} : onClose}
       maxWidth="lg"
     >
       <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
@@ -299,7 +299,7 @@ export default function QueryFormModal({
             Cancel
           </Button>
 
-          <Button type="submit" disabled={loading}>
+          <Button type="submit" loading={loading} disabled={loading}>
             {loading
               ? isEditing
                 ? "Updating..."

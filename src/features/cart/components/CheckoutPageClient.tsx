@@ -13,6 +13,7 @@ import { useProducts } from "@/services/product";
 import { useCheckout } from "@/services/checkout";
 import { useAddresses, useCreateAddress, useUpdateAddress } from "@/services/address";
 import AddressFormModal from "@/features/account/components/AddressFormModal";
+import AddressSkeleton from "@/components/skeleton/AddressSkeleton";
 import type { Address } from "@/features/account/types";
 import { orderService, useVerifyPayment, type CouponValidationResult } from "@/services/order";
 import { ErrorState, OfflineState } from "@/components/states";
@@ -95,7 +96,8 @@ export default function CheckoutPageClient() {
   const { subtotal, delivery } = calculateTotals(resolved);
 
   // Address queries and mutations
-  const { data: addresses = [], isLoading: isAddressesLoading } = useAddresses();
+  const addressesQuery = useAddresses();
+  const { data: addresses = [], isLoading: isAddressesLoading, isFetching: isAddressesFetching } = addressesQuery;
   const createAddressMutation = useCreateAddress();
   const updateAddressMutation = useUpdateAddress();
 
@@ -509,8 +511,10 @@ export default function CheckoutPageClient() {
             )}
           </div>
 
-          {/* If user has addresses: Scrollable list showing 3 cards at once */}
-          {addresses.length > 0 ? (
+          {/* If addresses are loading or refetching */}
+          {isAddressesLoading || isAddressesFetching ? (
+            <AddressSkeleton />
+          ) : addresses.length > 0 ? (
             <div className="space-y-2">
               <div className="max-h-[440px] overflow-y-auto space-y-3 pr-2 scrollbar-thin scrollbar-thumb-gold/30 hover:scrollbar-thumb-gold/60 scrollbar-track-ink-2/30 rounded-2xl">
                 {addresses.map((addr) => {

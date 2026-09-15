@@ -54,7 +54,7 @@ export default function ProductsPage() {
   const toggleStatusMutation = useToggleAdminProductStatus();
   const deleteMutation = useDeleteAdminProduct();
 
-  const isLoading = productsLoading || categoriesLoading || (productsQuery.isFetching && products.length === 0);
+  const isLoading = productsLoading || categoriesLoading || productsQuery.isFetching || categoriesQuery.isFetching;
 
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<ProductStatusFilter>("all");

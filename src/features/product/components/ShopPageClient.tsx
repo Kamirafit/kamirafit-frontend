@@ -78,8 +78,7 @@ export default function ShopPageClient({ initialCategorySlug, initialProducts = 
   }, [latestProducts, initialProducts]);
 
   const products = useFilteredSortedProducts(activeProducts, filters, sort);
-  const hasInitialData = initialProducts.length > 0;
-  const isLoading = (productsQuery.isLoading || (productsQuery.isFetching && latestProducts.length === 0)) && !hasInitialData;
+  const isUpdating = productsQuery.isLoading || productsQuery.isFetching;
 
   // Counts are computed from the full *active* product set so users can see how
   // many items each option would add — not the already-filtered subset.
@@ -137,11 +136,11 @@ export default function ShopPageClient({ initialCategorySlug, initialProducts = 
             onOpenMobileFilters={() => setMobileOpen(true)}
           />
           <div className="mt-6">
-            {!isOnline && !hasInitialData && latestProducts.length === 0 ? (
+            {!isOnline && latestProducts.length === 0 ? (
               <OfflineState onRetry={() => void refetch()} />
-            ) : isLoading && !hasInitialData ? (
+            ) : isUpdating ? (
               <ProductGridSkeleton count={8} />
-            ) : isError && !hasInitialData && latestProducts.length === 0 ? (
+            ) : isError && latestProducts.length === 0 ? (
               <ErrorState message="We couldn’t load the shop right now." onRetry={() => void refetch()} />
             ) : (
               <ProductGrid products={products} />

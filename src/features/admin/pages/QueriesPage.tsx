@@ -23,7 +23,7 @@ export default function QueriesPage() {
   const updateQueryMutation = useUpdateAdminQuery();
 
   const { data: queries = [] } = queriesQuery;
-  const isLoading = queriesQuery.isLoading || (queriesQuery.isFetching && queries.length === 0);
+  const isLoading = queriesQuery.isLoading || queriesQuery.isFetching;
 
   const [queryText, setQueryText] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<"ALL" | "PENDING" | "RESOLVED">("ALL");

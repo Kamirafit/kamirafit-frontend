@@ -175,6 +175,10 @@ export default function ContactModal({ open, onClose }: Props) {
       });
 
       setIsSuccess(true);
+      setTimeout(() => {
+        setIsSuccess(false);
+        onClose();
+      }, 1500);
       setFormData({
         firstName: "",
         lastName: "",

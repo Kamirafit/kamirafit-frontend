@@ -49,7 +49,7 @@ function StarIconFilled() {
 export default function TestimonialsPage() {
   const testimonialsQuery = useAdminTestimonials();
   const { data: serverTestimonials = [] } = testimonialsQuery;
-  const isLoading = testimonialsQuery.isLoading || (testimonialsQuery.isFetching && serverTestimonials.length === 0);
+  const isLoading = testimonialsQuery.isLoading || testimonialsQuery.isFetching;
   const createMutation = useCreateTestimonial();
   const updateMutation = useUpdateTestimonial();
   const deleteMutation = useDeleteTestimonial();
