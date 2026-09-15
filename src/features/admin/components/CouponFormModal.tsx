@@ -202,7 +202,8 @@ export default function CouponFormModal({
       title={initial ? `Edit Coupon: ${initial.code}` : "Create New Coupon"}
       maxWidth="lg"
     >
-      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
+
         {/* Row 1: Code and Status */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <FormField

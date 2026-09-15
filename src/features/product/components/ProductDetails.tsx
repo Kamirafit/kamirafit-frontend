@@ -338,7 +338,8 @@ export default function ProductDetails({ product }: Props) {
             </span>
           </div>
 
-          <form onSubmit={handleCheckDelivery} className="space-y-2.5">
+          <form onSubmit={handleCheckDelivery} noValidate className="space-y-2.5">
+
             <div className="grid grid-cols-1 sm:grid-cols-[140px_1fr_auto] gap-2">
               {/* Country Selector */}
               <div className="relative">

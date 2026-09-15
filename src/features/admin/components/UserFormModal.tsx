@@ -56,7 +56,8 @@ export default function UserFormModal({ open, onClose, onSubmit, initial, loadin
 
   return (
     <Modal open={open} onClose={loading ? () => {} : onClose} title="Edit user" maxWidth="md">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
+
         <FormField label="Name" error={errors.name}>
           <input
             type="text"

@@ -32,6 +32,7 @@ export default function ReviewFormModal({ orderId, productId, productName, produ
   const [comment, setComment] = useState("");
 
   const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [formError, setFormError] = useState<string | null>(null);
   
   const validProductImage = getValidImageSrc(productImage, DEFAULT_PRODUCT_IMAGE);
 
@@ -52,8 +53,15 @@ export default function ReviewFormModal({ orderId, productId, productName, produ
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (rating === 0) return alert("Please select a rating");
-    if (!comment.trim()) return alert("Please write a review comment");
+    setFormError(null);
+    if (rating === 0) {
+      setFormError("Please select a star rating for this product.");
+      return;
+    }
+    if (!comment.trim()) {
+      setFormError("Please write a review comment sharing your feedback.");
+      return;
+    }
 
     onSubmit({
       orderId,
@@ -61,10 +69,11 @@ export default function ReviewFormModal({ orderId, productId, productName, produ
       rating,
       title,
       comment,
-      images: imageUrls, // In a real app, upload files first and pass URLs
+      images: imageUrls,
       date: new Date().toISOString(),
     });
   };
+
 
   return (
     <div role="dialog" aria-modal="true" className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -85,7 +94,13 @@ export default function ReviewFormModal({ orderId, productId, productName, produ
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        <form onSubmit={handleSubmit} noValidate className="p-6 space-y-5">
+          {formError && (
+            <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3.5 text-xs text-red-400 font-medium">
+              {formError}
+            </div>
+          )}
+
           <div className="flex gap-4 items-center bg-ink-2 p-3 rounded-xl border border-line">
             <div className="relative h-16 w-16 overflow-hidden rounded-md border border-line">
               <Image src={validProductImage} alt={productName} fill className="object-cover" />
@@ -94,7 +109,9 @@ export default function ReviewFormModal({ orderId, productId, productName, produ
           </div>
 
           <div className="flex flex-col items-center gap-2 py-2">
-            <label className="text-[12px] font-medium text-paper-muted uppercase tracking-wider">Overall Rating</label>
+            <label className="text-[12px] font-medium text-paper-muted uppercase tracking-wider">
+              Overall Rating <span className="text-gold">*</span>
+            </label>
             <div className="flex gap-2">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
@@ -102,7 +119,10 @@ export default function ReviewFormModal({ orderId, productId, productName, produ
                   type="button"
                   onMouseEnter={() => setHoverRating(star)}
                   onMouseLeave={() => setHoverRating(0)}
-                  onClick={() => setRating(star)}
+                  onClick={() => {
+                    setRating(star);
+                    if (formError) setFormError(null);
+                  }}
                   className="transition-transform hover:scale-110 focus:outline-none"
                 >
                   <svg
@@ -135,16 +155,23 @@ export default function ReviewFormModal({ orderId, productId, productName, produ
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-medium text-paper-muted uppercase tracking-wider">Review Comment</label>
+            <label className="text-[11px] font-medium text-paper-muted uppercase tracking-wider">
+              Review Comment <span className="text-gold">*</span>
+            </label>
             <textarea
-              required
               rows={4}
               value={comment}
-              onChange={(e) => setComment(e.target.value)}
+              onChange={(e) => {
+                setComment(e.target.value);
+                if (formError) setFormError(null);
+              }}
               placeholder="What did you like or dislike? How did it fit?"
-              className="rounded-lg border border-line bg-transparent px-4 py-2.5 text-sm outline-none focus:border-gold resize-none"
+              className={`rounded-lg border bg-transparent px-4 py-2.5 text-sm outline-none transition-colors resize-none ${
+                formError && !comment.trim() ? "border-red-500/80 bg-red-500/5 focus:border-red-500" : "border-line focus:border-gold"
+              }`}
             />
           </div>
+
 
           <div className="flex flex-col gap-1.5">
             <label className="text-[11px] font-medium text-paper-muted uppercase tracking-wider">Add Photos (Optional)</label>

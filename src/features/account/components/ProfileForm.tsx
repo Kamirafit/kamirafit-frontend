@@ -43,9 +43,36 @@ export default function ProfileForm() {
     setIsEditing(true);
   };
 
+  const [errors, setErrors] = useState<{ firstName?: string; lastName?: string; email?: string; phoneNumber?: string }>({});
+
+  const validate = () => {
+    const nextErrors: { firstName?: string; lastName?: string; email?: string; phoneNumber?: string } = {};
+    if (!formData.firstName.trim()) {
+      nextErrors.firstName = "First name is required";
+    }
+    if (!formData.lastName.trim()) {
+      nextErrors.lastName = "Last name is required";
+    }
+    if (!formData.email.trim()) {
+      nextErrors.email = "Email address is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+      nextErrors.email = "Please enter a valid email address";
+    }
+    const cleanPhone = (formData.phoneNumber || "").replace(/\D/g, "");
+    if (!formData.phoneNumber?.trim()) {
+      nextErrors.phoneNumber = "Phone number is required";
+    } else if (cleanPhone.length < 7 || cleanPhone.length > 15) {
+      nextErrors.phoneNumber = "Please enter a valid phone number (7-15 digits)";
+    }
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isEditing) return;
+
+    if (!validate()) return;
 
     try {
       await updateMutation.mutateAsync({
@@ -57,12 +84,14 @@ export default function ProfileForm() {
         gender: formData.gender?.toLowerCase() || "male",
       });
       setIsEditing(false);
+      setErrors({});
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 4000);
     } catch {
       // Error handled by mutation state
     }
   };
+
 
   const handleCancel = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -91,7 +120,7 @@ export default function ProfileForm() {
   }
 
   return (
-    <form onSubmit={handleSave} className="space-y-6 max-w-2xl">
+    <form onSubmit={handleSave} noValidate className="space-y-6 max-w-2xl">
       {saveSuccess && (
         <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-400">
           Profile updated successfully.
@@ -108,61 +137,82 @@ export default function ProfileForm() {
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
           <label className="text-[12px] font-medium text-paper-muted uppercase tracking-wider">
-            First Name
+            First Name <span className="text-gold">*</span>
           </label>
           <input
             type="text"
-            required
             disabled={!isEditing}
             value={formData.firstName}
-            onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+            onChange={(e) => {
+              setFormData({ ...formData, firstName: e.target.value });
+              if (errors.firstName) setErrors((prev) => ({ ...prev, firstName: undefined }));
+            }}
             className={`rounded-lg border px-4 py-3 text-[14px] text-paper outline-none transition-colors ${
-              isEditing
+              errors.firstName && isEditing
+                ? "border-red-500/80 bg-red-500/5 focus:border-red-500 focus:ring-1 focus:ring-red-500/30"
+                : isEditing
                 ? "border-gold/60 bg-ink-2 focus:border-gold focus:ring-1 focus:ring-gold/30"
                 : "border-line bg-ink-3/40 opacity-75 cursor-default"
             }`}
           />
+          {errors.firstName && isEditing && (
+            <p className="text-[11px] text-red-400 font-medium">{errors.firstName}</p>
+          )}
         </div>
 
         <div className="flex flex-col gap-1.5">
           <label className="text-[12px] font-medium text-paper-muted uppercase tracking-wider">
-            Last Name
+            Last Name <span className="text-gold">*</span>
           </label>
           <input
             type="text"
-            required
             disabled={!isEditing}
             value={formData.lastName}
-            onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+            onChange={(e) => {
+              setFormData({ ...formData, lastName: e.target.value });
+              if (errors.lastName) setErrors((prev) => ({ ...prev, lastName: undefined }));
+            }}
             className={`rounded-lg border px-4 py-3 text-[14px] text-paper outline-none transition-colors ${
-              isEditing
+              errors.lastName && isEditing
+                ? "border-red-500/80 bg-red-500/5 focus:border-red-500 focus:ring-1 focus:ring-red-500/30"
+                : isEditing
                 ? "border-gold/60 bg-ink-2 focus:border-gold focus:ring-1 focus:ring-gold/30"
                 : "border-line bg-ink-3/40 opacity-75 cursor-default"
             }`}
           />
+          {errors.lastName && isEditing && (
+            <p className="text-[11px] text-red-400 font-medium">{errors.lastName}</p>
+          )}
         </div>
 
         <div className="flex flex-col gap-1.5">
           <label className="text-[12px] font-medium text-paper-muted uppercase tracking-wider">
-            Email
+            Email <span className="text-gold">*</span>
           </label>
           <input
             type="email"
-            required
             disabled={!isEditing}
             value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            onChange={(e) => {
+              setFormData({ ...formData, email: e.target.value });
+              if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
+            }}
             className={`rounded-lg border px-4 py-3 text-[14px] text-paper outline-none transition-colors ${
-              isEditing
+              errors.email && isEditing
+                ? "border-red-500/80 bg-red-500/5 focus:border-red-500 focus:ring-1 focus:ring-red-500/30"
+                : isEditing
                 ? "border-gold/60 bg-ink-2 focus:border-gold focus:ring-1 focus:ring-gold/30"
                 : "border-line bg-ink-3/40 opacity-75 cursor-default"
             }`}
           />
+          {errors.email && isEditing && (
+            <p className="text-[11px] text-red-400 font-medium">{errors.email}</p>
+          )}
         </div>
 
         <div className="flex flex-col gap-1.5">
           <label className="text-[12px] font-medium text-paper-muted uppercase tracking-wider">
-            Phone Number
+            Phone Number <span className="text-gold">*</span>
           </label>
           <div className="flex gap-2">
             <select
@@ -183,19 +233,27 @@ export default function ProfileForm() {
             </select>
             <input
               type="tel"
-              required
               disabled={!isEditing}
               value={formData.phoneNumber || ""}
-              onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, phoneNumber: e.target.value });
+                if (errors.phoneNumber) setErrors((prev) => ({ ...prev, phoneNumber: undefined }));
+              }}
               className={`flex-1 rounded-lg border px-4 py-3 text-[14px] text-paper outline-none transition-colors ${
-                isEditing
+                errors.phoneNumber && isEditing
+                  ? "border-red-500/80 bg-red-500/5 focus:border-red-500 focus:ring-1 focus:ring-red-500/30"
+                : isEditing
                   ? "border-gold/60 bg-ink-2 focus:border-gold focus:ring-1 focus:ring-gold/30"
                   : "border-line bg-ink-3/40 opacity-75 cursor-default"
               }`}
             />
           </div>
+          {errors.phoneNumber && isEditing && (
+            <p className="text-[11px] text-red-400 font-medium">{errors.phoneNumber}</p>
+          )}
         </div>
       </div>
+
 
       <div className="flex flex-col gap-2">
         <label className="text-[12px] font-medium text-paper-muted uppercase tracking-wider">

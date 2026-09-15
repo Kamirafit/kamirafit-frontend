@@ -244,10 +244,14 @@ export default function ProductReviews({
     }
     const trimmedComment = comment.trim();
     const trimmedTitle = title.trim();
-    if (!trimmedComment) return;
+    if (!trimmedComment) {
+      setSubmitError("Please write a review comment sharing your experience.");
+      return;
+    }
 
     setSubmitting(true);
     setSubmitError("");
+
 
     try {
       await createReviewMutation.mutateAsync({
@@ -411,7 +415,7 @@ export default function ProductReviews({
             )}
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
             {submitError && (
               <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-400">
                 {submitError}
@@ -447,18 +451,21 @@ export default function ProductReviews({
                 htmlFor="review-comment"
                 className="text-[12px] font-semibold uppercase tracking-[0.18em] text-paper-muted"
               >
-                Review comment
+                Review comment <span className="text-gold">*</span>
               </label>
               <textarea
                 id="review-comment"
                 value={comment}
-                onChange={(event) => setComment(event.target.value)}
-                required
+                onChange={(event) => {
+                  setComment(event.target.value);
+                  if (submitError) setSubmitError("");
+                }}
                 rows={4}
                 placeholder="How did it fit, feel, and wear?"
                 className="mt-2 w-full resize-none rounded-xl border border-line bg-ink-2 px-4 py-3 text-sm leading-relaxed text-paper outline-none transition-colors placeholder:text-paper-muted/70 focus:border-gold"
               />
             </div>
+
 
             <div>
               <label

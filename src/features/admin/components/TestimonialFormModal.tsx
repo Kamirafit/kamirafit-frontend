@@ -82,7 +82,8 @@ export default function TestimonialFormModal({
       title={initial ? "Edit Testimonial" : "Add Testimonial"}
       maxWidth="md"
     >
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
+
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <FormField label="Customer Name" error={errors.name}>
             <input

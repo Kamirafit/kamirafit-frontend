@@ -96,6 +96,7 @@ export default function CheckoutOrderSummary({
       <div className="border-t border-line pt-4">
         {!appliedCoupon ? (
           <form
+            noValidate
             onSubmit={(e) => {
               e.preventDefault();
               if (couponInput.trim() && onApplyCoupon) {
@@ -104,6 +105,7 @@ export default function CheckoutOrderSummary({
             }}
             className="space-y-2"
           >
+
             <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-paper-muted">
               <span>Promo / Coupon Code</span>
             </div>

@@ -95,7 +95,7 @@ function AdminLoginContent() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} noValidate className="space-y-6">
             <div className="space-y-2">
               <label
                 htmlFor="admin-email"
@@ -106,7 +106,6 @@ function AdminLoginContent() {
               <input
                 id="admin-email"
                 type="email"
-                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full rounded-2xl border border-line bg-ink-2 px-5 py-3.5 text-sm text-paper placeholder-paper-muted/50 focus:border-gold focus:outline-none transition-colors"
@@ -125,7 +124,6 @@ function AdminLoginContent() {
                 <input
                   id="admin-password"
                   type={showPassword ? "text" : "password"}
-                  required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full rounded-2xl border border-line bg-ink-2 pl-5 pr-12 py-3.5 text-sm text-paper placeholder-paper-muted/50 focus:border-gold focus:outline-none transition-colors"
@@ -143,6 +141,7 @@ function AdminLoginContent() {
             </div>
 
             <div className="pt-3">
+
               <Button
                 type="submit"
                 variant="primary"

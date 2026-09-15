@@ -135,7 +135,6 @@ export default function ShippingForm({
           inputMode="tel"
           autoComplete="tel"
           maxLength={16}
-          pattern="[0-9+\s-]{10,16}"
           value={values.phone}
           onChange={(e) => setPhone(e.target.value)}
           placeholder="9876543210"
@@ -143,6 +142,7 @@ export default function ShippingForm({
           aria-invalid={Boolean(errors.phone)}
           aria-describedby={errors.phone ? `${fieldId("phone")}-err` : undefined}
         />
+
         {errors.phone ? (
           <p id={`${fieldId("phone")}-err`} className="text-xs text-red-400">
             {errors.phone}

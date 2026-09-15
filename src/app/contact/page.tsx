@@ -4,6 +4,14 @@ import { useState } from "react";
 import PageShell from "@/components/layout/PageShell";
 import { contactService } from "@/services/contact";
 
+interface FormErrors {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  message?: string;
+}
+
 export default function ContactPage() {
   const [formData, setFormData] = useState({
     firstName: "",
@@ -14,16 +22,99 @@ export default function ContactPage() {
     message: "",
   });
 
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
+  const validateField = (name: keyof typeof formData, value: string): string => {
+    switch (name) {
+      case "firstName":
+        if (!value.trim()) return "First name is required";
+        if (value.trim().length < 2) return "First name must be at least 2 characters";
+        return "";
+      case "lastName":
+        if (!value.trim()) return "Last name is required";
+        return "";
+      case "email":
+        if (!value.trim()) return "Email address is required";
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim()))
+          return "Please enter a valid email address (e.g. name@domain.com)";
+        return "";
+      case "phone": {
+        const clean = value.replace(/\D/g, "");
+        if (!value.trim()) return "Phone number is required";
+        if (clean.length !== 10) return "Please enter a valid 10-digit mobile number";
+        return "";
+      }
+      case "message":
+        if (!value.trim()) return "Please write your inquiry or message";
+        if (value.trim().length < 10) return "Message must be at least 10 characters long";
+        return "";
+      default:
+        return "";
+    }
+  };
+
+  const validateAll = (): boolean => {
+    const nextErrors: FormErrors = {};
+    const fnErr = validateField("firstName", formData.firstName);
+    if (fnErr) nextErrors.firstName = fnErr;
+
+    const lnErr = validateField("lastName", formData.lastName);
+    if (lnErr) nextErrors.lastName = lnErr;
+
+    const emErr = validateField("email", formData.email);
+    if (emErr) nextErrors.email = emErr;
+
+    const phErr = validateField("phone", formData.phone);
+    if (phErr) nextErrors.phone = phErr;
+
+    const msgErr = validateField("message", formData.message);
+    if (msgErr) nextErrors.message = msgErr;
+
+    setErrors(nextErrors);
+    setTouched({
+      firstName: true,
+      lastName: true,
+      email: true,
+      phone: true,
+      message: true,
+    });
+    return Object.keys(nextErrors).length === 0;
+  };
+
+  const handleBlur = (field: keyof typeof formData) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+    const err = validateField(field, formData[field]);
+    setErrors((prev) => ({ ...prev, [field]: err }));
+  };
+
+  const handleChange = (field: keyof typeof formData, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (touched[field]) {
+      const err = validateField(field, value);
+      setErrors((prev) => ({ ...prev, [field]: err }));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setStatus("submitting");
     setErrorMessage("");
 
+    if (!validateAll()) return;
+
+    setStatus("submitting");
+
     try {
-      await contactService.submitQuery(formData);
+      await contactService.submitQuery({
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        countryCode: formData.countryCode,
+        phone: formData.phone.trim(),
+        email: formData.email.trim(),
+        message: formData.message.trim(),
+      });
       setStatus("success");
       setFormData({
         firstName: "",
@@ -33,6 +124,8 @@ export default function ContactPage() {
         email: "",
         message: "",
       });
+      setTouched({});
+      setErrors({});
     } catch (err: unknown) {
       setStatus("error");
       setErrorMessage(err instanceof Error ? err.message : "Failed to submit your message. Please try again or email us directly.");
@@ -96,7 +189,7 @@ export default function ContactPage() {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+            <form onSubmit={handleSubmit} noValidate className="mt-6 space-y-4">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label htmlFor="firstName" className="block text-xs font-medium text-paper-muted">
@@ -104,13 +197,20 @@ export default function ContactPage() {
                   </label>
                   <input
                     id="firstName"
-                    required
                     type="text"
                     value={formData.firstName}
-                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                    className="mt-1.5 w-full rounded-lg border border-line bg-ink px-3 py-2 text-xs text-paper placeholder-paper-muted/50 focus:border-gold focus:outline-none"
+                    onChange={(e) => handleChange("firstName", e.target.value)}
+                    onBlur={() => handleBlur("firstName")}
+                    className={`mt-1.5 w-full rounded-lg border bg-ink px-3 py-2 text-xs text-paper placeholder-paper-muted/50 transition-colors focus:outline-none ${
+                      touched.firstName && errors.firstName
+                        ? "border-red-500/80 bg-red-500/5 focus:border-red-500"
+                        : "border-line focus:border-gold"
+                    }`}
                     placeholder="Arjun"
                   />
+                  {touched.firstName && errors.firstName && (
+                    <p className="mt-1 text-[11px] text-red-400 font-medium">{errors.firstName}</p>
+                  )}
                 </div>
 
                 <div>
@@ -119,13 +219,20 @@ export default function ContactPage() {
                   </label>
                   <input
                     id="lastName"
-                    required
                     type="text"
                     value={formData.lastName}
-                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                    className="mt-1.5 w-full rounded-lg border border-line bg-ink px-3 py-2 text-xs text-paper placeholder-paper-muted/50 focus:border-gold focus:outline-none"
+                    onChange={(e) => handleChange("lastName", e.target.value)}
+                    onBlur={() => handleBlur("lastName")}
+                    className={`mt-1.5 w-full rounded-lg border bg-ink px-3 py-2 text-xs text-paper placeholder-paper-muted/50 transition-colors focus:outline-none ${
+                      touched.lastName && errors.lastName
+                        ? "border-red-500/80 bg-red-500/5 focus:border-red-500"
+                        : "border-line focus:border-gold"
+                    }`}
                     placeholder="Sharma"
                   />
+                  {touched.lastName && errors.lastName && (
+                    <p className="mt-1 text-[11px] text-red-400 font-medium">{errors.lastName}</p>
+                  )}
                 </div>
               </div>
 
@@ -136,31 +243,45 @@ export default function ContactPage() {
                   </label>
                   <input
                     id="email"
-                    required
                     type="email"
                     value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="mt-1.5 w-full rounded-lg border border-line bg-ink px-3 py-2 text-xs text-paper placeholder-paper-muted/50 focus:border-gold focus:outline-none"
+                    onChange={(e) => handleChange("email", e.target.value)}
+                    onBlur={() => handleBlur("email")}
+                    className={`mt-1.5 w-full rounded-lg border bg-ink px-3 py-2 text-xs text-paper placeholder-paper-muted/50 transition-colors focus:outline-none ${
+                      touched.email && errors.email
+                        ? "border-red-500/80 bg-red-500/5 focus:border-red-500"
+                        : "border-line focus:border-gold"
+                    }`}
                     placeholder="arjun@example.com"
                   />
+                  {touched.email && errors.email && (
+                    <p className="mt-1 text-[11px] text-red-400 font-medium">{errors.email}</p>
+                  )}
                 </div>
 
                 <div>
                   <label htmlFor="phone" className="block text-xs font-medium text-paper-muted">
                     Phone Number <span className="text-gold">*</span>
                   </label>
-                  <div className="mt-1.5 flex rounded-lg border border-line bg-ink focus-within:border-gold">
+                  <div className={`mt-1.5 flex rounded-lg border bg-ink transition-colors ${
+                    touched.phone && errors.phone
+                      ? "border-red-500/80 bg-red-500/5 focus-within:border-red-500"
+                      : "border-line focus-within:border-gold"
+                  }`}>
                     <span className="inline-flex items-center px-3 text-xs text-paper-muted border-r border-line">+91</span>
                     <input
                       id="phone"
-                      required
                       type="tel"
                       value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      onChange={(e) => handleChange("phone", e.target.value)}
+                      onBlur={() => handleBlur("phone")}
                       className="w-full bg-transparent px-3 py-2 text-xs text-paper placeholder-paper-muted/50 focus:outline-none"
                       placeholder="9876543210"
                     />
                   </div>
+                  {touched.phone && errors.phone && (
+                    <p className="mt-1 text-[11px] text-red-400 font-medium">{errors.phone}</p>
+                  )}
                 </div>
               </div>
 
@@ -170,13 +291,20 @@ export default function ContactPage() {
                 </label>
                 <textarea
                   id="message"
-                  required
                   rows={4}
                   value={formData.message}
-                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  className="mt-1.5 w-full rounded-lg border border-line bg-ink px-3 py-2 text-xs text-paper placeholder-paper-muted/50 focus:border-gold focus:outline-none resize-none"
+                  onChange={(e) => handleChange("message", e.target.value)}
+                  onBlur={() => handleBlur("message")}
+                  className={`mt-1.5 w-full rounded-lg border bg-ink px-3 py-2 text-xs text-paper placeholder-paper-muted/50 transition-colors focus:outline-none resize-none ${
+                    touched.message && errors.message
+                      ? "border-red-500/80 bg-red-500/5 focus:border-red-500"
+                      : "border-line focus:border-gold"
+                  }`}
                   placeholder="How can we assist you today?"
                 />
+                {touched.message && errors.message && (
+                  <p className="mt-1 text-[11px] text-red-400 font-medium">{errors.message}</p>
+                )}
               </div>
 
               <button

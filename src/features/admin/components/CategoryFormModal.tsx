@@ -151,7 +151,8 @@ export default function CategoryFormModal({
       title={initial ? "Edit category" : "Add category"}
       maxWidth="md"
     >
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5">
+
         <FormField label="Category name" error={errors.name}>
           <input
             type="text"

@@ -601,7 +601,8 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
 
   return (
     <Modal open={open} onClose={loading ? () => {} : onClose} title={duplicate ? "Duplicate product" : initial ? "Edit product" : "Add product"} maxWidth="xl">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-8">
+      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-8">
+
         <Section title="Product">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <FormField label="Name" error={errors.name}><input value={values.name} onChange={(event) => handleNameChange(event.target.value)} maxLength={80} className={inputClass} placeholder="Ivory Oversized Tee" /></FormField>
