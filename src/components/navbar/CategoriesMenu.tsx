@@ -3,11 +3,10 @@
 import Link from "next/link";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useCategories } from "@/services/category";
+import { CATEGORY_COLUMNS, type MegaMenuColumn } from "./categories-data";
 
-export type MegaMenuColumn = {
-  title: string;
-  items: { label: string; href: string }[];
-};
+export { CATEGORY_COLUMNS };
+export type { MegaMenuColumn };
 
 function Chevron({ open }: { open: boolean }) {
   return (
@@ -34,10 +33,11 @@ function useDynamicCategoryColumns(): MegaMenuColumn[] {
   const { data: serverCategories } = useCategories();
 
   return useMemo(() => {
-    if (serverCategories && Array.isArray(serverCategories)) {
-      return serverCategories
+    if (serverCategories && Array.isArray(serverCategories) && serverCategories.length > 0) {
+      const dynamicCols: MegaMenuColumn[] = serverCategories
         .filter((cat) => Boolean(cat && cat.name))
         .map((cat) => {
+          const catSlug = cat.slug || cat.name.toLowerCase().replace(/[\s_]+/g, "-");
           const subItems = (cat.subcategories || [])
             .map((sub) => {
               const label = typeof sub === "string" ? sub : sub.name || sub.title || "";
@@ -52,19 +52,32 @@ function useDynamicCategoryColumns(): MegaMenuColumn[] {
             })
             .filter((item) => Boolean(item.label));
 
+          // If no subcategories exist for this category, provide a direct link item to the category itself
+          const items =
+            subItems.length > 0
+              ? subItems
+              : [{ label: `All ${cat.name}`, href: `/shop?category=${encodeURIComponent(catSlug)}` }];
+
           return {
             title: cat.name,
-            items: subItems,
+            items,
           };
         });
+
+      if (dynamicCols.length > 0) {
+        return dynamicCols;
+      }
     }
-    return [];
+
+    // Always fallback to static CATEGORY_COLUMNS so the menu never breaks or disappears
+    return CATEGORY_COLUMNS;
   }, [serverCategories]);
 }
 
 /**
  * Desktop-only mega menu: trigger + hover-opened multi-column panel.
- * Dynamically populated strictly from backend categories & subcategories.
+ * Combines pure CSS group-hover for instant, flicker-free desktop hover
+ * with React state for click/touch accessibility.
  */
 export function DesktopCategoriesMenu() {
   const [isOpen, setIsOpen] = useState(false);
@@ -77,29 +90,26 @@ export function DesktopCategoriesMenu() {
         setIsOpen(false);
       }
     };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsOpen(false);
+      }
+    };
+
     document.addEventListener("click", handleOutsideAction);
     document.addEventListener("touchstart", handleOutsideAction);
+    document.addEventListener("keydown", handleKeyDown);
     return () => {
       document.removeEventListener("click", handleOutsideAction);
       document.removeEventListener("touchstart", handleOutsideAction);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
-
-  if (columns.length === 0) {
-    return (
-      <Link
-        href="/shop"
-        className="relative inline-flex items-center text-[12px] font-medium uppercase tracking-[0.22em] text-paper transition-colors hover:text-gold"
-      >
-        Categories
-      </Link>
-    );
-  }
 
   return (
     <div
       ref={containerRef}
-      className="relative"
+      className="group/cats relative py-2 -my-2"
       onMouseEnter={() => setIsOpen(true)}
       onMouseLeave={() => setIsOpen(false)}
     >
@@ -108,28 +118,33 @@ export function DesktopCategoriesMenu() {
         aria-haspopup="true"
         aria-expanded={isOpen}
         onClick={() => setIsOpen((prev) => !prev)}
-        className="relative inline-flex items-center gap-1.5 text-[12px] font-medium uppercase tracking-[0.22em] text-paper transition-colors hover:text-gold"
+        className="relative inline-flex items-center gap-1.5 text-[12px] font-medium uppercase tracking-[0.22em] text-paper transition-colors hover:text-gold group-hover/cats:text-gold"
       >
         Categories
-        <span className={`transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}>
+        <span className={`transition-transform duration-300 group-hover/cats:rotate-180 ${isOpen ? "rotate-180" : ""}`}>
           <Chevron open={isOpen} />
         </span>
         <span
           aria-hidden
-          className={`pointer-events-none absolute -bottom-1 left-0 h-px bg-gold transition-all duration-300 ${
+          className={`pointer-events-none absolute -bottom-1 left-0 h-px bg-gold transition-all duration-300 group-hover/cats:w-full ${
             isOpen ? "w-full" : "w-0"
           }`}
         />
       </button>
 
+      {/* Dropdown panel wrapper with top-full and pt-2 bridge */}
       <div
         role="menu"
         aria-label="Categories"
-        className={`absolute left-1/2 top-full z-50 w-[min(960px,92vw)] -translate-x-1/2 pt-2 transition-all duration-300 ease-in-out ${
-          isOpen ? "pointer-events-auto opacity-100 visible translate-y-0" : "pointer-events-none opacity-0 invisible translate-y-2"
+        className={`absolute left-1/2 top-full z-50 w-[min(960px,92vw)] -translate-x-1/2 pt-2 transition-all duration-300 ease-in-out pointer-events-none group-hover/cats:pointer-events-auto ${
+          isOpen ? "!pointer-events-auto" : ""
         }`}
       >
-        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-ink/60 text-paper shadow-[0_8px_32px_-12px_rgba(0,0,0,0.35)] backdrop-blur-xl supports-[backdrop-filter]:bg-ink/45">
+        <div
+          className={`relative overflow-hidden rounded-2xl border border-white/10 bg-ink/95 text-paper shadow-[0_16px_40px_-10px_rgba(0,0,0,0.6)] backdrop-blur-2xl transition-all duration-300 ease-in-out invisible opacity-0 translate-y-2 group-hover/cats:visible group-hover/cats:opacity-100 group-hover/cats:translate-y-0 ${
+            isOpen ? "!visible !opacity-100 !translate-y-0" : ""
+          }`}
+        >
           <div
             aria-hidden
             className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-gold/50 to-transparent"
@@ -155,8 +170,12 @@ export function DesktopCategoriesMenu() {
                         <Link
                           href={item.href}
                           onClick={() => setIsOpen(false)}
-                          className="block text-[13.5px] text-paper-muted transition-colors duration-200 hover:text-gold"
+                          className="group/it inline-flex items-center gap-2 text-[13.5px] text-paper-muted transition-all duration-200 hover:text-gold"
                         >
+                          <span
+                            aria-hidden
+                            className="h-px w-2.5 bg-white/25 transition-all duration-200 group-hover/it:w-4 group-hover/it:bg-gold"
+                          />
                           {item.label}
                         </Link>
                       </li>
@@ -168,7 +187,7 @@ export function DesktopCategoriesMenu() {
           </div>
           <div className="flex items-center justify-between border-t border-white/10 bg-white/5 px-8 py-4 backdrop-blur-xl">
             <p className="text-[12px] text-paper-muted">
-              Free shipping on orders over ₹2,000
+              Free shipping on orders over ₹999
             </p>
             <Link
               href="/shop"
@@ -195,18 +214,6 @@ export function MobileCategoriesMenu({
 }) {
   const [open, setOpen] = useState(false);
   const columns = useDynamicCategoryColumns();
-
-  if (columns.length === 0) {
-    return (
-      <Link
-        href="/shop"
-        onClick={onItemClick}
-        className="block px-3 py-2.5 text-sm font-medium uppercase tracking-[0.2em] text-paper transition-colors hover:bg-ink-3 hover:text-gold"
-      >
-        Categories
-      </Link>
-    );
-  }
 
   return (
     <div className="flex flex-col">
@@ -265,3 +272,4 @@ export function MobileCategoriesMenu({
     </div>
   );
 }
+

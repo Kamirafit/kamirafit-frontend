@@ -1,7 +1,7 @@
 import type { CartItem } from "@/features/product/store/cartSlice";
 import type { Product } from "@/features/product/types";
 
-export const FREE_SHIPPING_THRESHOLD = 500;
+export const FREE_SHIPPING_THRESHOLD = 999;
 export const DELIVERY_FEE = 50;
 
 export type ResolvedCartItem = {

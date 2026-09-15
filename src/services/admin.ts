@@ -7,6 +7,7 @@ import {
   type AdminOrder as Order,
   type AdminUser,
   type ContactQuery,
+  type AdminQueryInput,
   type Product,
   type BusinessAnalytics,
   type AdminCoupon,
@@ -341,10 +342,15 @@ export const adminService = {
       const items = Array.isArray(r) ? r : r?.items || r?.data || [];
       return items as ContactQuery[];
     }),
+  createQuery: (data: AdminQueryInput) =>
+    adminRequest<ContactQuery>("post", "/queries", data),
+  updateQuery: (id: string, data: Partial<AdminQueryInput>) =>
+    adminRequest<ContactQuery>("put", "/queries/" + id, data),
   updateQueryStatus: (id: string, status: "PENDING" | "RESOLVED" | "ARCHIVED") =>
     adminRequest<ContactQuery>("patch", "/queries/" + id + "/status", { status }),
   deleteQuery: (id: string) =>
     adminRequest<{ id: string }>("delete", "/queries/" + id).then((x) => x.id || id),
+
   getProductReviews: async (productId: string): Promise<AdminProductReview[]> => {
     const res = await unwrapApiResponse<any[]>(
       apiClient.get("/orders/reviews", { params: { productId } })
@@ -536,7 +542,29 @@ export function useAdminQueries(params?: { search?: string; status?: string; pag
   });
 }
 
+export function useCreateAdminQuery() {
+  const q = useQueryClient();
+  return useMutation({
+    mutationFn: (data: AdminQueryInput) => adminService.createQuery(data),
+    onSuccess: () => {
+      q.invalidateQueries({ queryKey: ["admin", "queries"] });
+    },
+  });
+}
+
+export function useUpdateAdminQuery() {
+  const q = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<AdminQueryInput> }) =>
+      adminService.updateQuery(id, data),
+    onSuccess: () => {
+      q.invalidateQueries({ queryKey: ["admin", "queries"] });
+    },
+  });
+}
+
 export function useUpdateAdminQueryStatus() {
+
   const q = useQueryClient();
   return useMutation({
     mutationFn: ({ id, status }: { id: string; status: "PENDING" | "RESOLVED" | "ARCHIVED" }) =>

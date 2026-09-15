@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Button from "@/components/ui/Button";
 import SectionHeader from "@/components/ui/SectionHeader";
 import type { AdminCategory } from "@/types/entities";
@@ -44,6 +45,27 @@ export default function CategoriesPage() {
     : null;
 
   const columns: Column<AdminCategory>[] = [
+    {
+      key: "image",
+      label: "Image",
+      render: (c) => (
+        <div className="relative h-12 w-10 shrink-0 overflow-hidden rounded-lg border border-line bg-ink-2">
+          {c.image ? (
+            <Image
+              src={c.image}
+              alt={c.name}
+              fill
+              unoptimized
+              className="object-cover"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-[10px] text-paper-muted">
+              No img
+            </div>
+          )}
+        </div>
+      ),
+    },
     {
       key: "name",
       label: "Category name",

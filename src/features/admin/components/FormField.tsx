@@ -42,6 +42,9 @@ export default function FormField({
 export const inputClass =
   "w-full rounded-full border border-line bg-ink-2 px-4 py-2.5 text-[13.5px] text-paper placeholder:text-paper-muted/70 transition-colors focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold";
 
+export const inputErrorClass =
+  "w-full rounded-full border border-[#B3261E] bg-[#B3261E]/5 px-4 py-2.5 text-[13.5px] text-paper placeholder:text-paper-muted/70 transition-colors focus:border-[#B3261E] focus:outline-none focus:ring-1 focus:ring-[#B3261E]";
+
 /**
  * Select style — identical to `inputClass` but with extra right padding so the
  * native dropdown chevron has breathing room from the right edge. Fixes the
@@ -50,9 +53,16 @@ export const inputClass =
 export const selectClass =
   "w-full rounded-full border border-line bg-ink-2 pl-4 pr-10 py-2.5 text-[13.5px] text-paper placeholder:text-paper-muted/70 transition-colors focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold";
 
+export const selectErrorClass =
+  "w-full rounded-full border border-[#B3261E] bg-[#B3261E]/5 pl-4 pr-10 py-2.5 text-[13.5px] text-paper placeholder:text-paper-muted/70 transition-colors focus:border-[#B3261E] focus:outline-none focus:ring-1 focus:ring-[#B3261E]";
+
 /**
  * Textareas keep a rounded-2xl shape because they're multi-line — matches the
  * `rounded-2xl` used on storefront product cards and admin card shells.
  */
 export const textareaClass =
   "w-full min-h-[96px] resize-y rounded-2xl border border-line bg-ink-2 px-4 py-3 text-[13.5px] leading-relaxed text-paper placeholder:text-paper-muted/70 transition-colors focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold";
+
+export const textareaErrorClass =
+  "w-full min-h-[96px] resize-y rounded-2xl border border-[#B3261E] bg-[#B3261E]/5 px-4 py-3 text-[13.5px] leading-relaxed text-paper placeholder:text-paper-muted/70 transition-colors focus:border-[#B3261E] focus:outline-none focus:ring-1 focus:ring-[#B3261E]";
+

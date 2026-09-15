@@ -9,9 +9,11 @@ import { useUpdateAdminQueryStatus, useDeleteAdminQuery } from "@/services/admin
 interface Props {
   query: ContactQuery | null;
   onClose: () => void;
+  onEdit?: (query: ContactQuery) => void;
 }
 
-export default function QueryDetailsModal({ query, onClose }: Props) {
+export default function QueryDetailsModal({ query, onClose, onEdit }: Props) {
+
   const updateStatusMutation = useUpdateAdminQueryStatus();
   const deleteMutation = useDeleteAdminQuery();
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -198,11 +200,24 @@ export default function QueryDetailsModal({ query, onClose }: Props) {
             </button>
           )}
 
-          <ActionButton tone="neutral" onClick={onClose}>
-            Close
-          </ActionButton>
+          <div className="flex items-center gap-2">
+            {onEdit && (
+              <ActionButton
+                onClick={() => {
+                  onClose();
+                  onEdit(query);
+                }}
+              >
+                Edit Query
+              </ActionButton>
+            )}
+            <ActionButton tone="neutral" onClick={onClose}>
+              Close
+            </ActionButton>
+          </div>
         </div>
       </div>
     </Modal>
+
   );
 }

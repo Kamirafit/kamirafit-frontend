@@ -21,3 +21,14 @@ export interface CreateContactQueryInput {
   email: string;
   message: string;
 }
+
+export interface AdminQueryInput {
+  firstName: string;
+  lastName?: string;
+  countryCode?: string;
+  phone: string;
+  email: string;
+  message: string;
+  status?: ContactQueryStatus;
+}
+

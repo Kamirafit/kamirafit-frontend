@@ -2,23 +2,35 @@
 
 import { useMemo, useState } from "react";
 import SectionHeader from "@/components/ui/SectionHeader";
-import type { ContactQuery } from "@/types/entities";
-import { useAdminQueries } from "@/services/admin";
+import type { ContactQuery, AdminQueryInput } from "@/types/entities";
+import {
+  useAdminQueries,
+  useCreateAdminQuery,
+  useUpdateAdminQuery,
+} from "@/services/admin";
+import Button from "@/components/ui/Button";
 import AdminTableSkeleton from "@/components/skeleton/AdminTableSkeleton";
 import ActionButton from "../components/ActionButton";
 import DataTable, { type Column } from "../components/DataTable";
 import SearchField from "../components/SearchField";
 import QueryDetailsModal from "../components/QueryDetailsModal";
+import QueryFormModal from "../components/QueryFormModal";
 import { EmptyState } from "@/components/states";
 
 export default function QueriesPage() {
   const queriesQuery = useAdminQueries();
+  const createQueryMutation = useCreateAdminQuery();
+  const updateQueryMutation = useUpdateAdminQuery();
+
   const { data: queries = [] } = queriesQuery;
   const isLoading = queriesQuery.isLoading || (queriesQuery.isFetching && queries.length === 0);
 
   const [queryText, setQueryText] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<"ALL" | "PENDING" | "RESOLVED">("ALL");
   const [activeQuery, setActiveQuery] = useState<ContactQuery | null>(null);
+  const [formModalOpen, setFormModalOpen] = useState(false);
+  const [editingQuery, setEditingQuery] = useState<ContactQuery | null>(null);
+
 
   const filtered = useMemo(() => {
     const q = queryText.trim().toLowerCase();
@@ -122,14 +134,36 @@ export default function QueriesPage() {
       label: "Actions",
       align: "right",
       render: (item) => (
-        <div className="flex items-center justify-end">
-          <ActionButton onClick={() => setActiveQuery(item)}>
+        <div className="flex items-center justify-end gap-2">
+          <ActionButton
+            onClick={() => {
+              setEditingQuery(item);
+              setFormModalOpen(true);
+            }}
+          >
+            Edit
+          </ActionButton>
+          <ActionButton
+            tone="neutral"
+            onClick={() => setActiveQuery(item)}
+          >
             View Details
           </ActionButton>
         </div>
       ),
     },
   ];
+
+  const handleFormSubmit = async (values: AdminQueryInput) => {
+    if (editingQuery) {
+      await updateQueryMutation.mutateAsync({
+        id: editingQuery.id,
+        data: values,
+      });
+    } else {
+      await createQueryMutation.mutateAsync(values);
+    }
+  };
 
   return (
     <div className="flex flex-col gap-8">
@@ -140,20 +174,34 @@ export default function QueriesPage() {
           description="Inquiries received from the Contact Us form on the website."
         />
 
-        {/* Quick summary counters */}
-        <div className="flex items-center gap-2">
-          <div className="rounded-xl border border-line bg-ink-2/60 px-3.5 py-2 text-center">
-            <span className="block text-xs font-bold text-amber-400">{pendingCount}</span>
-            <span className="text-[10px] uppercase tracking-wider text-paper-muted">Pending</span>
+        {/* Quick summary counters and Add Query CTA */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
+            <div className="rounded-xl border border-line bg-ink-2/60 px-3.5 py-2 text-center">
+              <span className="block text-xs font-bold text-amber-400">{pendingCount}</span>
+              <span className="text-[10px] uppercase tracking-wider text-paper-muted">Pending</span>
+            </div>
+            <div className="rounded-xl border border-line bg-ink-2/60 px-3.5 py-2 text-center">
+              <span className="block text-xs font-bold text-emerald-400">{resolvedCount}</span>
+              <span className="text-[10px] uppercase tracking-wider text-paper-muted">Resolved</span>
+            </div>
+            <div className="rounded-xl border border-line bg-ink-2/60 px-3.5 py-2 text-center">
+              <span className="block text-xs font-bold text-paper">{queries.length}</span>
+              <span className="text-[10px] uppercase tracking-wider text-paper-muted">Total</span>
+            </div>
           </div>
-          <div className="rounded-xl border border-line bg-ink-2/60 px-3.5 py-2 text-center">
-            <span className="block text-xs font-bold text-emerald-400">{resolvedCount}</span>
-            <span className="text-[10px] uppercase tracking-wider text-paper-muted">Resolved</span>
-          </div>
-          <div className="rounded-xl border border-line bg-ink-2/60 px-3.5 py-2 text-center">
-            <span className="block text-xs font-bold text-paper">{queries.length}</span>
-            <span className="text-[10px] uppercase tracking-wider text-paper-muted">Total</span>
-          </div>
+
+          <Button
+            type="button"
+            onClick={() => {
+              setEditingQuery(null);
+              setFormModalOpen(true);
+            }}
+            className="flex items-center gap-2"
+          >
+            <span className="text-base leading-none font-bold">+</span>
+            <span>Add Query</span>
+          </Button>
         </div>
       </div>
 
@@ -214,8 +262,25 @@ export default function QueriesPage() {
         <QueryDetailsModal
           query={queries.find((q) => q.id === activeQuery.id) || activeQuery}
           onClose={() => setActiveQuery(null)}
+          onEdit={(q) => {
+            setEditingQuery(q);
+            setFormModalOpen(true);
+          }}
         />
       )}
+
+      {/* Add / Edit Query Modal */}
+      <QueryFormModal
+        open={formModalOpen}
+        onClose={() => {
+          setFormModalOpen(false);
+          setEditingQuery(null);
+        }}
+        onSubmit={handleFormSubmit}
+        initial={editingQuery}
+        loading={createQueryMutation.isPending || updateQueryMutation.isPending}
+      />
     </div>
   );
 }
+

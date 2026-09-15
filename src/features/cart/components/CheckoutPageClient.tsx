@@ -382,7 +382,7 @@ export default function CheckoutPageClient() {
           <span className="font-semibold text-gold">
             {formatPrice(placedOrderTotal)}
           </span>{" "}
-          has been placed {placedPaymentMethod === "COD" ? "via Cash on Delivery" : "and payment confirmed"}. A confirmation will reach {placedRecipientPhone || "you"}{" "}
+          has been placed {placedPaymentMethod === "COD" ? "via COD" : "via UPI"}. A confirmation will reach {placedRecipientPhone || "you"}{" "}
           shortly.
         </p>
         <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
@@ -632,24 +632,21 @@ export default function CheckoutPageClient() {
               <h2 className="font-display text-lg font-semibold text-paper">
                 Payment method
               </h2>
-              <p className="text-xs text-paper-muted mt-0.5">
-                Choose between Cash on Delivery and instant online payment
-              </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              {/* Cash on Delivery (COD) */}
+              {/* COD */}
               <div
                 onClick={() => setPaymentMethod("COD")}
-                className={`relative flex flex-col justify-between rounded-2xl border p-4 sm:p-5 cursor-pointer transition-all duration-200 ${
+                className={`relative flex items-center justify-between rounded-2xl border p-4 sm:p-5 cursor-pointer transition-all duration-200 ${
                   paymentMethod === "COD"
                     ? "border-gold bg-gold/10 shadow-[0_0_20px_rgba(201,162,77,0.15)] ring-1 ring-gold"
                     : "border-line bg-ink hover:border-gold/40 hover:bg-ink-2/60"
                 }`}
               >
-                <div className="flex items-start gap-3">
+                <div className="flex items-center gap-3">
                   <div
-                    className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-all ${
+                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-all ${
                       paymentMethod === "COD"
                         ? "border-gold bg-gold text-ink"
                         : "border-paper-muted/50 bg-transparent"
@@ -661,38 +658,24 @@ export default function CheckoutPageClient() {
                       </svg>
                     )}
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-display text-[15px] font-semibold text-paper">
-                        Cash on Delivery (COD)
-                      </span>
-                      <span className="inline-flex items-center rounded-full bg-gold/15 border border-gold/30 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-gold">
-                        Doorstep
-                      </span>
-                    </div>
-                    <p className="text-xs text-paper-muted mt-1 leading-relaxed">
-                      Pay with cash or UPI directly when your package is delivered at your doorstep.
-                    </p>
-                    <div className="mt-3 flex flex-wrap items-center gap-1.5 text-[10px] font-medium text-paper-muted/80">
-                      <span className="rounded bg-ink-3 px-2 py-0.5 border border-line">Cash</span>
-                      <span className="rounded bg-ink-3 px-2 py-0.5 border border-line">Doorstep QR</span>
-                    </div>
-                  </div>
+                  <span className="font-display text-base font-semibold text-paper tracking-wide">
+                    COD
+                  </span>
                 </div>
               </div>
 
-              {/* UPI / Online via Razorpay */}
+              {/* UPI */}
               <div
                 onClick={() => setPaymentMethod("ONLINE")}
-                className={`relative flex flex-col justify-between rounded-2xl border p-4 sm:p-5 cursor-pointer transition-all duration-200 ${
+                className={`relative flex items-center justify-between rounded-2xl border p-4 sm:p-5 cursor-pointer transition-all duration-200 ${
                   paymentMethod === "ONLINE"
                     ? "border-gold bg-gold/10 shadow-[0_0_20px_rgba(201,162,77,0.15)] ring-1 ring-gold"
                     : "border-line bg-ink hover:border-gold/40 hover:bg-ink-2/60"
                 }`}
               >
-                <div className="flex items-start gap-3">
+                <div className="flex items-center gap-3">
                   <div
-                    className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-all ${
+                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-all ${
                       paymentMethod === "ONLINE"
                         ? "border-gold bg-gold text-ink"
                         : "border-paper-muted/50 bg-transparent"
@@ -704,24 +687,9 @@ export default function CheckoutPageClient() {
                       </svg>
                     )}
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-display text-[15px] font-semibold text-paper">
-                        UPI / Cards / Net Banking
-                      </span>
-                      <span className="inline-flex items-center rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-400">
-                        Razorpay
-                      </span>
-                    </div>
-                    <p className="text-xs text-paper-muted mt-1 leading-relaxed">
-                      Pay securely with Google Pay, PhonePe, Paytm, BHIM, Cards or Net Banking.
-                    </p>
-                    <div className="mt-3 flex flex-wrap items-center gap-1.5 text-[10px] font-medium text-paper-muted/80">
-                      <span className="rounded bg-ink-3 px-2 py-0.5 border border-line">UPI</span>
-                      <span className="rounded bg-ink-3 px-2 py-0.5 border border-line">GPay / PhonePe</span>
-                      <span className="rounded bg-ink-3 px-2 py-0.5 border border-line">Cards</span>
-                    </div>
-                  </div>
+                  <span className="font-display text-base font-semibold text-paper tracking-wide">
+                    UPI
+                  </span>
                 </div>
               </div>
             </div>

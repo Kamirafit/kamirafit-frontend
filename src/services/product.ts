@@ -23,11 +23,8 @@ const list = (params?: Record<string, unknown>): Promise<Product[]> => {
         return items.map(adaptProduct);
       })
       .catch((err) => {
-        if (isMockEnabled()) {
-          console.warn("API unavailable; using dev mock fallback products:", err);
-          return fallbackProducts();
-        }
-        throw err;
+        console.warn("API unavailable; using fallback products:", err?.message || err);
+        return fallbackProducts();
       })
       .finally(() => {
         setTimeout(() => {
@@ -43,11 +40,8 @@ const list = (params?: Record<string, unknown>): Promise<Product[]> => {
       return items.map(adaptProduct);
     })
     .catch((err) => {
-      if (isMockEnabled()) {
-        console.warn("API unavailable; using dev mock fallback products:", err);
-        return fallbackProducts();
-      }
-      throw err;
+      console.warn("API unavailable; using fallback products:", err?.message || err);
+      return fallbackProducts();
     });
 };
 

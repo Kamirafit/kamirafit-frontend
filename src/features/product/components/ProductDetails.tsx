@@ -195,7 +195,6 @@ export default function ProductDetails({ product }: Props) {
   const [isCheckingDelivery, setIsCheckingDelivery] = useState(false);
   const [deliveryResult, setDeliveryResult] = useState<DeliveryEstimateResult | null>(null);
   const [deliveryError, setDeliveryError] = useState<string | null>(null);
-  const [selectedTier, setSelectedTier] = useState<"STANDARD" | "PRIME">("STANDARD");
 
   const currentCountryConfig = useMemo(() => {
     return POPULAR_COUNTRIES.find((c) => c.name === selectedCountry) || POPULAR_COUNTRIES[0];
@@ -238,11 +237,9 @@ export default function ProductDetails({ product }: Props) {
         localStorage.getItem("kamirafit_pincode") ||
         "560038";
       const savedCountry = localStorage.getItem("kamirafit_country") || "India";
-      const savedTier = (localStorage.getItem("kamirafit_shipping_tier") as "STANDARD" | "PRIME") || "STANDARD";
 
       setPostalCode(savedPin);
       setSelectedCountry(savedCountry);
-      setSelectedTier(savedTier);
 
       if (savedPin) {
         handleFetchEstimate(savedPin, savedCountry);
@@ -406,7 +403,7 @@ export default function ProductDetails({ product }: Props) {
             </p>
           )}
 
-          {/* Delivery Options (Standard vs Prime) */}
+          {/* Standard Delivery Estimate */}
           {deliveryResult && (
             <div className="space-y-3 pt-1 animate-fadeIn">
               <div className="flex items-center justify-between text-[11px] text-paper-muted">
@@ -418,82 +415,36 @@ export default function ProductDetails({ product }: Props) {
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {/* Standard Delivery Option */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedTier("STANDARD");
-                    if (typeof window !== "undefined") localStorage.setItem("kamirafit_shipping_tier", "STANDARD");
-                  }}
-                  className={`relative flex flex-col justify-between text-left p-3.5 rounded-xl border transition-all ${
-                    selectedTier === "STANDARD"
-                      ? "border-gold bg-gold/10 shadow-[0_0_15px_rgba(201,162,77,0.15)] ring-1 ring-gold"
-                      : "border-line bg-ink-2/60 hover:border-line-strong hover:bg-ink-2"
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-2">
+              {/* Single Standard Delivery Card */}
+              <div className="rounded-xl border border-gold/40 bg-gold/5 p-4 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div>
                     <p className="text-xs font-semibold text-paper">
                       Standard Delivery
                     </p>
-                    <span className={`text-xs font-semibold ${deliveryResult.standard.isFree ? "text-emerald-400" : "text-paper"}`}>
-                      {deliveryResult.standard.isFree ? "FREE" : `₹${deliveryResult.standard.rate.toLocaleString()}`}
-                    </span>
-                  </div>
-                  <div className="mt-2.5 pt-2 border-t border-line/50 flex items-center justify-between text-[11px]">
-                    <span className="text-paper font-medium">
-                      Arrives: <strong className="text-gold">{deliveryResult.standard.estimatedDate}</strong>
-                    </span>
-                    <span className="text-[10px] text-paper-muted">
-                      {deliveryResult.standard.estimatedDays} days
-                    </span>
-                  </div>
-                </button>
-
-                {/* Prime Delivery Option */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedTier("PRIME");
-                    if (typeof window !== "undefined") localStorage.setItem("kamirafit_shipping_tier", "PRIME");
-                  }}
-                  className={`relative flex flex-col justify-between text-left p-3.5 rounded-xl border transition-all ${
-                    selectedTier === "PRIME"
-                      ? "border-amber-400 bg-amber-500/10 shadow-[0_0_20px_rgba(251,191,36,0.2)] ring-1 ring-amber-400"
-                      : "border-line bg-ink-2/60 hover:border-amber-400/40 hover:bg-ink-2"
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs font-semibold text-paper">
-                      Prime Delivery
+                    <p className="text-[11px] text-paper-muted mt-0.5">
+                      Via {deliveryResult.standard.courierName || "Express Courier"}
                     </p>
-                    <span className={`text-xs font-semibold ${deliveryResult.prime.isFree ? "text-emerald-400" : "text-paper"}`}>
-                      {deliveryResult.prime.isFree ? "FREE" : `₹${deliveryResult.prime.rate.toLocaleString()}`}
-                    </span>
                   </div>
-                  <div className="mt-2.5 pt-2 border-t border-line/50 flex items-center justify-between text-[11px]">
-                    <span className="text-paper font-medium">
-                      Arrives: <strong className="text-gold">{deliveryResult.prime.estimatedDate}</strong>
+                  <div className="text-right">
+                    <span className={`text-xs font-bold ${product.price >= 999 || deliveryResult.standard.isFree ? "text-emerald-400" : "text-paper"}`}>
+                      {product.price >= 999 || deliveryResult.standard.isFree ? "FREE" : `₹${deliveryResult.standard.rate.toLocaleString()}`}
                     </span>
-                    <span className="text-[10px] text-paper-muted">
-                      {deliveryResult.prime.estimatedDays} days
-                    </span>
+                    <p className="text-[10px] text-paper-muted">
+                      {product.price >= 999 ? "Order above ₹999" : "Free on orders above ₹999"}
+                    </p>
                   </div>
-                </button>
-              </div>
+                </div>
 
-              {/* Active Selection Banner */}
-              <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-400 space-y-1">
-                <p className="font-semibold flex items-center gap-1.5 text-emerald-300">
-                  <svg className="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
-                  </svg>
-                  Selected: {selectedTier === "PRIME" ? "Prime Delivery" : "Standard Delivery"}
-                </p>
-                <p className="text-[11px] text-emerald-400/90 pl-5">
-                  ✓ Estimated arrival by <strong className="underline">{selectedTier === "PRIME" ? deliveryResult.prime.estimatedDate : deliveryResult.standard.estimatedDate}</strong>
-                  {deliveryResult.isDomestic ? " • Cash on Delivery (COD) Available" : " • Full International Tracking Included"}
-                </p>
+                <div className="pt-2 border-t border-line/50 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                  <span className="text-paper font-medium flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                    Estimated arrival: <strong className="text-gold font-semibold">{deliveryResult.standard.estimatedDate}</strong>
+                  </span>
+                  <span className="text-[10px] text-paper-muted">
+                    ({deliveryResult.standard.estimatedDays} days) • {deliveryResult.isDomestic ? "COD Available" : "Tracking Included"}
+                  </span>
+                </div>
               </div>
             </div>
           )}

@@ -27,6 +27,7 @@ export default function CategoryCard({ category }: Props) {
         src={imageSrc}
         alt={category.title}
         fill
+        unoptimized={imageSrc.startsWith("data:") || imageSrc.startsWith("blob:")}
         sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
         className="object-cover opacity-90 transition-all duration-[1000ms] ease-out group-hover:scale-[1.05] group-hover:opacity-100"
       />

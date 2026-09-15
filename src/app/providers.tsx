@@ -9,6 +9,7 @@ import AuthHydrator from "@/features/auth/components/AuthHydrator";
 import QueryProvider from "@/providers/QueryProvider";
 import CommerceStateSync from "@/features/product/components/CommerceStateSync";
 import OfflineBanner from "@/components/states/OfflineBanner";
+import FreeShippingProgressBar from "@/components/cart/FreeShippingProgressBar";
 
 export default function Providers({ children }: { children: ReactNode }) {
   const storeRef = useRef<AppStore | null>(null);
@@ -22,7 +23,10 @@ export default function Providers({ children }: { children: ReactNode }) {
           <OfflineBanner />
           <CommerceStateSync />
           <SpotlightProvider>
-            <ContactModalProvider>{children}</ContactModalProvider>
+            <ContactModalProvider>
+              {children}
+              <FreeShippingProgressBar />
+            </ContactModalProvider>
           </SpotlightProvider>
         </AuthHydrator>
       </QueryProvider>
