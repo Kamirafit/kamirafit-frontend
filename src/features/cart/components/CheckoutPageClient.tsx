@@ -116,7 +116,6 @@ export default function CheckoutPageClient() {
   const [paymentMethod, setPaymentMethod] = useState<"COD" | "ONLINE">("ONLINE");
   const [placedOrderTotal, setPlacedOrderTotal] = useState<number | null>(null);
   const [placedRecipientName, setPlacedRecipientName] = useState<string>("");
-  const [placedRecipientPhone, setPlacedRecipientPhone] = useState<string>("");
   const [placedPaymentMethod, setPlacedPaymentMethod] = useState<"COD" | "ONLINE">("ONLINE");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const checkoutMutation = useCheckout();
@@ -264,7 +263,6 @@ export default function CheckoutPageClient() {
       if (paymentMethod === "COD") {
         setPlacedOrderTotal(result.order.totalAmount);
         setPlacedRecipientName(selectedAddress.fullName);
-        setPlacedRecipientPhone(selectedAddress.phoneNumber);
         setPlacedPaymentMethod("COD");
         dispatch(clearCart());
         setIsSubmitting(false);
@@ -321,7 +319,6 @@ export default function CheckoutPageClient() {
             });
             setPlacedOrderTotal(result.order.totalAmount);
             setPlacedRecipientName(selectedAddress.fullName);
-            setPlacedRecipientPhone(selectedAddress.phoneNumber);
             setPlacedPaymentMethod("ONLINE");
             dispatch(clearCart());
           } catch {

@@ -69,4 +69,5 @@ export const AdminOrderSchema = z.object({
   trackingCode: z.string().optional(),
   trackingUrl: z.string().optional(),
   notes: z.string().optional(),
+  returnReason: z.string().optional(),
 });

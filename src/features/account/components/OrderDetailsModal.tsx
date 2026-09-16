@@ -7,7 +7,8 @@ import { Order } from "../types";
 import { formatPrice } from "@/lib/format";
 import OrderStatusBadge from "./OrderStatusBadge";
 import OrderTrackingModal from "./OrderTrackingModal";
-import { useCancelOrder, useRequestReturn } from "@/services/order";
+import OrderJourneyTimeline from "./OrderJourneyTimeline";
+import { useCancelOrder, useRequestReturn, orderService } from "@/services/order";
 
 type Props = {
   order: Order;
@@ -29,22 +30,83 @@ export default function OrderDetailsModal({ order, onClose }: Props) {
   const [returnError, setReturnError] = useState<string | null>(null);
 
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+  const [downloadingInvoice, setDownloadingInvoice] = useState(false);
+  const [invoiceError, setInvoiceError] = useState<string | null>(null);
+
+  const customOrder = order as {
+    createdAt?: string;
+    updatedAt?: string;
+    orderNumber?: string;
+    paymentStatus?: string;
+    shippingFee?: number;
+    couponCode?: string;
+    coupon?: {
+      code: string;
+      discountType?: string;
+      discountValue?: number;
+      description?: string | null;
+    } | null;
+  } & Order;
 
   const normStatus = (order.status || "").toUpperCase();
+  // Customer can cancel up until Shiprocket has picked up the product
   const isCancellable =
     normStatus === "CONFIRMED" ||
     normStatus === "PROCESSING" ||
+    normStatus === "PACKED" ||
     normStatus === "PENDING_VERIFICATION" ||
     normStatus === "PENDING VERIFICATION";
 
-  const isReturnable = normStatus === "DELIVERED";
+  // Return only allowed within 7 days of delivery
+  const deliveryDate = customOrder.updatedAt || customOrder.createdAt;
+  const daysSinceDelivery = deliveryDate
+    ? Math.floor((Date.now() - new Date(deliveryDate).getTime()) / (1000 * 60 * 60 * 24))
+    : 0;
+  const isWithin7Days = daysSinceDelivery <= 7;
+  const isReturnable = normStatus === "DELIVERED" && isWithin7Days;
+
+  // Invoice only available post-delivery
+  const isDeliveredOrPost = [
+    "DELIVERED",
+    "RETURN_REQUESTED",
+    "RETURN_APPROVED",
+    "RETURN_REJECTED",
+    "RETURNED",
+    "REFUNDED",
+  ].includes(normStatus);
+
+  // Track package is only needed for active forward shipments
+  const isTerminalOrReturned =
+    normStatus === "CANCELLED" ||
+    normStatus === "CANCELED" ||
+    normStatus === "DELIVERED" ||
+    normStatus.includes("RETURN") ||
+    normStatus.includes("REFUND");
+  const canTrackPackage = !isTerminalOrReturned;
+
+  // Accurate breakdown of items subtotal, shipping, discount, and total
+  const itemsSubtotal = (order.items || []).reduce(
+    (sum, it) => sum + (Number(it.price) || 0) * (Number(it.quantity) || 1),
+    0
+  );
+  const totalAmount = Number(order.totalAmount) || 0;
+  let shippingFee = 0;
+  if (customOrder.shippingFee !== undefined && customOrder.shippingFee !== null) {
+    shippingFee = Number(customOrder.shippingFee);
+  } else if (totalAmount > itemsSubtotal) {
+    shippingFee = totalAmount - itemsSubtotal;
+  } else if (itemsSubtotal > 0 && itemsSubtotal < 999) {
+    shippingFee = 50;
+  }
+  const discountAmount = Math.max(0, itemsSubtotal + shippingFee - totalAmount);
+  const couponCode = customOrder.coupon?.code || customOrder.couponCode;
 
   const handleCancelSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setCancelError(null);
     try {
       await cancelOrderMutation.mutateAsync({ id: order.id, reason: cancelReason });
-      setActionSuccess("Order cancelled successfully. Stock has been restored to inventory.");
+      setActionSuccess("Order cancelled successfully.");
       setCancelOpen(false);
     } catch (err: unknown) {
       const errorObj = err as { response?: { data?: { message?: string } }; message?: string };
@@ -69,7 +131,32 @@ export default function OrderDetailsModal({ order, onClose }: Props) {
     }
   };
 
-  const customOrder = order as { createdAt?: string; orderNumber?: string; paymentStatus?: string } & Order;
+  const handleDownloadInvoice = async () => {
+    try {
+      setDownloadingInvoice(true);
+      setInvoiceError(null);
+      const res = await orderService.downloadInvoice(order.id);
+      const blob = new Blob([res.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `Invoice-${orderNum}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err: unknown) {
+      const errorObj = err as { response?: { data?: { message?: string } }; message?: string };
+      setInvoiceError(
+        errorObj?.response?.data?.message ||
+        errorObj?.message ||
+        "Failed to download tax invoice. Please try again."
+      );
+    } finally {
+      setDownloadingInvoice(false);
+    }
+  };
+
   const dateValue = customOrder.createdAt || order.date;
   const dateStr = dateValue
     ? new Date(dateValue).toLocaleDateString("en-US", {
@@ -84,8 +171,8 @@ export default function OrderDetailsModal({ order, onClose }: Props) {
   return (
     <div role="dialog" aria-modal="true" className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto modal-scrollbar-hidden rounded-2xl border border-line bg-ink shadow-2xl backdrop-blur-xl">
-        <div className="sticky top-0 z-10 border-b border-line bg-ink/95 px-6 py-4 backdrop-blur-md flex justify-between items-center">
+      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden modal-scrollbar-hidden rounded-2xl border border-line bg-ink shadow-2xl backdrop-blur-xl">
+        <div className="sticky top-0 z-30 border-b border-line bg-ink px-6 py-4 backdrop-blur-md flex justify-between items-center">
           <div>
             <h2 className="font-display text-lg font-bold text-paper">
               Order Details
@@ -114,8 +201,15 @@ export default function OrderDetailsModal({ order, onClose }: Props) {
               <OrderStatusBadge status={order.status} size="lg" />
             </div>
 
+            {/* Visual Product Journey Stepper */}
+            <OrderJourneyTimeline
+              order={order}
+              variant="detailed"
+              onTrackShipment={order.trackingNumber && canTrackPackage ? () => setShowTracking(true) : undefined}
+            />
+
             <div className="flex flex-wrap items-center gap-3">
-              {order.trackingNumber && (
+              {order.trackingNumber && canTrackPackage && (
                 <div className="flex flex-1 items-center justify-between gap-4 rounded-xl border border-line bg-ink-2/40 p-3">
                   <p className="text-sm text-paper">
                     <span className="text-paper-muted">Tracking ID: </span>
@@ -147,7 +241,7 @@ export default function OrderDetailsModal({ order, onClose }: Props) {
                   onClick={() => setReturnOpen(true)}
                   className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-amber-300 transition-colors hover:bg-amber-500 hover:text-ink"
                 >
-                  Request Return / Refund
+                  Request Return / Refund (7-Day Window)
                 </button>
               )}
             </div>
@@ -200,34 +294,88 @@ export default function OrderDetailsModal({ order, onClose }: Props) {
               <h3 className="text-[12px] font-semibold uppercase tracking-wider text-paper-muted border-b border-line pb-2">
                 Order Summary
               </h3>
-              <div className="space-y-2 text-sm">
+              <div className="space-y-2.5 text-sm">
                 <div className="flex justify-between text-paper-muted">
-                  <span>Subtotal</span>
-                  <span>{formatPrice(order.totalAmount)}</span>
+                  <span>Items Subtotal</span>
+                  <span className="font-medium text-paper">{formatPrice(itemsSubtotal)}</span>
                 </div>
-                <div className="flex justify-between text-paper-muted">
-                  <span>Shipping</span>
-                  <span>Free</span>
+                {(discountAmount > 0 || couponCode) && (
+                  <div className="flex justify-between items-center text-emerald-400">
+                    <span className="flex items-center gap-1.5">
+                      <span>Coupon Discount</span>
+                      {couponCode && (
+                        <span className="inline-flex items-center rounded border border-emerald-500/30 bg-emerald-500/15 px-1.5 py-0.5 text-[11px] font-mono font-semibold uppercase text-emerald-300">
+                          {couponCode}
+                        </span>
+                      )}
+                    </span>
+                    <span className="font-medium">-{formatPrice(discountAmount)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center text-paper-muted">
+                  <span>Shipping Fee</span>
+                  <span className={shippingFee > 0 ? "font-medium text-paper" : "font-medium text-emerald-400"}>
+                    {shippingFee > 0 ? formatPrice(shippingFee) : "Free"}
+                  </span>
                 </div>
-                <div className="flex justify-between border-t border-line pt-2 font-medium text-paper text-[15px]">
-                  <span>Total</span>
-                  <span className="text-gold">{formatPrice(order.totalAmount)}</span>
+                <div className="flex justify-between border-t border-line pt-2.5 font-medium text-paper text-[15px]">
+                  <span>Total Amount</span>
+                  <span className="font-bold text-gold">{formatPrice(totalAmount)}</span>
                 </div>
-                <p className="pt-2 text-paper-muted text-[12px]">
-                  Paid via {order.paymentMethod}
+                <div className="flex justify-between items-center pt-1 text-[12px] text-paper-muted">
+                  <span>Payment Method</span>
+                  <span className="font-medium text-paper">{order.paymentMethod}</span>
+                </div>
+                <p className="pt-0.5 text-[11px] text-paper-muted/80">
+                  * All product prices are inclusive of applicable GST taxes.
                 </p>
-                <div className="pt-3">
-                  <a
-                    href={`/api/orders/${order.id}/invoice`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-2 w-full rounded-xl border border-line bg-ink-2 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-paper transition-colors hover:border-gold hover:text-gold"
-                  >
-                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    Download Tax Invoice (PDF)
-                  </a>
+                <div className="pt-3 space-y-2">
+                  {invoiceError && (
+                    <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-2.5 text-center text-xs text-red-400">
+                      {invoiceError}
+                    </div>
+                  )}
+                  {isDeliveredOrPost ? (
+                    <button
+                      type="button"
+                      onClick={handleDownloadInvoice}
+                      disabled={downloadingInvoice}
+                      className="inline-flex items-center justify-center gap-2 w-full rounded-xl border border-gold/40 bg-gold/10 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-gold hover:bg-gold hover:text-ink transition-all disabled:opacity-50 cursor-pointer shadow-sm"
+                    >
+                      <svg
+                        className={`h-4 w-4 ${downloadingInvoice ? "animate-spin" : ""}`}
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        {downloadingInvoice ? (
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2.5}
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                          />
+                        ) : (
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          />
+                        )}
+                      </svg>
+                      {downloadingInvoice ? "Generating Invoice PDF..." : "Download Tax Invoice (PDF)"}
+                    </button>
+                  ) : (
+                    <div className="rounded-xl border border-line/60 bg-ink-2/30 p-3 text-center">
+                      <p className="text-[11px] text-paper-muted flex items-center justify-center gap-1.5">
+                        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Tax invoice will be available for download once delivered.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -256,7 +404,7 @@ export default function OrderDetailsModal({ order, onClose }: Props) {
               Are you sure you want to cancel order <strong className="text-paper">{orderNum}</strong>?
               {customOrder.paymentStatus === "Paid" || customOrder.paymentStatus === "COMPLETED"
                 ? " Since your payment was completed, a refund will be initiated to your original payment method."
-                : " All reserved items will be returned to inventory."}
+                : ""}
             </p>
             {cancelError && (
               <p className="text-xs text-red-400">{cancelError}</p>
@@ -308,7 +456,7 @@ export default function OrderDetailsModal({ order, onClose }: Props) {
               <button onClick={() => setReturnOpen(false)} className="text-paper-muted hover:text-paper">✕</button>
             </div>
             <p className="text-xs text-paper-muted leading-relaxed">
-              Items can be returned within 7 days of delivery. Once verified, returned items are re-added to inventory and your refund is processed.
+              Items can be returned within 7 days of delivery. Once verified, your refund will be processed.
             </p>
             {returnError && (
               <p className="text-xs text-red-400">{returnError}</p>

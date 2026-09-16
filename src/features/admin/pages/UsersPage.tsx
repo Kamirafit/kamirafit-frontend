@@ -5,7 +5,7 @@ import SectionHeader from "@/components/ui/SectionHeader";
 import type { AdminUser } from "@/types/entities";
 import { useAdminUsers, useUpdateAdminUser } from "@/services/admin";
 import AdminTableSkeleton from "@/components/skeleton/AdminTableSkeleton";
-import ActionButton from "../components/ActionButton";
+import TableActions from "../components/TableActions";
 import DataTable, { type Column } from "../components/DataTable";
 import SearchField from "../components/SearchField";
 import UserFormModal from "../components/UserFormModal";
@@ -72,9 +72,14 @@ export default function UsersPage() {
       label: "Actions",
       align: "right",
       render: (u) => (
-        <div className="flex items-center justify-end">
-          <ActionButton onClick={() => setEditing(u)}>Edit</ActionButton>
-        </div>
+        <TableActions
+          actions={[
+            {
+              label: "Edit",
+              onClick: () => setEditing(u),
+            },
+          ]}
+        />
       ),
     },
   ];

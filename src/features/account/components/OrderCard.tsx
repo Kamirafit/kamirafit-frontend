@@ -3,6 +3,7 @@ import { DEFAULT_PRODUCT_IMAGE, getValidImageSrc } from "@/lib/format";
 import { Order, OrderItem } from "../types";
 import { formatPrice } from "@/lib/format";
 import OrderStatusBadge from "./OrderStatusBadge";
+import OrderJourneyTimeline from "./OrderJourneyTimeline";
 
 type Props = {
   order: Order;
@@ -12,7 +13,14 @@ type Props = {
 };
 
 export default function OrderCard({ order, onViewDetails, onReviewProduct, onTrackPackage }: Props) {
-  const customOrder = order as { createdAt?: string; orderNumber?: string } & Order;
+  const customOrder = order as {
+    createdAt?: string;
+    updatedAt?: string;
+    orderNumber?: string;
+    couponCode?: string;
+    coupon?: { code: string };
+  } & Order;
+  const couponCode = customOrder.coupon?.code || customOrder.couponCode;
   const dateValue = customOrder.createdAt || order.date;
   const dateStr = dateValue
     ? new Date(dateValue).toLocaleDateString("en-US", {
@@ -25,13 +33,30 @@ export default function OrderCard({ order, onViewDetails, onReviewProduct, onTra
   const orderNum = customOrder.orderNumber || order.id;
 
   const normStatus = (order.status || "").toUpperCase();
+  // Customer can cancel up until Shiprocket has picked up the product
   const isCancellable =
     normStatus === "CONFIRMED" ||
     normStatus === "PROCESSING" ||
+    normStatus === "PACKED" ||
     normStatus === "PENDING_VERIFICATION" ||
     normStatus === "PENDING VERIFICATION";
 
-  const isReturnable = normStatus === "DELIVERED";
+  // Return & refund eligibility: only for delivered orders within 7 days
+  const deliveryDate = customOrder.updatedAt || customOrder.createdAt;
+  const daysSinceDelivery = deliveryDate
+    ? Math.floor((Date.now() - new Date(deliveryDate).getTime()) / (1000 * 60 * 60 * 24))
+    : 0;
+  const isWithin7Days = daysSinceDelivery <= 7;
+  const isReturnable = normStatus === "DELIVERED" && isWithin7Days;
+
+  // Track package is only needed for active forward shipments (not for cancelled, delivered, or returned orders)
+  const isTerminalOrReturned =
+    normStatus === "CANCELLED" ||
+    normStatus === "CANCELED" ||
+    normStatus === "DELIVERED" ||
+    normStatus.includes("RETURN") ||
+    normStatus.includes("REFUND");
+  const canTrackPackage = !isTerminalOrReturned;
 
   return (
     <div className="flex flex-col overflow-hidden rounded-2xl border border-line bg-ink shadow-sm transition-all duration-300 hover:border-gold/40 hover:shadow-md">
@@ -43,7 +68,14 @@ export default function OrderCard({ order, onViewDetails, onReviewProduct, onTra
           </div>
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-wider text-paper-muted">Total</p>
-            <p className="mt-0.5 font-medium text-paper">{formatPrice(order.totalAmount)}</p>
+            <div className="mt-0.5 flex items-center gap-1.5">
+              <p className="font-medium text-paper">{formatPrice(order.totalAmount)}</p>
+              {couponCode && (
+                <span className="inline-flex items-center rounded border border-emerald-500/30 bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-mono font-semibold uppercase text-emerald-300">
+                  {couponCode}
+                </span>
+              )}
+            </div>
           </div>
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-wider text-paper-muted">Order ID</p>
@@ -76,15 +108,22 @@ export default function OrderCard({ order, onViewDetails, onReviewProduct, onTra
         </div>
       </div>
 
-      <div className="p-5">
-        <div className="mb-4 flex items-center justify-between">
+      <div className="p-5 space-y-6">
+        <div className="flex items-center justify-between">
           <h3 className="font-display text-lg font-bold text-paper">
             Status
           </h3>
           <OrderStatusBadge status={order.status} />
         </div>
 
-        <div className="flex flex-col gap-5">
+        {/* Product Journey Timeline with progress bar and dots */}
+        <OrderJourneyTimeline
+          order={order}
+          variant="compact"
+          onTrackShipment={canTrackPackage && onTrackPackage ? () => onTrackPackage(order) : undefined}
+        />
+
+        <div className="flex flex-col gap-5 pt-2 border-t border-line/60">
           {order.items.map((item, index) => {
             const imageSrc = getValidImageSrc(item.productImage, DEFAULT_PRODUCT_IMAGE);
             return (
@@ -100,15 +139,17 @@ export default function OrderCard({ order, onViewDetails, onReviewProduct, onTra
                   <p className="mt-1 text-sm text-paper-muted">
                     Size: {item.size} • Color: {item.color}
                   </p>
-                  <div className="mt-2 flex items-center gap-4">
-                    <button
-                      type="button"
-                      onClick={() => onTrackPackage ? onTrackPackage(order) : onViewDetails(order)}
-                      className="text-[12px] font-semibold uppercase tracking-wider text-gold hover:text-gold-bright"
-                    >
-                      Track Package
-                    </button>
-                  </div>
+                  {canTrackPackage && (
+                    <div className="mt-2 flex items-center gap-4">
+                      <button
+                        type="button"
+                        onClick={() => onTrackPackage ? onTrackPackage(order) : onViewDetails(order)}
+                        className="text-[12px] font-semibold uppercase tracking-wider text-gold hover:text-gold-bright"
+                      >
+                        Track Package
+                      </button>
+                    </div>
+                  )}
                 </div>
                 {order.status === "Delivered" && (
                   <div className="mt-4 sm:mt-0">

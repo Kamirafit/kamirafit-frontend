@@ -27,6 +27,16 @@ export const OrderSchema = z.object({
   status: OrderStatusSchema,
   items: z.array(OrderItemSchema),
   totalAmount: z.number(),
+  shippingFee: z.number().optional(),
+  couponCode: z.string().optional(),
+  coupon: z
+    .object({
+      code: z.string(),
+      discountType: z.string().optional(),
+      discountValue: z.number().optional(),
+      description: z.string().nullable().optional(),
+    })
+    .optional(),
   shippingAddress: AddressSchema,
   paymentMethod: z.string(),
   trackingNumber: z.string().optional(),

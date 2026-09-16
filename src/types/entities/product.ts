@@ -43,7 +43,7 @@ export function adaptProduct(raw: any): Product {
       mrp: vMrp,
       stock: available,
       weight: typeof v.weight === "number" ? v.weight : 0.2,
-      gstPercentage: typeof v.gstPercentage === "number" ? v.gstPercentage : 12.0,
+      gstPercentage: typeof v.gstPercentage === "number" ? v.gstPercentage : 5.0,
       hsnCode: v.hsnCode || "61091000",
       inventory: {
         quantity,

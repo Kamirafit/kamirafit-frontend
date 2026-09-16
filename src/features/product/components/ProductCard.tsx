@@ -119,7 +119,7 @@ export default function ProductCard({ product }: Props) {
           className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
         />
         {isCardOutOfStock ? (
-          <div className="absolute top-3 left-3 rounded-full bg-ink/90 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-red-400 border border-red-500/30">
+          <div className="absolute top-3 left-3 rounded-full bg-red-600 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-md">
             Out of Stock
           </div>
         ) : null}

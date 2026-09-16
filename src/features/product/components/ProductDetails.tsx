@@ -502,8 +502,8 @@ export default function ProductDetails({ product }: Props) {
         </div>
 
         {isOutOfStock ? (
-          <div className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-xs font-medium text-red-400">
-            <span className="h-2 w-2 rounded-full bg-red-400" />
+          <div className="flex items-center gap-2 rounded-xl border border-red-600 bg-red-600 px-3.5 py-2.5 text-xs font-medium text-white shadow-sm">
+            <span className="h-2 w-2 rounded-full bg-white animate-pulse" />
             This variant is currently out of stock. Please select another size or color.
           </div>
         ) : isMaxInCart ? (
@@ -523,7 +523,7 @@ export default function ProductDetails({ product }: Props) {
             <button
               type="button"
               disabled
-              className="flex-1 rounded-full border border-line bg-ink-2 px-6 py-4 text-[13px] font-semibold uppercase tracking-[0.2em] text-paper-muted cursor-not-allowed opacity-60"
+              className="flex-1 rounded-full border border-red-600 bg-red-600 px-6 py-4 text-[13px] font-semibold uppercase tracking-[0.2em] text-white cursor-not-allowed shadow-md opacity-90"
             >
               Out of Stock
             </button>

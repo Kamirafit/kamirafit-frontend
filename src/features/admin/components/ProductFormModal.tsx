@@ -114,6 +114,17 @@ const SUBCATEGORY_MAP: Record<string, string[]> = {
   "Hoodies": ["Pullover", "Zip-Up", "Oversized"],
 };
 
+export const HSN_PRESETS = [
+  { code: "61091000", label: "Cotton T-Shirts & Knitted Tops", type: "Knitted (Stretchable)", desc: "100% Cotton tees, polo shirts, drop shoulder, crop tops" },
+  { code: "62044220", label: "Cotton Kurtis & Tunics", type: "Woven (Structured)", desc: "100% Cotton straight/A-line/Anarkali kurtis & tunics" },
+  { code: "62044990", label: "Indo-Western & Fusion Dresses", type: "Material Unknown / Blends", desc: "Indo-western dresses, fusion gowns, synthetic or mixed fabrics" },
+  { code: "62064000", label: "Imported Western Tops & Shirts", type: "Material Unknown / Poly", desc: "Western tops, shirts, blouses made of georgette, rayon, polyester" },
+  { code: "62046200", label: "Cotton Pants & Trousers", type: "Woven Cotton", desc: "Cotton pants, formal trousers, palazzos" },
+  { code: "62046990", label: "Western Pants / Slacks", type: "Material Unknown / Blends", desc: "Wide-leg trousers, cargo pants, synthetic/imported bottomwear" },
+  { code: "61152100", label: "Leggings & Churidars", type: "Knitted Stretch", desc: "Cotton-spandex / lycra leggings, tights, churidars" },
+  { code: "61046200", label: "Joggers & Track Pants", type: "Knitted Casual", desc: "Casual joggers, track pants, activewear sweatpants" },
+];
+
 const EMPTY: FormValues = {
   name: "",
   price: 0,
@@ -139,9 +150,9 @@ const EMPTY: FormValues = {
   seoTitle: "",
   seoDescription: "",
   showOnStorefront: false,
-  taxEnabled: false,
-  gstRate: 0,
-  priceIncludesTax: false,
+  taxEnabled: true,
+  gstRate: 5,
+  priceIncludesTax: true,
 };
 
 const sectionTitle = "border-b border-line pb-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-gold";
@@ -208,6 +219,7 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
   const [adjustmentReason, setAdjustmentReason] = useState(ADJUSTMENT_REASONS[0]);
   const [adjustmentNote, setAdjustmentNote] = useState("");
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [showHsnGuide, setShowHsnGuide] = useState(false);
   const [draggedImage, setDraggedImage] = useState<string | null>(null);
   const [isProcessingImages, setIsProcessingImages] = useState(false);
   const [imageUrlInput, setImageUrlInput] = useState("");
@@ -282,7 +294,7 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
         offerPrice: variant.offerPrice || variant.price || initial.price,
         price: variant.price || initial.price,
         hsnCode: variant.hsnCode || "61091000",
-        gstPercentage: variant.gstPercentage || 12,
+        gstPercentage: variant.gstPercentage || 5,
         weight: variant.weight || 0.2,
       }));
       setValues({
@@ -333,7 +345,17 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
   const setNumber = (key: "costPrice" | "mrp" | "price" | "weight" | "length" | "width" | "height", raw: string) => set(key, numeric(raw));
 
   const profit = Math.max(0, values.price - values.costPrice);
-  const margin = values.price > 0 ? (profit / values.price) * 100 : 0;
+  void profit;
+
+  // Real Indian GST Reverse Calculation (B2C Selling Price is Tax Inclusive)
+  const effectiveGstRate = values.gstRate !== undefined && values.gstRate !== null ? values.gstRate : 5;
+  const sellingPrice = values.price || 0;
+  const costPrice = values.costPrice || 0;
+  const taxableBasePrice = sellingPrice > 0 ? sellingPrice / (1 + effectiveGstRate / 100) : 0;
+  const gstTaxAmount = sellingPrice > 0 ? sellingPrice - taxableBasePrice : 0;
+  const intraStateHalf = gstTaxAmount / 2; // Split into CGST + SGST for West Bengal
+  const netProfitAfterGst = Math.max(0, taxableBasePrice - costPrice);
+  const netMarginAfterGst = taxableBasePrice > 0 ? (netProfitAfterGst / taxableBasePrice) * 100 : 0;
 
   const handleNameChange = (name: string) => {
     setValues((previous) => ({ ...previous, name, slug: previous.slug === slugify(previous.name) || !previous.slug ? slugify(name) : previous.slug }));
@@ -359,7 +381,7 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
         offerPrice: values.price,
         price: values.price,
         hsnCode: "61091000",
-        gstPercentage: values.gstRate || 12,
+        gstPercentage: values.gstRate || 5,
         weight: values.weight || 0.2,
       };
     }));
@@ -593,7 +615,7 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
         offerPrice: v.offerPrice || values.price,
         price: values.price,
         hsnCode: v.hsnCode || "61091000",
-        gstPercentage: v.gstPercentage || values.gstRate || 12,
+        gstPercentage: v.gstPercentage || values.gstRate || 5,
         weight: v.weight || values.weight || 0.2,
       })),
     });
@@ -674,16 +696,190 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
           </div>
         </Section>
 
-        <Section title="Pricing">
+        <Section title="Pricing, Costs & GST Calculation">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <FormField label="Cost price (₹)" error={errors.costPrice}><input type="number" min={0} value={values.costPrice || ""} placeholder="Enter cost price" onKeyDown={preventInvalidNumberKeys} onChange={(event) => setNumber("costPrice", event.target.value)} className={inputClass} /></FormField>
-            <FormField label="MRP (₹)" error={errors.mrp}><input type="number" min={0} value={values.mrp || ""} placeholder="Enter MRP" onKeyDown={preventInvalidNumberKeys} onChange={(event) => setNumber("mrp", event.target.value)} className={inputClass} /></FormField>
-            <FormField label="Selling price (₹)" error={errors.price}><input type="number" min={0} value={values.price || ""} placeholder="Enter selling price" onKeyDown={preventInvalidNumberKeys} onChange={(event) => setNumber("price", event.target.value)} className={inputClass} /></FormField>
+            <FormField label="Cost price (₹)" error={errors.costPrice} hint="Manufacturer / purchase cost">
+              <input type="number" min={0} value={values.costPrice || ""} placeholder="Enter cost price" onKeyDown={preventInvalidNumberKeys} onChange={(event) => setNumber("costPrice", event.target.value)} className={inputClass} />
+            </FormField>
+            <FormField label="MRP (₹)" error={errors.mrp} hint="Maximum Retail Price displayed">
+              <input type="number" min={0} value={values.mrp || ""} placeholder="Enter MRP" onKeyDown={preventInvalidNumberKeys} onChange={(event) => setNumber("mrp", event.target.value)} className={inputClass} />
+            </FormField>
+            <FormField label="Selling price (₹) (GST Inclusive)" error={errors.price} hint="Customer checkout price">
+              <input type="number" min={0} value={values.price || ""} placeholder="Enter selling price" onKeyDown={preventInvalidNumberKeys} onChange={(event) => setNumber("price", event.target.value)} className={inputClass} />
+            </FormField>
           </div>
-          <div className="grid grid-cols-2 gap-4 rounded-2xl border border-line bg-ink-2/50 p-4">
-            <div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-paper-muted">Profit</p><p className="mt-1 text-lg font-semibold text-gold">₹{profit.toLocaleString("en-IN")}</p></div>
-            <div><p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-paper-muted">Margin</p><p className="mt-1 text-lg font-semibold text-gold">{margin.toFixed(2)}%</p></div>
+
+          {/* GST Slabs & HSN Code selection */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <FormField label="GST Tax Slab (%)" hint="Statutory rate for apparel in West Bengal & India">
+              <select
+                value={values.gstRate ?? 5}
+                onChange={(e) => set("gstRate", Number(e.target.value))}
+                className={selectClass}
+              >
+                <option value={5}>5% — Standard Apparel / Clothing (Price ≤ ₹2,500)</option>
+                <option value={18}>18% — Luxury Apparel / Clothing (Price &gt; ₹2,500)</option>
+                <option value={12}>12% — Traditional Rate / Accessories</option>
+                <option value={0}>0% — Exempt / Raw Handloom Fabric</option>
+              </select>
+            </FormField>
+
+            <FormField
+              label={
+                <div className="flex items-center justify-between w-full">
+                  <span>Default HSN Code</span>
+                  <button
+                    type="button"
+                    onClick={() => setShowHsnGuide((prev) => !prev)}
+                    className="text-[11px] font-medium text-gold hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>{showHsnGuide ? "Hide Guidelines ▲" : "📖 HSN Guidelines ▼"}</span>
+                  </button>
+                </div>
+              }
+              hint="Harmonized System of Nomenclature (Select preset or type code)"
+            >
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={variants[0]?.hsnCode || "61091000"}
+                    onChange={(e) => {
+                      const val = e.target.value.trim();
+                      setVariants((prev) => prev.map((v) => ({ ...v, hsnCode: val })));
+                    }}
+                    className={inputClass}
+                    placeholder="e.g. 61091000"
+                  />
+                  <select
+                    value=""
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        const val = e.target.value;
+                        setVariants((prev) => prev.map((v) => ({ ...v, hsnCode: val })));
+                      }
+                    }}
+                    className="rounded-xl border border-line bg-ink px-3 py-2 text-xs text-paper focus:border-gold focus:outline-none shrink-0"
+                    title="Quickly fill standard HSN code"
+                  >
+                    <option value="">⚡ Quick Presets...</option>
+                    {HSN_PRESETS.map((p) => (
+                      <option key={p.code} value={p.code}>
+                        {p.code} — {p.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </FormField>
           </div>
+
+          {/* Interactive HSN Guidelines Cheat Sheet */}
+          {showHsnGuide && (
+            <div className="rounded-2xl border border-gold/30 bg-gold/5 p-4 space-y-3 transition-all">
+              <div className="flex items-center justify-between border-b border-gold/20 pb-2">
+                <div className="flex items-center gap-2 text-gold">
+                  <span className="text-base">📚</span>
+                  <h4 className="text-xs font-semibold uppercase tracking-wider">
+                    KamiraFit Apparel HSN Guidelines & Rules
+                  </h4>
+                </div>
+                <span className="text-[10px] text-paper-muted">
+                  Click any category below to auto-apply its HSN code
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                {HSN_PRESETS.map((preset) => (
+                  <button
+                    key={preset.code}
+                    type="button"
+                    onClick={() => {
+                      setVariants((prev) => prev.map((v) => ({ ...v, hsnCode: preset.code })));
+                    }}
+                    className="flex flex-col text-left p-2.5 rounded-xl border border-line bg-ink/70 hover:border-gold/60 hover:bg-gold/10 transition-all cursor-pointer group"
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <span className="font-semibold text-paper group-hover:text-gold">{preset.label}</span>
+                      <span className="font-mono text-[11px] font-bold text-gold bg-gold/10 px-1.5 py-0.5 rounded">
+                        {preset.code}
+                      </span>
+                    </div>
+                    <div className="mt-1 flex items-center gap-2 text-[10.5px]">
+                      <span className="text-paper-muted/80">{preset.type}</span>
+                      <span className="text-paper-muted/40">•</span>
+                      <span className="text-paper-muted truncate">{preset.desc}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              <div className="rounded-xl bg-ink/80 p-3 text-[11px] text-paper-muted space-y-1.5 border border-line/60">
+                <p className="font-semibold text-paper">💡 Golden Rule for Material Unknown (Imported / Western Collections):</p>
+                <p>
+                  • <strong>Knitted / Stretchable fabrics</strong> (T-shirts, activewear, lycra): Fall under <strong>Chapter 61</strong> (e.g., <code className="text-gold">61091000</code>).
+                </p>
+                <p>
+                  • <strong>Woven / Structured fabrics</strong> (Kurtis, trousers, blouses, dresses): Fall under <strong>Chapter 62</strong>.
+                </p>
+                <p>
+                  • <strong>Unknown Material / Poly Blends</strong>: Under Indian GST classification rules, if the exact fiber composition is unstated, use the statutory sub-heading for <em>&ldquo;Other Textile Materials&rdquo;</em> (e.g., <code className="text-gold">62044990</code> for fusion dresses, <code className="text-gold">62064000</code> for imported tops, <code className="text-gold">62046990</code> for pants). This is 100% compliant with GST norms.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Live GST Calculation & Profit Intelligence Card */}
+          <div className="rounded-2xl border border-line bg-ink-2/60 p-4 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-2.5">
+              <div className="flex items-center gap-2">
+                <span className="text-sm">🧾</span>
+                <h4 className="text-[11.5px] font-semibold uppercase tracking-[0.14em] text-gold">
+                  GST & Profit Breakdown ({effectiveGstRate}% Slab)
+                </h4>
+              </div>
+              <span className="rounded-full border border-gold/30 bg-gold/10 px-2.5 py-0.5 text-[10.5px] font-medium text-gold">
+                {effectiveGstRate}% GST Included
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-[12px]">
+              <div className="rounded-xl border border-line/60 bg-ink/50 p-2.5">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-paper-muted">Retail Price (B2C)</p>
+                <p className="mt-1 text-base font-bold text-paper">₹{sellingPrice.toLocaleString("en-IN")}</p>
+                <p className="text-[10px] text-paper-muted/80">Inclusive of all taxes</p>
+              </div>
+
+              <div className="rounded-xl border border-line/60 bg-ink/50 p-2.5">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-paper-muted">Taxable Base Price</p>
+                <p className="mt-1 text-base font-bold text-paper">₹{taxableBasePrice.toFixed(2)}</p>
+                <p className="text-[10px] text-paper-muted/80">Net sales revenue</p>
+              </div>
+
+              <div className="rounded-xl border border-line/60 bg-ink/50 p-2.5">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-paper-muted">GST Tax Amount</p>
+                <p className="mt-1 text-base font-bold text-gold">₹{gstTaxAmount.toFixed(2)}</p>
+                <p className="text-[10px] text-paper-muted/80">
+                  {effectiveGstRate === 5
+                    ? `CGST: ₹${intraStateHalf.toFixed(2)} + SGST: ₹${intraStateHalf.toFixed(2)}`
+                    : `Tax at ${effectiveGstRate}%`}
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-line/60 bg-ink/50 p-2.5">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-paper-muted">Real Business Profit</p>
+                <p className={`mt-1 text-base font-bold ${netProfitAfterGst > 0 ? "text-[#16A34A]" : "text-[#B3261E]"}`}>
+                  ₹{netProfitAfterGst.toFixed(2)}
+                </p>
+                <p className="text-[10px] text-paper-muted/80">Real Margin: {netMarginAfterGst.toFixed(1)}%</p>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-paper-muted/90 leading-relaxed pt-1">
+              ℹ️ <strong className="text-paper">West Bengal & Statutory GST Compliance:</strong> Under Indian GST law, apparel priced up to ₹2,500 attracts <strong>5% GST</strong> across West Bengal and all states (One Nation, One Tax). For West Bengal local sales, tax is split equally into <strong>CGST ({(effectiveGstRate / 2).toFixed(1)}%) + SGST ({(effectiveGstRate / 2).toFixed(1)}%)</strong>. For interstate orders, <strong>IGST ({effectiveGstRate}%)</strong> applies.
+            </p>
+          </div>
+
           {values.price < values.costPrice ? <p className="rounded-xl border border-[#B3261E]/40 bg-[#B3261E]/10 px-3 py-2 text-[12px] text-[#B3261E]">Selling price is lower than cost price.</p> : null}
         </Section>
 
@@ -1037,7 +1233,7 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
           {advancedOpen ? <div className="flex flex-col gap-4"><FormField label="URL handle / slug" error={errors.slug}><input value={values.slug} onChange={(event) => set("slug", slugify(event.target.value))} className={inputClass} /></FormField><FormField label="SEO title"><input value={values.seoTitle} onChange={(event) => set("seoTitle", event.target.value)} maxLength={70} className={inputClass} /></FormField><FormField label="SEO description"><textarea value={values.seoDescription} onChange={(event) => set("seoDescription", event.target.value)} maxLength={160} className={textareaClass} /></FormField></div> : null}
         </Section>
 
-        <div className="sticky bottom-0 -mx-6 flex items-center justify-end gap-2 border-t border-line bg-ink/95 px-6 py-4 backdrop-blur">
+        <div className="sticky bottom-0 z-20 -mx-4 sm:-mx-6 -mb-4 sm:-mb-6 flex items-center justify-end gap-2 border-t border-line bg-ink/95 px-4 sm:px-6 py-4 shadow-[0_-4px_16px_rgba(0,0,0,0.06)] backdrop-blur rounded-b-2xl">
           <Button variant="dark" size="sm" onClick={onClose} disabled={loading}>Cancel</Button>
           <Button variant="primary" size="sm" type="submit" loading={loading} disabled={loading}>
             {duplicate ? "Create duplicate" : initial ? "Save changes" : "Create product"}

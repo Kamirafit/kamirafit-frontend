@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 type Props = {
-  label: string;
+  label: ReactNode;
   htmlFor?: string;
   hint?: string;
   error?: string;
@@ -46,15 +46,15 @@ export const inputErrorClass =
   "w-full rounded-full border border-[#B3261E] bg-[#B3261E]/5 px-4 py-2.5 text-[13.5px] text-paper placeholder:text-paper-muted/70 transition-colors focus:border-[#B3261E] focus:outline-none focus:ring-1 focus:ring-[#B3261E]";
 
 /**
- * Select style — identical to `inputClass` but with extra right padding so the
- * native dropdown chevron has breathing room from the right edge. Fixes the
- * "arrow too close to edge" issue without swapping to a custom select.
+ * Select style — styled with appearance-none and an inline SVG chevron positioned
+ * at `right 1.1rem center` so the dropdown arrow has generous breathing room
+ * from the curved pill border edge.
  */
 export const selectClass =
-  "w-full rounded-full border border-line bg-ink-2 pl-4 pr-10 py-2.5 text-[13.5px] text-paper placeholder:text-paper-muted/70 transition-colors focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold";
+  "w-full rounded-full border border-line bg-ink-2 pl-4 pr-11 py-2.5 text-[13.5px] text-paper placeholder:text-paper-muted/70 transition-colors focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold select-pill";
 
 export const selectErrorClass =
-  "w-full rounded-full border border-[#B3261E] bg-[#B3261E]/5 pl-4 pr-10 py-2.5 text-[13.5px] text-paper placeholder:text-paper-muted/70 transition-colors focus:border-[#B3261E] focus:outline-none focus:ring-1 focus:ring-[#B3261E]";
+  "w-full rounded-full border border-[#B3261E] bg-[#B3261E]/5 pl-4 pr-11 py-2.5 text-[13.5px] text-paper placeholder:text-paper-muted/70 transition-colors focus:border-[#B3261E] focus:outline-none focus:ring-1 focus:ring-[#B3261E] select-pill-error";
 
 /**
  * Textareas keep a rounded-2xl shape because they're multi-line — matches the

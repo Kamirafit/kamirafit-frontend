@@ -14,7 +14,7 @@ import {
 } from "@/services/admin";
 import AdminTableSkeleton from "@/components/skeleton/AdminTableSkeleton";
 import type { Category, Product } from "@/features/product/types";
-import ActionButton from "../components/ActionButton";
+import TableActions from "../components/TableActions";
 import ConfirmDialog from "../components/ConfirmDialog";
 import DataTable, { type Column } from "../components/DataTable";
 import ProductFormModal, {
@@ -249,23 +249,63 @@ export default function ProductsPage() {
       align: "right",
       render: (p) => {
         const active = p.status === "active";
+        const reviewsCount = Array.isArray(p.reviews) ? p.reviews.length : 0;
         return (
-          <div className="flex items-center justify-end gap-2">
-            <ActionButton onClick={() => openReviews(p)}>
-              Reviews ({Array.isArray(p.reviews) ? p.reviews.length : 0})
-            </ActionButton>
-            <ActionButton
-              tone={active ? "warning" : "success"}
-              onClick={() => toggleStatusMutation.mutate(p.id)}
-            >
-              {active ? "Deactivate" : "Activate"}
-            </ActionButton>
-            <ActionButton onClick={() => openEdit(p)}>Edit</ActionButton>
-            <ActionButton onClick={() => openDuplicate(p)}>Duplicate</ActionButton>
-            <ActionButton tone="danger" onClick={() => setDeletingId(p.id)}>
-              Delete
-            </ActionButton>
-          </div>
+          <TableActions
+            actions={[
+              {
+                label: `Reviews (${reviewsCount})`,
+                onClick: () => openReviews(p),
+                icon: (
+                  <svg className="h-3.5 w-3.5 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                ),
+              },
+              {
+                label: active ? "Deactivate" : "Activate",
+                tone: active ? "warning" : "success",
+                onClick: () => toggleStatusMutation.mutate(p.id),
+                icon: active ? (
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                  </svg>
+                ) : (
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                ),
+              },
+              {
+                label: "Edit",
+                onClick: () => openEdit(p),
+                icon: (
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                ),
+              },
+              {
+                label: "Duplicate",
+                onClick: () => openDuplicate(p),
+                icon: (
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                ),
+              },
+              {
+                label: "Delete",
+                tone: "danger",
+                onClick: () => setDeletingId(p.id),
+                icon: (
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                ),
+              },
+            ]}
+          />
         );
       },
     },

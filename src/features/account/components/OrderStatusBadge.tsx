@@ -12,83 +12,84 @@ export function getOrderStatusConfig(status: string) {
     case "PROCESSING":
       return {
         label: "Processing",
-        containerClass: "bg-amber-500/15 text-amber-400 border border-amber-500/30",
-        dotClass: "bg-amber-400",
+        containerClass: "bg-teal-100 text-teal-950 border border-teal-500 font-bold",
+        dotClass: "bg-teal-600",
       };
     case "SHIPPED":
       return {
         label: "Shipped",
-        containerClass: "bg-sky-500/15 text-sky-400 border border-sky-500/30",
-        dotClass: "bg-sky-400",
+        containerClass: "bg-purple-100 text-purple-950 border border-purple-500 font-bold",
+        dotClass: "bg-purple-600",
       };
     case "IN_TRANSIT":
       return {
         label: "In Transit",
-        containerClass: "bg-blue-500/15 text-blue-400 border border-blue-500/30",
-        dotClass: "bg-blue-400",
+        containerClass: "bg-violet-100 text-violet-950 border border-violet-500 font-bold",
+        dotClass: "bg-violet-600",
       };
     case "DELIVERED":
       return {
         label: "Delivered",
-        containerClass: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30",
-        dotClass: "bg-emerald-400",
+        containerClass: "bg-emerald-100 text-emerald-950 border border-emerald-500 font-bold",
+        dotClass: "bg-emerald-600",
       };
     case "CANCELLED":
     case "CANCELED":
       return {
         label: "Cancelled",
-        containerClass: "bg-rose-500/15 text-rose-400 border border-rose-500/30",
-        dotClass: "bg-rose-400",
+        containerClass: "bg-red-100 text-red-950 border border-red-500 font-bold",
+        dotClass: "bg-red-600",
       };
     case "RETURN_REQUESTED":
       return {
         label: "Return Requested",
-        containerClass: "bg-purple-500/15 text-purple-400 border border-purple-500/30",
-        dotClass: "bg-purple-400",
+        containerClass: "bg-orange-100 text-orange-950 border border-orange-500 font-bold",
+        dotClass: "bg-orange-600",
       };
     case "RETURN_APPROVED":
       return {
         label: "Return Approved",
-        containerClass: "bg-indigo-500/15 text-indigo-400 border border-indigo-500/30",
-        dotClass: "bg-indigo-400",
+        containerClass: "bg-rose-100 text-rose-950 border border-rose-500 font-bold",
+        dotClass: "bg-rose-600",
       };
     case "RETURN_IN_PROGRESS":
       return {
         label: "Return In Progress",
-        containerClass: "bg-violet-500/15 text-violet-400 border border-violet-500/30",
-        dotClass: "bg-violet-400",
+        containerClass: "bg-amber-100 text-amber-950 border border-amber-600 font-bold",
+        dotClass: "bg-amber-700",
       };
     case "RETURN_COMPLETED":
+    case "RETURNED":
       return {
-        label: "Return Completed",
-        containerClass: "bg-fuchsia-500/15 text-fuchsia-400 border border-fuchsia-500/30",
-        dotClass: "bg-fuchsia-400",
+        label: "Returned",
+        containerClass: "bg-amber-100 text-amber-950 border border-amber-700 font-bold",
+        dotClass: "bg-amber-700",
       };
     case "REFUNDED":
     case "REFUND_INITIATED":
     case "REFUND_COMPLETED":
       return {
         label: norm === "REFUND_INITIATED" ? "Refund Initiated" : "Refunded",
-        containerClass: "bg-orange-500/15 text-orange-400 border border-orange-500/30",
-        dotClass: "bg-orange-400",
+        containerClass: "bg-fuchsia-100 text-fuchsia-950 border border-fuchsia-500 font-bold",
+        dotClass: "bg-fuchsia-600",
       };
     case "CONFIRMED":
       return {
         label: "Confirmed",
-        containerClass: "bg-cyan-500/15 text-cyan-400 border border-cyan-500/30",
-        dotClass: "bg-cyan-400",
+        containerClass: "bg-blue-100 text-blue-950 border border-blue-500 font-bold",
+        dotClass: "bg-blue-600",
       };
     case "PENDING":
       return {
         label: "Pending",
-        containerClass: "bg-yellow-500/15 text-yellow-400 border border-yellow-500/30",
-        dotClass: "bg-yellow-400",
+        containerClass: "bg-amber-100 text-amber-950 border border-amber-500 font-bold",
+        dotClass: "bg-amber-600",
       };
     default:
       return {
         label: status || "Unknown",
-        containerClass: "bg-paper-muted/15 text-paper-muted border border-paper-muted/30",
-        dotClass: "bg-paper-muted",
+        containerClass: "bg-stone-100 text-stone-900 border border-stone-300 font-bold",
+        dotClass: "bg-stone-600",
       };
   }
 }

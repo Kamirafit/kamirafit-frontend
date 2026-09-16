@@ -11,7 +11,7 @@ import {
   useDeleteTestimonial,
   useReorderTestimonials,
 } from "@/services/testimonial";
-import ActionButton from "../components/ActionButton";
+import TableActions from "../components/TableActions";
 import ConfirmDialog from "../components/ConfirmDialog";
 import TestimonialFormModal from "../components/TestimonialFormModal";
 import AdminTableSkeleton from "@/components/skeleton/AdminTableSkeleton";
@@ -302,21 +302,33 @@ export default function TestimonialsPage() {
                   </div>
 
                   {/* Right Actions */}
-                  <div className="flex items-center justify-end gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-line/60">
-                    <ActionButton
-                      onClick={() => {
-                        setEditing(testimonial);
-                        setFormOpen(true);
-                      }}
-                    >
-                      Edit
-                    </ActionButton>
-                    <ActionButton
-                      tone="danger"
-                      onClick={() => setDeletingId(testimonial.id)}
-                    >
-                      Delete
-                    </ActionButton>
+                  <div className="flex items-center justify-end shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-line/60">
+                    <TableActions
+                      actions={[
+                        {
+                          label: "Edit",
+                          onClick: () => {
+                            setEditing(testimonial);
+                            setFormOpen(true);
+                          },
+                          icon: (
+                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                          ),
+                        },
+                        {
+                          label: "Delete",
+                          tone: "danger",
+                          onClick: () => setDeletingId(testimonial.id),
+                          icon: (
+                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          ),
+                        },
+                      ]}
+                    />
                   </div>
                 </div>
               );

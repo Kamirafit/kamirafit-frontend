@@ -1,7 +1,7 @@
 "use client";
 
 import type { AdminOrder as Order } from "@/types/entities";
-import ActionButton from "@/features/admin/components/ActionButton";
+import TableActions from "@/features/admin/components/TableActions";
 import DataTable, { type Column } from "@/features/admin/components/DataTable";
 import StatusBadge from "./StatusBadge";
 
@@ -78,10 +78,10 @@ export default function OrdersTable({ rows, onView, emptyLabel }: Props) {
           <div className="flex flex-col gap-1 items-start">
             <StatusBadge kind="payment" status={o.paymentStatus} />
             <span
-              className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9.5px] font-semibold tracking-wider uppercase border ${
+              className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9.5px] font-bold tracking-wider uppercase border ${
                 isCod
-                  ? "border-amber-500/30 bg-amber-500/10 text-amber-300"
-                  : "border-sky-500/30 bg-sky-500/10 text-sky-300"
+                  ? "border-amber-400 bg-amber-100 text-amber-950"
+                  : "border-blue-400 bg-blue-100 text-blue-950"
               }`}
             >
               {isCod ? "COD" : "UPI"}
@@ -93,7 +93,20 @@ export default function OrdersTable({ rows, onView, emptyLabel }: Props) {
     {
       key: "orderStatus",
       label: "Status",
-      render: (o) => <StatusBadge kind="order" status={o.orderStatus} />,
+      render: (o) => (
+        <div className="flex flex-col gap-1 items-start">
+          <StatusBadge kind="order" status={o.orderStatus} />
+          {o.returnReason && (
+            <span
+              className="inline-flex items-center gap-1 text-[10px] text-orange-950 bg-orange-100 border border-orange-300 rounded px-1.5 py-0.5 max-w-[180px] truncate font-medium"
+              title={o.returnReason}
+            >
+              <span className="shrink-0 font-bold">Return:</span>
+              <span className="truncate">{o.returnReason.replace(/^Customer requested return:\s*/i, "")}</span>
+            </span>
+          )}
+        </div>
+      ),
     },
     {
       key: "createdAt",
@@ -107,9 +120,14 @@ export default function OrdersTable({ rows, onView, emptyLabel }: Props) {
       label: "Actions",
       align: "right",
       render: (o) => (
-        <div className="flex items-center justify-end">
-          <ActionButton onClick={() => onView(o)}>View</ActionButton>
-        </div>
+        <TableActions
+          actions={[
+            {
+              label: "View",
+              onClick: () => onView(o),
+            },
+          ]}
+        />
       ),
     },
   ];

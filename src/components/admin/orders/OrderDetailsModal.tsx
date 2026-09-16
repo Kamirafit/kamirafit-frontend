@@ -27,8 +27,8 @@ import {
   useGetAdminOrderManifest,
 } from "@/services/admin";
 import { COLOR_OPTIONS, SIZE_OPTIONS } from "@/features/product/types";
+import { orderService } from "@/services/order";
 import StatusBadge from "./StatusBadge";
-import ErrorState from "@/components/states/ErrorState";
 
 const formatPrice = (n: number) =>
   new Intl.NumberFormat("en-IN", {
@@ -118,6 +118,83 @@ function SummaryRow({
   );
 }
 
+function getErrorMessage(error: unknown): string {
+  if (!error) return "An unexpected error occurred.";
+  const err = error as {
+    response?: {
+      data?: {
+        message?: string;
+        details?: Array<{ field?: string; message?: string }>;
+      };
+    };
+    message?: string;
+  };
+  const data = err?.response?.data;
+  if (data?.details && Array.isArray(data.details) && data.details.length > 0) {
+    return data.details
+      .map((d) => (d.field ? `${d.field}: ${d.message}` : d.message))
+      .join(", ");
+  }
+  return data?.message || err?.message || "Failed to update order.";
+}
+
+const ALLOWED_STATUS_TRANSITIONS: Record<string, string[]> = {
+  New: ["Confirmed", "Processing", "Ready to Ship", "Cancelled"],
+  Confirmed: ["Processing", "Ready to Ship", "Shipped", "Cancelled"],
+  CONFIRMED: ["Processing", "Ready to Ship", "Shipped", "Cancelled"],
+  Pending: ["Confirmed", "Cancelled"],
+  PENDING_VERIFICATION: ["Confirmed", "Cancelled"],
+  Processing: ["Ready to Ship", "Shipped", "Cancelled"],
+  PROCESSING: ["Ready to Ship", "Shipped", "Cancelled"],
+  "Ready to Ship": ["Shipped", "Out For Delivery", "Delivered", "Cancelled"],
+  Packed: ["Shipped", "Out For Delivery", "Delivered", "Cancelled"],
+  PACKED: ["Shipped", "Out For Delivery", "Delivered", "Cancelled"],
+  "Pickup Scheduled": ["Ready to Ship", "Shipped", "Cancelled"],
+  "Picked Up": ["Out For Delivery", "Delivered", "Cancelled"],
+  "In Transit": ["Out For Delivery", "Delivered", "Cancelled"],
+  Shipped: ["Out For Delivery", "Delivered", "Returned", "Cancelled"],
+  SHIPPED: ["Out For Delivery", "Delivered", "Returned", "Cancelled"],
+  "Out For Delivery": ["Delivered", "Returned", "Cancelled"],
+  OUT_FOR_DELIVERY: ["Delivered", "Returned", "Cancelled"],
+  Delivered: ["Return Requested", "Returned", "Cancelled"],
+  DELIVERED: ["Return Requested", "Returned", "Cancelled"],
+  "Return Requested": ["Return Approved", "Returned", "Cancelled"],
+  RETURN_REQUESTED: ["Return Approved", "Returned", "Cancelled"],
+  "Return Approved": ["Returned", "Cancelled"],
+  RETURN_APPROVED: ["Returned", "Cancelled"],
+  "RTO Initiated": ["RTO Delivered", "Returned", "Cancelled"],
+  "RTO Delivered": ["Refunded"],
+  Returned: ["Refunded"],
+  RETURNED: ["Refunded"],
+  "Return Completed": ["Refunded"],
+  RETURN_COMPLETED: ["Refunded"],
+  "Return In Progress": ["Returned", "Return Completed", "Refunded", "Cancelled"],
+  RETURN_IN_PROGRESS: ["Returned", "Return Completed", "Refunded", "Cancelled"],
+  "Refund Initiated": ["Refunded"],
+  REFUND_INITIATED: ["Refunded"],
+  Refunded: [],
+  REFUNDED: [],
+  Cancelled: [],
+  CANCELLED: [],
+};
+
+function getAllowedTransitions(status: string): string[] {
+  const trimmed = String(status || "").trim();
+  if (ALLOWED_STATUS_TRANSITIONS[trimmed]) {
+    return ALLOWED_STATUS_TRANSITIONS[trimmed];
+  }
+  const match = Object.keys(ALLOWED_STATUS_TRANSITIONS).find(
+    (k) => k.toLowerCase() === trimmed.toLowerCase(),
+  );
+  if (match) return ALLOWED_STATUS_TRANSITIONS[match];
+
+  const lower = trimmed.toLowerCase();
+  if (lower.includes("return") || lower.includes("rto")) {
+    return ["Refunded"];
+  }
+  return [];
+}
+
 type Props = {
   open: boolean;
   onClose: () => void;
@@ -133,6 +210,9 @@ export default function OrderDetailsModal({ open, onClose, order }: Props) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [showFulfillSection, setShowFulfillSection] = useState(false);
   const [logisticsError, setLogisticsError] = useState<string | null>(null);
+  const [showFlowGuide, setShowFlowGuide] = useState(false);
+  const [downloadingInvoice, setDownloadingInvoice] = useState(false);
+  const [invoiceError, setInvoiceError] = useState<string | null>(null);
 
   const syncShiprocketMutation = useSyncAdminOrderWithShiprocket();
   const getShippingLabelMutation = useGetAdminOrderShippingLabel();
@@ -161,6 +241,16 @@ export default function OrderDetailsModal({ open, onClose, order }: Props) {
       total: subtotal + order.deliveryFee,
     };
   }, [draft, order]);
+
+  const allowedNextStatuses = useMemo(() => {
+    return order ? getAllowedTransitions(order.orderStatus) : [];
+  }, [order]);
+
+  const isTransitionAllowed = useMemo(() => {
+    if (!draft || !order) return true;
+    if (draft.orderStatus === order.orderStatus) return true;
+    return allowedNextStatuses.includes(draft.orderStatus);
+  }, [draft, order, allowedNextStatuses]);
 
   if (!order) {
     return (
@@ -229,6 +319,32 @@ export default function OrderDetailsModal({ open, onClose, order }: Props) {
     });
   };
 
+  const handleDownloadInvoice = async () => {
+    try {
+      setDownloadingInvoice(true);
+      setInvoiceError(null);
+      const res = await orderService.downloadInvoice(order.id);
+      const blob = new Blob([res.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `Invoice-${order.id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err: unknown) {
+      const errorObj = err as { response?: { data?: { message?: string } }; message?: string };
+      setInvoiceError(
+        errorObj?.response?.data?.message ||
+        errorObj?.message ||
+        "Failed to download tax invoice."
+      );
+    } finally {
+      setDownloadingInvoice(false);
+    }
+  };
+
   const isBusy = updateMutation.isPending || deleteMutation.isPending;
   const isCod = (order.paymentMethod || "").toUpperCase() === "COD";
 
@@ -241,11 +357,133 @@ export default function OrderDetailsModal({ open, onClose, order }: Props) {
         maxWidth="lg"
       >
         <div className="flex flex-col gap-8">
-          {updateMutation.isError || deleteMutation.isError ? <ErrorState className="min-h-0 py-6" title="Order change not saved" message="Please try that action again." /> : null}
+          {updateMutation.isError || deleteMutation.isError ? (
+            <div className="rounded-2xl border border-red-400/80 bg-red-50 p-4 text-red-950 shadow-md">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-200 text-red-900 text-sm font-bold">
+                    ✕
+                  </div>
+                  <div>
+                    <h4 className="font-display text-[14.5px] font-bold text-red-950">
+                      Update Failed
+                    </h4>
+                    <p className="mt-1 text-[13px] leading-relaxed text-red-900 font-mono font-semibold">
+                      {getErrorMessage(updateMutation.error || deleteMutation.error)}
+                    </p>
+                    <p className="mt-1.5 text-[12px] text-red-800 font-medium">
+                      Please check the allowed transitions guide below or follow sequential fulfillment rules.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    updateMutation.reset();
+                    deleteMutation.reset();
+                  }}
+                  className="rounded-lg border border-red-400 bg-white px-3 py-1 text-xs font-bold text-red-950 hover:bg-red-100 transition-colors shadow-sm"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          ) : null}
+          {order.returnReason ? (
+            <div className="rounded-2xl border-2 border-orange-400 bg-orange-50 p-4.5 text-orange-950 shadow-md">
+              <div className="flex items-start gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-orange-200 text-orange-900 text-base font-bold">
+                  ↩
+                </div>
+                <div className="flex-1 space-y-1.5">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h4 className="font-display text-[15px] font-bold text-orange-950">
+                      Customer Return Request
+                    </h4>
+                    <span className="rounded-full border border-orange-400 bg-orange-200 px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wider text-orange-950">
+                      Action Required
+                    </span>
+                  </div>
+                  <div className="rounded-xl border border-orange-300 bg-white/95 p-3.5 shadow-inner">
+                    <p className="text-[10.5px] font-bold uppercase tracking-wider text-orange-900 mb-1">
+                      Reason Given by Customer:
+                    </p>
+                    <p className="text-[13.5px] leading-relaxed text-orange-950 font-semibold whitespace-pre-wrap">
+                      {order.returnReason}
+                    </p>
+                  </div>
+                  <p className="text-[12px] text-orange-900 font-medium">
+                    💡 If approved, update status to <strong>Return Approved</strong> below. This will automatically schedule reverse pickup via Shiprocket.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (order.orderStatus === "Return Requested" || (order.orderStatus as string) === "RETURN_REQUESTED") ? (
+            <div className="rounded-2xl border-2 border-orange-400 bg-orange-50 p-4 text-orange-950 shadow-md">
+              <div className="flex items-start gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-orange-200 text-orange-900 text-base font-bold">
+                  ↩
+                </div>
+                <div className="flex-1 space-y-1">
+                  <h4 className="font-display text-[15px] font-bold text-orange-950">
+                    Customer Return Requested
+                  </h4>
+                  <p className="text-[13px] text-orange-900 font-medium">
+                    Customer has requested a return and refund for this order within the 7-day window.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          {invoiceError && (
+            <div className="rounded-2xl border border-red-400/80 bg-red-50 p-3.5 text-red-950 shadow-sm flex items-center justify-between gap-3">
+              <span className="text-xs font-semibold">{invoiceError}</span>
+              <button
+                type="button"
+                onClick={() => setInvoiceError(null)}
+                className="text-xs font-bold text-red-900 hover:underline"
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
+
           <section className="flex flex-col gap-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <SectionTitle>Order info</SectionTitle>
               <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  disabled={downloadingInvoice}
+                  onClick={handleDownloadInvoice}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-gold/50 bg-gold/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-gold hover:bg-gold hover:text-white transition-all disabled:opacity-50 cursor-pointer"
+                  title="Generate and download Tax Invoice PDF"
+                >
+                  <svg
+                    className={`h-3 w-3 ${downloadingInvoice ? "animate-spin" : ""}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    {downloadingInvoice ? (
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2.5"
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                      />
+                    ) : (
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    )}
+                  </svg>
+                  {downloadingInvoice ? "Downloading..." : "Tax Invoice"}
+                </button>
                 <button
                   type="button"
                   disabled={syncMutation.isPending}
@@ -277,16 +515,16 @@ export default function OrderDetailsModal({ open, onClose, order }: Props) {
                   {syncMutation.isPending ? "Syncing..." : "Sync Shiprocket"}
                 </button>
                 <span
-                  className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] border ${
+                  className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.12em] border ${
                     isCod
-                      ? "border-amber-500/40 bg-amber-500/15 text-amber-300"
-                      : "border-sky-500/40 bg-sky-500/15 text-sky-300"
+                      ? "border-amber-400 bg-amber-100 text-amber-950"
+                      : "border-sky-400 bg-sky-100 text-sky-950"
                   }`}
                   title={`Payment Mode: ${isCod ? "COD" : "UPI"}`}
                 >
                   <span
                     className={`h-1.5 w-1.5 rounded-full ${
-                      isCod ? "bg-amber-400" : "bg-sky-400"
+                      isCod ? "bg-amber-600" : "bg-sky-600"
                     }`}
                   />
                   {isCod ? "COD" : "UPI"}
@@ -316,15 +554,15 @@ export default function OrderDetailsModal({ open, onClose, order }: Props) {
                 </span>
                 <div className="flex items-center gap-2 mt-0.5">
                   <span
-                    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11.5px] font-medium tracking-wide uppercase border ${
+                    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11.5px] font-bold tracking-wide uppercase border ${
                       isCod
-                        ? "border-amber-500/40 bg-amber-500/10 text-amber-300"
-                        : "border-sky-500/40 bg-sky-500/10 text-sky-300"
+                        ? "border-amber-400 bg-amber-100 text-amber-950"
+                        : "border-sky-400 bg-sky-100 text-sky-950"
                     }`}
                   >
                     <span
                       className={`h-1.5 w-1.5 rounded-full ${
-                        isCod ? "bg-amber-400" : "bg-sky-400"
+                        isCod ? "bg-amber-600" : "bg-sky-600"
                       }`}
                     />
                     {isCod ? "Cash on Delivery (COD)" : "UPI"}
@@ -350,25 +588,166 @@ export default function OrderDetailsModal({ open, onClose, order }: Props) {
                   ))}
                 </select>
               </FormField>
-              <FormField label="Order status">
-                <select
-                  value={draft.orderStatus}
-                  onChange={(e) =>
-                    setDraft((d) =>
-                      d
-                        ? { ...d, orderStatus: e.target.value as OrderStatus }
-                        : d,
-                    )
-                  }
-                  className={selectClass}
-                >
-                  {ORDER_STATUSES.map((s) => (
-                    <option key={s} value={s} className="bg-ink">
-                      {s}
-                    </option>
-                  ))}
-                </select>
-              </FormField>
+              <div className="sm:col-span-2 flex flex-col gap-3 rounded-2xl border border-line/60 bg-surface/30 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-paper">
+                      Order Status & Transition Control
+                    </span>
+                    <span className="text-[10px] text-paper-muted">|</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[11px] text-paper-muted">Current:</span>
+                      <StatusBadge kind="order" status={order.orderStatus} />
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowFlowGuide((prev) => !prev)}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-amber-600/40 bg-amber-100 px-3 py-1 text-[11.5px] font-bold text-amber-950 hover:bg-amber-200 transition-all"
+                  >
+                    <span>{showFlowGuide ? "▲ Hide Lifecycle Instructions" : "▼ View Status Guide & Order Flow"}</span>
+                  </button>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-[11px] font-medium text-paper-muted">
+                    Change Status To:
+                  </label>
+                  <select
+                    value={draft.orderStatus}
+                    onChange={(e) =>
+                      setDraft((d) =>
+                        d
+                          ? { ...d, orderStatus: e.target.value as OrderStatus }
+                          : d,
+                      )
+                    }
+                    className={selectClass}
+                  >
+                    <optgroup label="── Recommended Next Transitions ──">
+                      <option value={order.orderStatus} className="bg-ink font-semibold">
+                        {order.orderStatus} (Keep Current Status)
+                      </option>
+                      {allowedNextStatuses.map((s) => (
+                        <option key={s} value={s} className="bg-ink text-gold font-medium">
+                          ✓ {s} (Allowed Next Step)
+                        </option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="── Other Lifecycle Statuses (May Fail Validation) ──">
+                      {ORDER_STATUSES.filter(
+                        (s) =>
+                          s !== order.orderStatus &&
+                          !allowedNextStatuses.includes(s),
+                      ).map((s) => (
+                        <option key={s} value={s} className="bg-ink text-paper-muted">
+                          {s}
+                        </option>
+                      ))}
+                    </optgroup>
+                  </select>
+                </div>
+
+                {allowedNextStatuses.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-line/40">
+                    <span className="text-[11.5px] font-semibold text-paper">
+                      Quick Next Action:
+                    </span>
+                    {allowedNextStatuses.map((nextSt) => {
+                      const isSelected = draft.orderStatus === nextSt;
+                      const isCancel = nextSt === "Cancelled";
+                      return (
+                        <button
+                          key={nextSt}
+                          type="button"
+                          onClick={() =>
+                            setDraft((d) =>
+                              d
+                                ? { ...d, orderStatus: nextSt as OrderStatus }
+                                : d,
+                            )
+                          }
+                          className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11.5px] font-bold transition-all ${
+                            isSelected
+                              ? isCancel
+                                ? "bg-red-800 text-white shadow-sm ring-2 ring-red-400"
+                                : "bg-stone-900 text-white shadow-sm ring-2 ring-amber-500"
+                              : isCancel
+                              ? "border border-red-300 bg-red-100 text-red-950 hover:bg-red-200"
+                              : "border border-amber-300 bg-amber-100 text-amber-950 hover:bg-amber-200"
+                          }`}
+                        >
+                          <span>{isSelected ? "●" : "→"}</span>
+                          <span>{nextSt}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {!isTransitionAllowed && (
+                  <div className="rounded-xl border border-amber-400 bg-amber-50 p-3 text-amber-950 shadow-sm">
+                    <div className="flex items-center gap-2 text-[12.5px] font-bold text-amber-950">
+                      <span>⚠️ Irregular Status Transition Selected</span>
+                    </div>
+                    <p className="mt-1 text-[12px] leading-relaxed text-amber-950 font-medium">
+                      You are changing from <strong>&quot;{order.orderStatus}&quot;</strong> directly to <strong>&quot;{draft.orderStatus}&quot;</strong>. Standard orders follow a sequential path: <code className="rounded bg-amber-200/90 px-1 py-0.5 font-mono text-amber-950 font-bold">Confirmed ➔ Processing ➔ Ready to Ship ➔ Shipped ➔ Out For Delivery ➔ Delivered</code>. Saving non-standard jumps may trigger a server validation error.
+                    </p>
+                  </div>
+                )}
+
+                {showFlowGuide && (
+                  <div className="rounded-xl border border-line/60 bg-surface-raised p-4 text-[12px] text-paper-muted space-y-3 mt-1 shadow-inner">
+                    <div className="flex items-center justify-between border-b border-line/40 pb-2">
+                      <span className="font-semibold text-paper text-[12.5px] flex items-center gap-1.5">
+                        <span>📋</span> How Status Changes Work & Lifecycle Rules
+                      </span>
+                      <span className="text-[10.5px] uppercase tracking-wider text-gold font-medium">Fulfillment Lifecycle</span>
+                    </div>
+
+                    <div>
+                      <span className="block font-medium text-paper text-[11.5px] mb-1.5">
+                        1. Standard Forward Fulfillment Path:
+                      </span>
+                      <div className="flex flex-wrap items-center gap-1.5 font-mono text-[11px] text-paper">
+                        <span className="rounded bg-paper/10 px-2 py-0.5 border border-line/50">Confirmed / New</span>
+                        <span className="text-gold">➔</span>
+                        <span className="rounded bg-paper/10 px-2 py-0.5 border border-line/50">Processing</span>
+                        <span className="text-gold">➔</span>
+                        <span className="rounded bg-paper/10 px-2 py-0.5 border border-line/50">Ready to Ship</span>
+                        <span className="text-gold">➔</span>
+                        <span className="rounded bg-paper/10 px-2 py-0.5 border border-line/50">Shipped</span>
+                        <span className="text-gold">➔</span>
+                        <span className="rounded bg-paper/10 px-2 py-0.5 border border-line/50">Out For Delivery</span>
+                        <span className="text-gold">➔</span>
+                        <span className="rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 font-semibold">Delivered</span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-line/30">
+                      <div className="rounded-lg bg-red-50/90 p-2.5 border border-red-300 text-red-950">
+                        <span className="block font-bold text-red-950 text-[11.5px] mb-1">
+                          ✕ Cancellation Rules:
+                        </span>
+                        <p className="text-[11px] leading-relaxed text-red-950/90 font-medium">
+                          Orders can be cancelled prior to dispatch (<span className="font-bold">Confirmed</span>, <span className="font-bold">Processing</span>, or <span className="font-bold">Ready to Ship</span>). Once marked Shipped or In Transit, cancellation is blocked. Cancellation automatically restores all product quantities to inventory.
+                        </p>
+                      </div>
+
+                      <div className="rounded-lg bg-sky-50/90 p-2.5 border border-sky-300 text-sky-950">
+                        <span className="block font-bold text-sky-950 text-[11.5px] mb-1">
+                          🔄 Returns & Refunds:
+                        </span>
+                        <p className="text-[11px] leading-relaxed text-sky-950/90 font-medium">
+                          Only applicable after <span className="font-bold">Delivered</span>:
+                          <br />
+                          <span className="font-mono font-bold">Return Requested</span> ➔ <span className="font-mono font-bold">Return Approved</span> (triggers automated Shiprocket reverse pickup) ➔ <span className="font-mono font-bold">Returned</span> (auto-restocks inventory) ➔ <span className="font-mono font-bold text-emerald-800">Refunded</span>.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
             {(draft.orderStatus === "Return Approved" || (draft.orderStatus as string) === "RETURN_APPROVED") && (
               <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-[12.5px] text-amber-300">
@@ -687,9 +1066,41 @@ export default function OrderDetailsModal({ open, onClose, order }: Props) {
                 emphasise
               />
             </dl>
-            <p className="text-[11.5px] text-paper-muted">
-              Totals recalculate live as you change items or quantities.
-            </p>
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+              <p className="text-[11.5px] text-paper-muted">
+                Totals recalculate live as you change items or quantities.
+              </p>
+              <button
+                type="button"
+                onClick={handleDownloadInvoice}
+                disabled={downloadingInvoice}
+                className="inline-flex items-center gap-2 rounded-xl border border-gold/50 bg-gold/10 px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider text-gold hover:bg-gold hover:text-white transition-all disabled:opacity-50 cursor-pointer shadow-sm"
+              >
+                <svg
+                  className={`h-3.5 w-3.5 ${downloadingInvoice ? "animate-spin" : ""}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  {downloadingInvoice ? (
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2.5}
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    />
+                  ) : (
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  )}
+                </svg>
+                {downloadingInvoice ? "Generating PDF..." : "Download Tax Invoice (PDF)"}
+              </button>
+            </div>
           </section>
 
           <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line pt-5">

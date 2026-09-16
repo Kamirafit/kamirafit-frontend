@@ -54,7 +54,7 @@ export default function Modal({
         className="absolute inset-0 h-full w-full bg-black/50 backdrop-blur-md"
       />
       <div
-        className={`relative z-10 w-full ${WIDTH[maxWidth]} max-h-[92vh] sm:max-h-[85vh] overflow-y-auto modal-scrollbar-hidden rounded-2xl border border-white/15 bg-ink/90 shadow-[0_40px_120px_-40px_rgba(0,0,0,0.6)] backdrop-blur-xl supports-[backdrop-filter]:bg-ink/75`}
+        className={`relative z-10 w-full ${WIDTH[maxWidth]} max-h-[92vh] sm:max-h-[85vh] overflow-y-auto overflow-x-hidden modal-scrollbar-hidden rounded-2xl border border-white/15 bg-ink/90 shadow-[0_40px_120px_-40px_rgba(0,0,0,0.6)] backdrop-blur-xl supports-[backdrop-filter]:bg-ink/75`}
       >
         <div className="sticky top-0 z-20 flex items-center justify-between gap-4 border-b border-line bg-ink/95 px-4 py-3.5 sm:px-6 sm:py-5 backdrop-blur-md">
           <div className="flex flex-col gap-1">

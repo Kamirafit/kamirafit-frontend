@@ -110,7 +110,12 @@ export function adaptOrder(raw: any): Order {
   }));
 
   const subtotal = items.reduce((sum: number, it: any) => sum + it.price * it.quantity, 0);
-  const deliveryFee = typeof o.deliveryFee === "number" ? o.deliveryFee : 0;
+  const deliveryFee =
+    typeof o.shippingFee === "number"
+      ? o.shippingFee
+      : typeof o.deliveryFee === "number"
+      ? o.deliveryFee
+      : Number(o.shippingFee ?? o.deliveryFee ?? 0);
   const total =
     typeof o.total === "number"
       ? o.total
@@ -143,6 +148,7 @@ export function adaptOrder(raw: any): Order {
     courierName: o.courierName || o.carrier,
     trackingUrl: o.trackingUrl,
     notes: o.notes,
+    returnReason: o.returnReason,
   };
 }
 
@@ -241,7 +247,7 @@ export const adminService = {
               offerPrice: Number(v.offerPrice || v.price || x.price || x.basePrice || 0),
               stock: typeof v.stock === "number" ? v.stock : 50,
               hsnCode: String(v.hsnCode || "61091000"),
-              gstPercentage: typeof v.gstPercentage === "number" ? v.gstPercentage : 12.0,
+              gstPercentage: typeof v.gstPercentage === "number" ? v.gstPercentage : 5.0,
               weight: typeof v.weight === "number" ? v.weight : 0.2,
             }))
           : (x.size || ["M"]).map((size: string, index: number) => {
@@ -255,7 +261,7 @@ export const adminService = {
                 offerPrice: Number(x.price || x.basePrice || 0),
                 stock: 50,
                 hsnCode: "61091000",
-                gstPercentage: 12.0,
+                gstPercentage: 5.0,
                 weight: 0.2,
               };
             }),
@@ -289,7 +295,7 @@ export const adminService = {
         offerPrice: Number(v.offerPrice || v.price || x.price || x.basePrice || 0),
         stock: typeof v.stock === "number" ? v.stock : 50,
         hsnCode: String(v.hsnCode || "61091000"),
-        gstPercentage: typeof v.gstPercentage === "number" ? v.gstPercentage : 12.0,
+        gstPercentage: typeof v.gstPercentage === "number" ? v.gstPercentage : 5.0,
         weight: typeof v.weight === "number" ? v.weight : 0.2,
       }));
     }
