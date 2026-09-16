@@ -4,6 +4,7 @@ export type { CartItem } from "@/types/entities";
 
 export type AddToCartPayload = {
   id: string;
+  variantId?: string;
   size?: Size;
   color?: Color;
   quantity?: number;
@@ -11,6 +12,7 @@ export type AddToCartPayload = {
 
 export type CartItemKey = {
   id: string;
+  variantId?: string;
   size?: Size;
   color?: Color;
 };
@@ -79,14 +81,15 @@ const cartSlice = createSlice({
   initialState,
   reducers: {
     addToCart(state, action: PayloadAction<AddToCartPayload>) {
-      const { id, size, color, quantity = 1 } = action.payload;
+      const { id, variantId, size, color, quantity = 1 } = action.payload;
       const existing = state.items.find((it) =>
         matchesKey(it, { id, size, color }),
       );
       if (existing) {
         existing.quantity += quantity;
+        if (!existing.variantId && variantId) existing.variantId = variantId;
       } else {
-        state.items.push({ id, size, color, quantity });
+        state.items.push({ id, variantId, size, color, quantity });
       }
       persistCartToStorage(state.items);
     },

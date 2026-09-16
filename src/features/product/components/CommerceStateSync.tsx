@@ -131,9 +131,33 @@ export default function CommerceStateSync() {
     const currentJson = JSON.stringify(cartItems);
     if (currentJson !== lastSyncedCartJsonRef.current) {
       lastSyncedCartJsonRef.current = currentJson;
-      updateCart.mutate(cartItems);
+      updateCart.mutate(cartItems, {
+        onSuccess: (res) => {
+          const rawServerItems: Array<Partial<CartItem>> = res?.items || [];
+          if (Array.isArray(rawServerItems)) {
+            const resolvedServerItems: CartItem[] = rawServerItems
+              .filter((sItem) => Boolean(sItem.id))
+              .map((sItem) => ({
+                id: sItem.id as string,
+                variantId: sItem.variantId,
+                size: sItem.size,
+                color: sItem.color,
+                quantity: Math.max(1, Math.min(100, Number(sItem.quantity) || 1)),
+              }));
+            const serverJson = JSON.stringify(resolvedServerItems);
+            if (serverJson !== JSON.stringify(cartItemsRef.current)) {
+              lastSyncedCartJsonRef.current = serverJson;
+              dispatch(replaceCart(resolvedServerItems));
+              persistCartToStorage(resolvedServerItems);
+            }
+          }
+        },
+        onError: () => {
+          cartQuery.refetch();
+        },
+      });
     }
-  }, [cartItems, isAuthenticated, updateCart]);
+  }, [cartItems, isAuthenticated, updateCart, cartQuery, dispatch]);
 
   return null;
 }

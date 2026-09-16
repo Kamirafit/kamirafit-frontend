@@ -252,10 +252,41 @@ export default function ProductDetails({ product }: Props) {
     handleFetchEstimate(postalCode, selectedCountry);
   };
 
+  const cartItems = useAppSelector((s) => s.cart.items);
+
+  const selectedVariant = useMemo(() => {
+    if (!product.variants || product.variants.length === 0) return null;
+    const match = product.variants.find((v) => {
+      const matchSize = selectedSize ? v.size === selectedSize : true;
+      const matchColor = selectedColor ? v.color === selectedColor : true;
+      return matchSize && matchColor;
+    });
+    return match || product.variants[0];
+  }, [product.variants, selectedSize, selectedColor]);
+
+  const availableStock = selectedVariant?.stock ?? (product.isAvailable ? 10 : 0);
+  const isOutOfStock = availableStock <= 0 || !product.isAvailable;
+
+  const inCartQty = useMemo(() => {
+    const item = cartItems.find(
+      (it) =>
+        it.id === product.id &&
+        (selectedSize ? it.size === selectedSize : true) &&
+        (selectedColor ? it.color === selectedColor : true)
+    );
+    return item?.quantity || 0;
+  }, [cartItems, product.id, selectedSize, selectedColor]);
+
+  const isMaxInCart = availableStock > 0 && inCartQty >= availableStock;
+
   const handleAddToCart = () => {
     if (!isAuthenticated) {
       const current = pathname || `/product/${product.slug || product.id}`;
       router.push(`/login?redirect=${encodeURIComponent(current)}`);
+      return;
+    }
+
+    if (isOutOfStock || isMaxInCart) {
       return;
     }
 
@@ -267,8 +298,10 @@ export default function ProductDetails({ product }: Props) {
     dispatch(
       addToCart({
         id: product.id,
+        variantId: selectedVariant?.id,
         size: selectedSize,
         color: selectedColor ?? undefined,
+        quantity: 1,
       }),
     );
     setAdded(true);
@@ -468,14 +501,49 @@ export default function ProductDetails({ product }: Props) {
           />
         </div>
 
+        {isOutOfStock ? (
+          <div className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-xs font-medium text-red-400">
+            <span className="h-2 w-2 rounded-full bg-red-400" />
+            This variant is currently out of stock. Please select another size or color.
+          </div>
+        ) : isMaxInCart ? (
+          <div className="flex items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3.5 py-2 text-xs font-medium text-amber-300">
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+            You have added all available stock ({availableStock} unit{availableStock > 1 ? "s" : ""}) to your bag.
+          </div>
+        ) : availableStock <= 5 ? (
+          <div className="flex items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3.5 py-2 text-xs font-medium text-amber-300">
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+            Hurry! Only {availableStock} left in stock.
+          </div>
+        ) : null}
+
         <div className="flex items-stretch gap-3">
-          <button
-            type="button"
-            onClick={handleAddToCart}
-            className="flex-1 rounded-full border-2 border-gold bg-gold px-6 py-4 text-[13px] font-semibold uppercase tracking-[0.2em] text-white shadow-[0_14px_30px_-14px_rgba(74,14,26,0.6)] transition-all duration-300 ease-in-out hover:bg-transparent hover:text-gold hover:shadow-[0_18px_40px_-18px_rgba(74,14,26,0.45)]"
-          >
-            {added ? "Added to cart" : "Add to Cart"}
-          </button>
+          {isOutOfStock ? (
+            <button
+              type="button"
+              disabled
+              className="flex-1 rounded-full border border-line bg-ink-2 px-6 py-4 text-[13px] font-semibold uppercase tracking-[0.2em] text-paper-muted cursor-not-allowed opacity-60"
+            >
+              Out of Stock
+            </button>
+          ) : isMaxInCart ? (
+            <button
+              type="button"
+              disabled
+              className="flex-1 rounded-full border border-line bg-ink-2 px-6 py-4 text-[13px] font-semibold uppercase tracking-[0.2em] text-paper-muted cursor-not-allowed opacity-70"
+            >
+              Max Stock in Bag
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              className="flex-1 rounded-full border-2 border-gold bg-gold px-6 py-4 text-[13px] font-semibold uppercase tracking-[0.2em] text-white shadow-[0_14px_30px_-14px_rgba(74,14,26,0.6)] transition-all duration-300 ease-in-out hover:bg-transparent hover:text-gold hover:shadow-[0_18px_40px_-18px_rgba(74,14,26,0.45)]"
+            >
+              {added ? "Added to cart" : "Add to Cart"}
+            </button>
+          )}
           <button
             type="button"
             aria-pressed={saved}

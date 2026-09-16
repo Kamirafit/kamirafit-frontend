@@ -384,8 +384,7 @@ export default function CheckoutPageClient() {
           <span className="font-semibold text-gold">
             {formatPrice(placedOrderTotal)}
           </span>{" "}
-          has been placed {placedPaymentMethod === "COD" ? "via COD" : "via UPI"}. A confirmation will reach {placedRecipientPhone || "you"}{" "}
-          shortly.
+          has been placed {placedPaymentMethod === "COD" ? "via COD" : "via UPI"}.
         </p>
         <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
           <Link href="/shop" className={buttonClasses("primary", "md")}>

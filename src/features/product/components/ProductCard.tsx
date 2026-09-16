@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { DEFAULT_PRODUCT_IMAGE, formatPrice, getValidImageSrc } from "@/lib/format";
 import { useAppDispatch, useAppSelector } from "../hooks/redux";
 import { addToCart } from "../store/cartSlice";
@@ -92,6 +92,13 @@ export default function ProductCard({ product }: Props) {
     }
   };
 
+  const totalStock = useMemo(() => {
+    if (!product.variants || product.variants.length === 0) return product.isAvailable ? 10 : 0;
+    return product.variants.reduce((sum, v) => sum + (v.stock || 0), 0);
+  }, [product.variants, product.isAvailable]);
+
+  const isCardOutOfStock = totalStock <= 0 || !product.isAvailable;
+
   return (
     <article
       onClick={handleCardClick}
@@ -111,6 +118,11 @@ export default function ProductCard({ product }: Props) {
           sizes="(min-width: 1280px) 22vw, (min-width: 1024px) 30vw, (min-width: 640px) 45vw, 50vw"
           className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
         />
+        {isCardOutOfStock ? (
+          <div className="absolute top-3 left-3 rounded-full bg-ink/90 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-red-400 border border-red-500/30">
+            Out of Stock
+          </div>
+        ) : null}
       </Link>
 
       <div className="flex flex-1 flex-col gap-1.5 p-4 sm:p-5">
@@ -177,11 +189,34 @@ export default function ProductCard({ product }: Props) {
             </button>
             <button
               type="button"
-              aria-label={inCart ? "Added to cart" : "Add to cart"}
+              aria-label={isCardOutOfStock ? "Out of stock" : inCart ? "Added to cart" : "Add to cart"}
               aria-pressed={inCart}
-              onClick={(e) => handleActionWithAuth(e, () => dispatch(addToCart({ id: product.id })))}
+              disabled={isCardOutOfStock}
+              onClick={(e) => {
+                if (isCardOutOfStock) return;
+                // If product has multiple sizes or colors, route to detail page for selection
+                if ((product.size && product.size.length > 1) || (product.color && product.color.length > 1)) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  router.push(productHref);
+                  return;
+                }
+                const firstVar = product.variants?.[0];
+                handleActionWithAuth(e, () =>
+                  dispatch(
+                    addToCart({
+                      id: product.id,
+                      variantId: firstVar?.id,
+                      size: firstVar?.size || product.size?.[0],
+                      color: firstVar?.color || product.color?.[0],
+                    })
+                  )
+                );
+              }}
               className={`inline-flex h-9 w-9 items-center justify-center rounded-full border-2 transition-all duration-300 ease-in-out ${
-                inCart
+                isCardOutOfStock
+                  ? "border-line bg-ink-2 text-paper-muted/40 cursor-not-allowed"
+                  : inCart
                   ? "border-gold bg-gold text-white shadow-[0_8px_20px_-8px_rgba(74,14,26,0.55)]"
                   : "border-gold bg-transparent text-gold hover:bg-gold hover:text-white hover:shadow-[0_8px_20px_-8px_rgba(74,14,26,0.55)]"
               }`}

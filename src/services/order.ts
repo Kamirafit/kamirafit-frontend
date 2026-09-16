@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient, unwrapApiResponse } from "@/api/client";
 import type { Order } from "@/types/entities";
 
@@ -53,6 +53,10 @@ export const orderService = {
     unwrapApiResponse<Order>(apiClient.post("/orders/verify-payment", params)),
   getTracking: (id: string) =>
     unwrapApiResponse<OrderTrackingResponse>(apiClient.get(`/orders/${id}/tracking`)),
+  cancelOrder: (id: string, reason?: string) =>
+    unwrapApiResponse<Order>(apiClient.post(`/orders/${id}/cancel`, { reason })),
+  requestReturn: (id: string, reason: string, comments?: string) =>
+    unwrapApiResponse<Order>(apiClient.post(`/orders/${id}/return`, { reason, comments })),
 };
 
 export interface TrackingMilestone {
@@ -96,6 +100,28 @@ export function useVerifyPayment() {
   });
 }
 
+export function useCancelOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason?: string }) =>
+      orderService.cancelOrder(id, reason),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["orders"] });
+    },
+  });
+}
+
+export function useRequestReturn() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, reason, comments }: { id: string; reason: string; comments?: string }) =>
+      orderService.requestReturn(id, reason, comments),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["orders"] });
+    },
+  });
+}
+
 export function useOrderTracking(id: string | null | undefined) {
   return useQuery<OrderTrackingResponse>({
     queryKey: ["orders", id, "tracking"],
@@ -104,4 +130,5 @@ export function useOrderTracking(id: string | null | undefined) {
     staleTime: 30000,
   });
 }
+
 

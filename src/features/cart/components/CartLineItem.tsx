@@ -31,6 +31,19 @@ export default function CartLineItem({ resolved }: Props) {
     return getValidImageSrc(product.image, DEFAULT_PRODUCT_IMAGE);
   }, [item.color, product.image, product.imageColorMap, product.images]);
 
+  const variant = useMemo(() => {
+    if (!product.variants || product.variants.length === 0) return null;
+    return (
+      product.variants.find(
+        (v) =>
+          (!item.size || v.size === item.size) &&
+          (!item.color || v.color === item.color)
+      ) || product.variants[0]
+    );
+  }, [product.variants, item.size, item.color]);
+
+  const maxStock = variant?.stock ?? 20;
+
   return (
     <li className="flex flex-col gap-4 border-b border-line py-6 sm:flex-row sm:gap-6">
       <Link
@@ -82,12 +95,22 @@ export default function CartLineItem({ resolved }: Props) {
               <span className="font-medium text-paper">{item.color}</span>
             </span>
           ) : null}
+          {maxStock <= 5 ? (
+            <span className="text-[11px] font-medium text-amber-400">
+              Only {maxStock} left
+            </span>
+          ) : null}
         </div>
 
         <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
           <QuantityStepper
             value={item.quantity}
-            onIncrement={() => dispatch(incrementQuantity(key))}
+            max={Math.max(1, maxStock)}
+            onIncrement={() => {
+              if (item.quantity < maxStock) {
+                dispatch(incrementQuantity(key));
+              }
+            }}
             onDecrement={() => dispatch(decrementQuantity(key))}
           />
           <div className="flex items-center gap-4">

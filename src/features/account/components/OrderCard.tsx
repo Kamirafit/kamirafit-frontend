@@ -24,6 +24,15 @@ export default function OrderCard({ order, onViewDetails, onReviewProduct, onTra
 
   const orderNum = customOrder.orderNumber || order.id;
 
+  const normStatus = (order.status || "").toUpperCase();
+  const isCancellable =
+    normStatus === "CONFIRMED" ||
+    normStatus === "PROCESSING" ||
+    normStatus === "PENDING_VERIFICATION" ||
+    normStatus === "PENDING VERIFICATION";
+
+  const isReturnable = normStatus === "DELIVERED";
+
   return (
     <div className="flex flex-col overflow-hidden rounded-2xl border border-line bg-ink shadow-sm transition-all duration-300 hover:border-gold/40 hover:shadow-md">
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-line bg-ink-2 px-5 py-4 sm:flex-nowrap">
@@ -41,12 +50,30 @@ export default function OrderCard({ order, onViewDetails, onReviewProduct, onTra
             <p className="mt-0.5 font-medium text-paper">{orderNum}</p>
           </div>
         </div>
-        <button
-          onClick={() => onViewDetails(order)}
-          className="rounded-full border border-line px-4 py-2 text-[12px] font-semibold uppercase tracking-wider text-paper transition-colors hover:border-gold hover:text-gold"
-        >
-          View Details
-        </button>
+        <div className="flex items-center gap-2">
+          {isCancellable && (
+            <button
+              onClick={() => onViewDetails(order)}
+              className="rounded-full border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-red-400 transition-colors hover:bg-red-500 hover:text-white"
+            >
+              Cancel
+            </button>
+          )}
+          {isReturnable && (
+            <button
+              onClick={() => onViewDetails(order)}
+              className="rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-amber-300 transition-colors hover:bg-amber-500 hover:text-ink"
+            >
+              Return
+            </button>
+          )}
+          <button
+            onClick={() => onViewDetails(order)}
+            className="rounded-full border border-line px-4 py-2 text-[12px] font-semibold uppercase tracking-wider text-paper transition-colors hover:border-gold hover:text-gold"
+          >
+            View Details
+          </button>
+        </div>
       </div>
 
       <div className="p-5">
