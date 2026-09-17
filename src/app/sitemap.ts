@@ -17,6 +17,44 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "daily",
       priority: 0.9,
     },
+    // Top Fashion & Apparel Category Hubs
+    {
+      url: `${baseUrl}/shop?category=Kurti`,
+      lastModified: new Date(),
+      changeFrequency: "daily",
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/shop?category=Co-ords+Sets`,
+      lastModified: new Date(),
+      changeFrequency: "daily",
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/shop?category=Dresses`,
+      lastModified: new Date(),
+      changeFrequency: "daily",
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/shop?category=T-Shirts`,
+      lastModified: new Date(),
+      changeFrequency: "daily",
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/shop?category=Oversized+T-Shirts`,
+      lastModified: new Date(),
+      changeFrequency: "daily",
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/shop?category=Hoodies`,
+      lastModified: new Date(),
+      changeFrequency: "daily",
+      priority: 0.8,
+    },
+    // Customer Support & Policies
     {
       url: `${baseUrl}/shipping`,
       lastModified: new Date(),
@@ -70,15 +108,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .map((product) => {
         const identifier = product.slug || product.id;
         const lastModDate = product.updatedAt || product.createdAt || new Date().toISOString();
+        const imgs = (product.images && product.images.length > 0 ? product.images : [product.image]).filter(Boolean);
         return {
           url: `${baseUrl}/product/${identifier}`,
           lastModified: new Date(lastModDate),
           changeFrequency: "weekly" as const,
           priority: 0.8,
+          images: imgs.length > 0 ? imgs : undefined,
         };
       });
   } catch {
-    // If backend is unreachable during static build, return static pages
     productPages = [];
   }
 

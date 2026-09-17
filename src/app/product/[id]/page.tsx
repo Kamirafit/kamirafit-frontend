@@ -43,17 +43,28 @@ export async function generateMetadata({
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://kamirafit.com";
     const imageUrl = product.images?.[0] || `${siteUrl}/images/og-default.jpg`;
     const canonicalId = product.slug || product.id;
+    const cleanDesc = (product.description || "").replace(/\s+/g, " ").trim().slice(0, 140);
 
     return {
-      title: `${product.name} — KamiraFit`,
-      description: product.description.slice(0, 160),
+      title: `${product.name} | Women's ${product.category || "Apparel"} — Buy Online at ₹${product.price} | KamiraFit`,
+      description: `Buy ${product.name} online at KamiraFit for ₹${product.price}. ${cleanDesc}. Free express shipping over ₹999 across India.`,
+      keywords: [
+        product.name,
+        `${product.name} online`,
+        product.category || "Clothing",
+        `buy ${product.category || "clothing"} online`,
+        "women apparel India",
+        "KamiraFit",
+        "designer clothing",
+      ],
       alternates: {
         canonical: `${siteUrl}/product/${canonicalId}`,
       },
       openGraph: {
-        title: `${product.name} — KamiraFit`,
-        description: product.description.slice(0, 160),
+        title: `${product.name} | Women's ${product.category || "Apparel"} — KamiraFit`,
+        description: `Shop ${product.name} for ₹${product.price} at KamiraFit. Premium quality fabrics and fast delivery across India.`,
         url: `${siteUrl}/product/${canonicalId}`,
+        type: "website",
         images: [
           {
             url: imageUrl,
@@ -65,15 +76,15 @@ export async function generateMetadata({
       },
       twitter: {
         card: "summary_large_image",
-        title: `${product.name} — KamiraFit`,
-        description: product.description.slice(0, 160),
+        title: `${product.name} — KamiraFit Clothing`,
+        description: `Buy ${product.name} online at KamiraFit for ₹${product.price}. Premium apparel with express delivery.`,
         images: [imageUrl],
       },
     };
   } catch {
     return {
       title: "Product Not Found — KamiraFit",
-      description: "The requested product is unavailable or does not exist.",
+      description: "The requested apparel item is unavailable or does not exist.",
     };
   }
 }
@@ -104,13 +115,18 @@ export default async function ProductPage({
     : (product.isAvailable !== false);
   const availability = hasStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock";
 
-  // Product JSON-LD Schema
-  const jsonLd = {
+  const primarySku = product.variants?.[0]?.sku || `KF-${product.id}`;
+
+  // Complete Google Merchant & Product Rich Snippet Schema
+  const productJsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.name,
     description: product.description,
     image: product.images,
+    sku: primarySku,
+    mpn: primarySku,
+    category: product.category,
     brand: {
       "@type": "Brand",
       name: "KamiraFit",
@@ -120,8 +136,48 @@ export default async function ProductPage({
       url: `${siteUrl}/product/${canonicalId}`,
       priceCurrency: "INR",
       price: product.price,
+      priceValidUntil: "2027-12-31",
       availability,
       itemCondition: "https://schema.org/NewCondition",
+      seller: {
+        "@type": "Organization",
+        name: "KamiraFit",
+      },
+      hasMerchantReturnPolicy: {
+        "@type": "MerchantReturnPolicy",
+        applicableCountry: "IN",
+        returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+        merchantReturnDays: 7,
+        returnMethod: "https://schema.org/ReturnByMail",
+        returnFees: "https://schema.org/FreeReturn",
+      },
+      shippingDetails: {
+        "@type": "OfferShippingDetails",
+        shippingRate: {
+          "@type": "MonetaryAmount",
+          value: product.price >= 999 ? 0 : 99,
+          currency: "INR",
+        },
+        shippingDestination: {
+          "@type": "DefinedRegion",
+          addressCountry: "IN",
+        },
+        deliveryTime: {
+          "@type": "ShippingDeliveryTime",
+          handlingTime: {
+            "@type": "QuantitativeValue",
+            minValue: 1,
+            maxValue: 2,
+            unitCode: "d",
+          },
+          transitTime: {
+            "@type": "QuantitativeValue",
+            minValue: 2,
+            maxValue: 5,
+            unitCode: "d",
+          },
+        },
+      },
     },
     ...(product.reviews?.length
       ? {
@@ -134,7 +190,44 @@ export default async function ProductPage({
       : {}),
   };
 
-  const safeJsonLdString = JSON.stringify(jsonLd)
+  // Google Search Breadcrumbs Schema
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: siteUrl,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Shop",
+        item: `${siteUrl}/shop`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: product.category || "Apparel",
+        item: `${siteUrl}/shop?category=${encodeURIComponent(product.category || "all")}`,
+      },
+      {
+        "@type": "ListItem",
+        position: 4,
+        name: product.name,
+        item: `${siteUrl}/product/${canonicalId}`,
+      },
+    ],
+  };
+
+  const safeProductJsonLd = JSON.stringify(productJsonLd)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026");
+
+  const safeBreadcrumbJsonLd = JSON.stringify(breadcrumbJsonLd)
     .replace(/</g, "\\u003c")
     .replace(/>/g, "\\u003e")
     .replace(/&/g, "\\u0026");
@@ -143,7 +236,11 @@ export default async function ProductPage({
     <PageShell>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: safeJsonLdString }}
+        dangerouslySetInnerHTML={{ __html: safeProductJsonLd }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: safeBreadcrumbJsonLd }}
       />
       <Container className="py-8 lg:py-10">
         <nav
