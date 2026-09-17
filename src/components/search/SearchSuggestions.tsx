@@ -58,6 +58,10 @@ export default function SearchSuggestions({
       {results.map((product, i) => {
         const active = i === selectedIndex;
         const imageSrc = getValidImageSrc(product.image, DEFAULT_PRODUCT_IMAGE);
+        const mrp = typeof product.mrp === "number" ? product.mrp : typeof product.baseMrp === "number" ? product.baseMrp : 0;
+        const price = typeof product.price === "number" ? product.price : 0;
+        const hasDiscount = mrp > 0 && price > 0 && mrp > price;
+
         return (
           <li key={product.id} data-index={i}>
             <Link
@@ -86,9 +90,22 @@ export default function SearchSuggestions({
                     {product.category}
                   </p>
                 </div>
-                <p className="shrink-0 font-display text-[14px] font-semibold tracking-wide text-gold">
-                  {formatPrice(product.price)}
-                </p>
+                <div className="shrink-0 flex items-baseline gap-1.5 font-display text-[14px] font-semibold tracking-wide">
+                  {hasDiscount ? (
+                    <>
+                      <span className="line-through text-paper-muted text-[11.5px] font-normal">
+                        {formatPrice(mrp)}
+                      </span>
+                      <span className="text-gold">
+                        {formatPrice(price)}
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-gold">
+                      {formatPrice(price > 0 ? price : mrp)}
+                    </span>
+                  )}
+                </div>
               </div>
             </Link>
           </li>

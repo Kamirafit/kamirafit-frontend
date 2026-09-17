@@ -194,9 +194,28 @@ export default function ProductsPage() {
     {
       key: "price",
       label: "Price",
-      render: (p) => (
-        <span className="font-semibold text-gold">{formatPrice(p.price)}</span>
-      ),
+      render: (p) => {
+        const mrp = typeof p.mrp === "number" ? p.mrp : typeof p.baseMrp === "number" ? p.baseMrp : 0;
+        const price = typeof p.price === "number" ? p.price : 0;
+        const hasDiscount = mrp > 0 && price > 0 && mrp > price;
+        const discountPercent = hasDiscount ? Math.round(((mrp - price) / mrp) * 100) : 0;
+
+        return (
+          <div className="flex flex-col">
+            <div className="flex items-baseline gap-1.5">
+              {hasDiscount ? (
+                <span className="line-through text-paper-muted text-[11px]">{formatPrice(mrp)}</span>
+              ) : null}
+              <span className="font-semibold text-gold">{formatPrice(price > 0 ? price : mrp)}</span>
+            </div>
+            {hasDiscount ? (
+              <span className="text-[10.5px] font-bold text-gold">
+                {discountPercent}% OFF
+              </span>
+            ) : null}
+          </div>
+        );
+      },
     },
     {
       key: "rating",

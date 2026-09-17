@@ -312,6 +312,21 @@ export default function ProductDetails({ product }: Props) {
     toggleWishlistOptimistic(product.id);
   };
 
+  const activeMrp = typeof selectedVariant?.mrp === "number" && selectedVariant.mrp > 0
+    ? selectedVariant.mrp
+    : typeof product.mrp === "number"
+    ? product.mrp
+    : typeof product.baseMrp === "number"
+    ? product.baseMrp
+    : 0;
+  const activePrice = typeof selectedVariant?.price === "number" && selectedVariant.price > 0
+    ? selectedVariant.price
+    : typeof product.price === "number"
+    ? product.price
+    : 0;
+  const hasDiscount = activeMrp > 0 && activePrice > 0 && activeMrp > activePrice;
+  const discountPercent = hasDiscount ? Math.round(((activeMrp - activePrice) / activeMrp) * 100) : 0;
+
   return (
     <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-16">
       <div>
@@ -341,9 +356,25 @@ export default function ProductDetails({ product }: Props) {
               {product.reviews.length} reviews
             </span>
           </div>
-          <p className="mt-1 font-display text-[28px] font-semibold tracking-tight text-paper">
-            {formatPrice(product.price)}
-          </p>
+          <div className="mt-1 flex flex-wrap items-baseline gap-3">
+            {hasDiscount ? (
+              <>
+                <span className="line-through text-paper-muted text-[20px] font-normal">
+                  {formatPrice(activeMrp)}
+                </span>
+                <p className="font-display text-[28px] font-semibold tracking-tight text-paper">
+                  {formatPrice(activePrice)}
+                </p>
+                <span className="inline-flex items-center rounded-full bg-[#8B1E2D]/15 border border-[#8B1E2D]/30 px-2.5 py-0.5 text-xs font-bold text-gold uppercase tracking-wider">
+                  {discountPercent}% OFF
+                </span>
+              </>
+            ) : (
+              <p className="font-display text-[28px] font-semibold tracking-tight text-paper">
+                {formatPrice(activePrice > 0 ? activePrice : activeMrp)}
+              </p>
+            )}
+          </div>
         </header>
 
         <div className="flex items-center gap-3 rounded-xl border border-line bg-ink px-4 py-3 text-[13px]">

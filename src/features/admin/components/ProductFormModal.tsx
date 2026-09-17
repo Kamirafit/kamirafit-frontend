@@ -349,13 +349,21 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
 
   // Real Indian GST Reverse Calculation (B2C Selling Price is Tax Inclusive)
   const effectiveGstRate = values.gstRate !== undefined && values.gstRate !== null ? values.gstRate : 5;
-  const sellingPrice = values.price || 0;
+  const mrp = values.mrp || 0;
+  const rawPrice = values.price || 0;
+  // If price is 0 but mrp > 0, price behaves as mrp
+  const sellingPrice = rawPrice > 0 ? rawPrice : (mrp > 0 ? mrp : 0);
   const costPrice = values.costPrice || 0;
   const taxableBasePrice = sellingPrice > 0 ? sellingPrice / (1 + effectiveGstRate / 100) : 0;
   const gstTaxAmount = sellingPrice > 0 ? sellingPrice - taxableBasePrice : 0;
   const intraStateHalf = gstTaxAmount / 2; // Split into CGST + SGST for West Bengal
   const netProfitAfterGst = Math.max(0, taxableBasePrice - costPrice);
   const netMarginAfterGst = taxableBasePrice > 0 ? (netProfitAfterGst / taxableBasePrice) * 100 : 0;
+
+  // Real-time discount calculation
+  const hasDiscount = mrp > 0 && rawPrice > 0 && mrp > rawPrice;
+  const discountPercent = hasDiscount ? Math.round(((mrp - rawPrice) / mrp) * 100) : 0;
+  const savingsAmount = hasDiscount ? mrp - rawPrice : 0;
 
   const handleNameChange = (name: string) => {
     setValues((previous) => ({ ...previous, name, slug: previous.slug === slugify(previous.name) || !previous.slug ? slugify(name) : previous.slug }));
@@ -541,8 +549,8 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
     event.preventDefault();
     const nextErrors: Record<string, string> = {};
     if (!values.name.trim()) nextErrors.name = "Product name is required.";
-    if (!values.category) nextErrors.category = "Category is required.";
-    if (!Number.isFinite(values.price) || values.price < 0) nextErrors.price = "Enter a valid non-negative selling price.";
+    const finalPrice = values.price > 0 ? values.price : (values.mrp > 0 ? values.mrp : 0);
+    if (!Number.isFinite(finalPrice) || finalPrice <= 0) nextErrors.price = "Enter a valid selling price or MRP.";
     if (!Number.isFinite(values.costPrice) || values.costPrice < 0) nextErrors.costPrice = "Enter a valid non-negative cost price.";
     if (!values.description.trim()) nextErrors.description = "Description is required.";
     if (values.weight < 0 || !Number.isFinite(values.weight)) nextErrors.weight = "Weight must be a non-negative number.";
@@ -594,12 +602,17 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
 
     const finalImageUrls = orderedImages.map((image) => image.src);
 
+    const effectivePrice = values.price > 0 ? values.price : (values.mrp > 0 ? values.mrp : 0);
+    const effectiveMrp = values.mrp > 0 ? values.mrp : effectivePrice;
+
     onSubmit({
       ...values,
       name: values.name.trim(),
       slug: values.slug || slugify(values.name),
       description: values.description.trim(),
       costPrice: values.costPrice,
+      price: effectivePrice,
+      mrp: effectiveMrp,
       images: finalImageUrls,
       imageColorMap,
       image: finalImageUrls[0] || "",
@@ -611,9 +624,9 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
         sku: v.sku,
         stock: v.stock,
         threshold: v.threshold,
-        mrp: v.mrp || values.mrp || values.price,
-        offerPrice: v.offerPrice || values.price,
-        price: values.price,
+        mrp: v.mrp || effectiveMrp,
+        offerPrice: v.offerPrice || effectivePrice,
+        price: effectivePrice,
         hsnCode: v.hsnCode || "61091000",
         gstPercentage: v.gstPercentage || values.gstRate || 5,
         weight: v.weight || values.weight || 0.2,
@@ -704,10 +717,24 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
             <FormField label="MRP (₹)" error={errors.mrp} hint="Maximum Retail Price displayed">
               <input type="number" min={0} value={values.mrp || ""} placeholder="Enter MRP" onKeyDown={preventInvalidNumberKeys} onChange={(event) => setNumber("mrp", event.target.value)} className={inputClass} />
             </FormField>
-            <FormField label="Selling price (₹) (GST Inclusive)" error={errors.price} hint="Customer checkout price">
-              <input type="number" min={0} value={values.price || ""} placeholder="Enter selling price" onKeyDown={preventInvalidNumberKeys} onChange={(event) => setNumber("price", event.target.value)} className={inputClass} />
+            <FormField
+              label="Selling price (₹) (GST Inclusive)"
+              error={errors.price}
+              hint={
+                hasDiscount
+                  ? `Customer checkout price · ${discountPercent}% OFF (Save ₹${savingsAmount.toLocaleString("en-IN")})`
+                  : "Customer checkout price"
+              }
+            >
+              <input type="number" min={0} value={values.price || ""} placeholder={values.mrp ? String(values.mrp) : "Enter selling price"} onKeyDown={preventInvalidNumberKeys} onChange={(event) => setNumber("price", event.target.value)} className={inputClass} />
             </FormField>
           </div>
+
+          {mrp > 0 && rawPrice > mrp ? (
+            <p className="text-xs text-[#B3261E]">
+              ⚠️ Selling price (₹{rawPrice}) exceeds MRP (₹{mrp}). Under Indian statutory regulations, selling price cannot exceed MRP.
+            </p>
+          ) : null}
 
           {/* GST Slabs & HSN Code selection */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -838,15 +865,29 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
                   GST & Profit Breakdown ({effectiveGstRate}% Slab)
                 </h4>
               </div>
-              <span className="rounded-full border border-gold/30 bg-gold/10 px-2.5 py-0.5 text-[10.5px] font-medium text-gold">
-                {effectiveGstRate}% GST Included
-              </span>
+              <div className="flex items-center gap-2">
+                {hasDiscount ? (
+                  <span className="rounded-full border border-gold/30 bg-gold/10 px-2.5 py-0.5 text-[10.5px] font-semibold text-gold">
+                    🏷️ {discountPercent}% OFF
+                  </span>
+                ) : null}
+                <span className="rounded-full border border-gold/30 bg-gold/10 px-2.5 py-0.5 text-[10.5px] font-medium text-gold">
+                  {effectiveGstRate}% GST Included
+                </span>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-[12px]">
               <div className="rounded-xl border border-line/60 bg-ink/50 p-2.5">
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-paper-muted">Retail Price (B2C)</p>
-                <p className="mt-1 text-base font-bold text-paper">₹{sellingPrice.toLocaleString("en-IN")}</p>
+                <div className="mt-1 flex items-baseline gap-1.5 flex-wrap">
+                  <p className="text-base font-bold text-paper">₹{sellingPrice.toLocaleString("en-IN")}</p>
+                  {hasDiscount ? (
+                    <span className="text-[11px] font-medium text-gold">
+                      ({discountPercent}% OFF)
+                    </span>
+                  ) : null}
+                </div>
                 <p className="text-[10px] text-paper-muted/80">Inclusive of all taxes</p>
               </div>
 

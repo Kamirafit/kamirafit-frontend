@@ -10,6 +10,7 @@ export type Product = {
   slug?: string;
   name: string;
   price: number;
+  mrp?: number;
   image: string;
   tag?: "New" | "Bestseller" | string;
 };
@@ -30,6 +31,11 @@ export default function ProductCard({ product }: Props) {
     : undefined;
   const imageSrc = getValidImageSrc(product.image, DEFAULT_PRODUCT_IMAGE);
   const productHref = `/product/${product.slug || product.id}`;
+
+  const mrp = typeof product.mrp === "number" ? product.mrp : 0;
+  const price = typeof product.price === "number" ? product.price : 0;
+  const hasDiscount = mrp > 0 && price > 0 && mrp > price;
+  const discountPercent = hasDiscount ? Math.round(((mrp - price) / mrp) * 100) : 0;
 
   const handleCardClick = (e: React.MouseEvent<HTMLElement>) => {
     const target = e.target as HTMLElement;
@@ -90,9 +96,25 @@ export default function ProductCard({ product }: Props) {
         >
           {product.name}
         </Link>
-        <p className="shrink-0 font-display text-[15px] font-semibold tracking-wide text-gold">
-          {formatPrice(product.price)}
-        </p>
+        <div className="shrink-0 flex items-baseline gap-1.5 font-display text-[15px] font-semibold tracking-wide">
+          {hasDiscount ? (
+            <>
+              <span className="line-through text-paper-muted text-[12px] font-normal">
+                {formatPrice(mrp)}
+              </span>
+              <span className="text-gold">
+                {formatPrice(price)}
+              </span>
+              <span className="rounded bg-[#8B1E2D]/15 px-1.5 py-0.5 text-[10.5px] font-bold text-[#8B1E2D] dark:text-gold border border-[#8B1E2D]/25">
+                {discountPercent}% OFF
+              </span>
+            </>
+          ) : (
+            <span className="text-gold">
+              {formatPrice(price > 0 ? price : mrp)}
+            </span>
+          )}
+        </div>
       </div>
     </article>
   );

@@ -99,6 +99,11 @@ export default function ProductCard({ product }: Props) {
 
   const isCardOutOfStock = totalStock <= 0 || !product.isAvailable;
 
+  const mrp = typeof product.mrp === "number" ? product.mrp : typeof product.baseMrp === "number" ? product.baseMrp : 0;
+  const price = typeof product.price === "number" ? product.price : 0;
+  const hasDiscount = mrp > 0 && price > 0 && mrp > price;
+  const discountPercent = hasDiscount ? Math.round(((mrp - price) / mrp) * 100) : 0;
+
   return (
     <article
       onClick={handleCardClick}
@@ -166,9 +171,25 @@ export default function ProductCard({ product }: Props) {
         ) : null}
 
         <div className="mt-auto flex items-center justify-between gap-3 pt-3">
-          <p className="font-display text-[17px] font-semibold tracking-wide text-paper">
-            {formatPrice(product.price)}
-          </p>
+          <div className="flex items-baseline gap-2 flex-wrap">
+            {hasDiscount ? (
+              <>
+                <span className="line-through text-paper-muted text-[13px] font-normal">
+                  {formatPrice(mrp)}
+                </span>
+                <span className="font-display text-[17px] font-semibold tracking-wide text-paper">
+                  {formatPrice(price)}
+                </span>
+                <span className="rounded bg-[#8B1E2D]/15 px-1.5 py-0.5 text-[11px] font-bold text-[#8B1E2D] dark:text-gold border border-[#8B1E2D]/25">
+                  {discountPercent}% OFF
+                </span>
+              </>
+            ) : (
+              <span className="font-display text-[17px] font-semibold tracking-wide text-paper">
+                {formatPrice(price > 0 ? price : mrp)}
+              </span>
+            )}
+          </div>
           <div className="flex items-center gap-2">
             <button
               type="button"
