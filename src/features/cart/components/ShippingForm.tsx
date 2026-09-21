@@ -19,6 +19,7 @@ export type ShippingDetails = {
 
 export type ShippingErrors = Partial<Record<keyof ShippingDetails, string>>;
 
+
 type Props = {
   values: ShippingDetails;
   errors: ShippingErrors;
