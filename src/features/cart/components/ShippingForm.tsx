@@ -16,6 +16,7 @@ export type ShippingDetails = {
   country?: string;
 };
 
+
 export type ShippingErrors = Partial<Record<keyof ShippingDetails, string>>;
 
 type Props = {
@@ -98,10 +99,9 @@ export default function ShippingForm({
   };
 
   const inputClass = (hasError?: boolean) =>
-    `w-full rounded-xl border bg-ink-2 px-4 py-3 text-sm text-paper outline-none transition-colors placeholder:text-paper-muted/60 focus:ring-2 focus:ring-gold/30 ${
-      hasError
-        ? "border-red-500/70 focus:border-red-500"
-        : "border-line focus:border-gold"
+    `w-full rounded-xl border bg-ink-2 px-4 py-3 text-sm text-paper outline-none transition-colors placeholder:text-paper-muted/60 focus:ring-2 focus:ring-gold/30 ${hasError
+      ? "border-red-500/70 focus:border-red-500"
+      : "border-line focus:border-gold"
     }`;
 
   return (
