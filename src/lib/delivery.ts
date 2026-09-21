@@ -108,3 +108,47 @@ export function calculateDeliveryCharge(
     zoneLabel: "Domestic Express",
   };
 }
+
+/**
+ * Computes estimated delivery arrival range by adding:
+ * 1) 24–48 hours (1–2 business days) for fulfillment & packaging, barring Sat/Sun & holidays.
+ * 2) Estimated carrier transit days to the destination location.
+ */
+export function calculateDeliveryDateRange(transitDays: number): {
+  minDateFormatted: string;
+  maxDateFormatted: string;
+  fullDateRange: string;
+  processingDays: string;
+} {
+  const addBusinessDays = (startDate: Date, daysToAdd: number): Date => {
+    const current = new Date(startDate);
+    let added = 0;
+    while (added < daysToAdd) {
+      current.setDate(current.getDate() + 1);
+      const day = current.getDay();
+      // Skip Saturday (6) and Sunday (0)
+      if (day !== 0 && day !== 6) {
+        added++;
+      }
+    }
+    return current;
+  };
+
+  const now = new Date();
+  const minDeliveryDate = addBusinessDays(now, 1 + transitDays);
+  const maxDeliveryDate = addBusinessDays(now, 2 + transitDays);
+
+  const formatShort = (d: Date) =>
+    d.toLocaleDateString("en-IN", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+    });
+
+  return {
+    minDateFormatted: formatShort(minDeliveryDate),
+    maxDateFormatted: formatShort(maxDeliveryDate),
+    fullDateRange: `${formatShort(minDeliveryDate)} – ${formatShort(maxDeliveryDate)}`,
+    processingDays: "1–2 business days (24–48 hrs)",
+  };
+}

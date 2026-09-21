@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
+import { calculateDeliveryCharge, calculateDeliveryDateRange } from "@/lib/delivery";
 import { buttonClasses } from "@/components/ui/Button";
 import Container from "@/components/ui/Container";
 import SectionHeader from "@/components/ui/SectionHeader";
@@ -108,6 +109,22 @@ export default function CheckoutPageClient() {
   // Selected address object
   const selectedAddress = addresses.find((a) => a.id === selectedAddressId) || addresses[0] || null;
   const { subtotal, delivery } = calculateTotals(resolved, selectedAddress?.pincode, selectedAddress?.country);
+
+  // Real-time delivery charge & date estimation based on selected address PIN and cart value
+  const deliveryEstimation = useMemo(() => {
+    if (!selectedAddress) return null;
+    const pin = selectedAddress.pincode || "";
+    const country = selectedAddress.country || "India";
+    const charge = calculateDeliveryCharge(pin, country);
+    const dateRange = calculateDeliveryDateRange(charge.estimatedDays);
+    const isFree = subtotal > 999;
+    return {
+      ...charge,
+      effectiveRate: isFree ? 0 : charge.rate,
+      isFree,
+      ...dateRange,
+    };
+  }, [selectedAddress, subtotal]);
 
   // Coupon state
   const [appliedCoupon, setAppliedCoupon] = useState<CouponValidationResult | null>(null);
@@ -292,6 +309,24 @@ export default function CheckoutPageClient() {
           name: selectedAddress.fullName,
         },
         send_sms_hash: false,
+        config: {
+          display: {
+            blocks: {
+              upi: {
+                name: "Pay via UPI",
+                instruments: [
+                  {
+                    method: "upi",
+                  },
+                ],
+              },
+            },
+            sequence: ["block.upi"],
+            preferences: {
+              show_default_blocks: false,
+            },
+          },
+        },
         notes: {
           orderId: result.order.id,
           orderNumber: orderNumber,
@@ -629,6 +664,93 @@ export default function CheckoutPageClient() {
             </div>
           )}
 
+          {/* Real-time Delivery Estimation & Order Processing Breakdown */}
+          {selectedAddress && deliveryEstimation && (
+            <div className="mt-5 rounded-2xl border border-line bg-ink-2/60 p-4 sm:p-5 space-y-4 shadow-sm transition-all animate-fadeIn">
+              {/* Top Banner: Destination & Calculated Delivery Fee */}
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line/60 pb-3.5">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gold/15 text-sm text-gold border border-gold/30">
+                    🚚
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-display text-xs sm:text-sm font-semibold text-paper">
+                        Standard Delivery ({deliveryEstimation.zoneLabel})
+                      </h3>
+                      <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-400 border border-emerald-500/20">
+                        {deliveryEstimation.isDomestic ? "Domestic Express" : "International Express"}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-paper-muted mt-0.5">
+                      Destination PIN: <strong className="text-paper font-mono">{selectedAddress.pincode}</strong> ({selectedAddress.city}, {selectedAddress.state})
+                    </p>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  {deliveryEstimation.isFree ? (
+                    <div>
+                      <div className="flex items-center gap-1.5 justify-end">
+                        <span className="text-xs text-paper-muted line-through">
+                          ₹{deliveryEstimation.rate}
+                        </span>
+                        <span className="text-sm font-bold text-emerald-400 font-display">
+                          FREE
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-emerald-400 font-medium">
+                        ✓ Free delivery on orders over ₹999
+                      </span>
+                    </div>
+                  ) : (
+                    <div>
+                      <span className="font-display text-sm font-bold text-gold">
+                        ₹{deliveryEstimation.rate}
+                      </span>
+                      <p className="text-[10px] text-paper-muted">
+                        Regional shipping fee
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Transit & Processing Breakdown */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* 1. Order Processing Time */}
+                <div className="rounded-xl border border-line/60 bg-ink/70 p-3.5 space-y-1.5">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-paper">
+                    <span>⏱️</span>
+                    <span>Order Processing: 24–48 Hours</span>
+                  </div>
+                  <p className="text-[11px] text-paper-muted leading-relaxed">
+                    Takes <strong>1–2 business days</strong> for verification, tailoring inspection, and packaging at our atelier (<strong>barring Saturdays, Sundays, and national holidays</strong>).
+                  </p>
+                </div>
+
+                {/* 2. Courier Transit Time */}
+                <div className="rounded-xl border border-line/60 bg-ink/70 p-3.5 space-y-1.5">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-paper">
+                    <span>📦</span>
+                    <span>Courier Transit: ~{deliveryEstimation.estimatedDays} Days</span>
+                  </div>
+                  <p className="text-[11px] text-paper-muted leading-relaxed">
+                    Dispatched via <strong>{deliveryEstimation.courierName}</strong> with live tracking. Estimated arrival: <strong className="text-gold font-semibold">{deliveryEstimation.fullDateRange}</strong>.
+                  </p>
+                </div>
+              </div>
+
+              {/* Explicit Transparency Notice */}
+              <div className="flex items-start gap-2.5 rounded-xl border border-gold/20 bg-gold/5 px-3.5 py-2.5 text-[11px] leading-relaxed text-paper-muted">
+                <span className="text-sm text-gold shrink-0">✨</span>
+                <p>
+                  <strong className="text-paper font-medium">Delivery Transparency:</strong> To ensure complete honesty and prevent false promises, our delivery estimate accounts for <strong>24–48 hrs processing (1–2 business days)</strong> plus carrier transit to your address.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Payment Method Selection Section */}
           <div className="mt-8 pt-6 border-t border-line">
             <div className="mb-4">
@@ -711,6 +833,8 @@ export default function CheckoutPageClient() {
             onRemoveCoupon={handleRemoveCoupon}
             isApplyingCoupon={isApplyingCoupon}
             couponError={couponError}
+            selectedPincode={selectedAddress?.pincode}
+            deliveryZoneLabel={deliveryEstimation?.zoneLabel}
           />
           <button
             type="button"

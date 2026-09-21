@@ -423,18 +423,6 @@ export default function ProductDetails({ product }: Props) {
           </div>
         </header>
 
-        <div className="flex items-center gap-3 rounded-xl border border-line bg-ink px-4 py-3 text-[13px]">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gold/10 text-gold">
-            <TruckIcon />
-          </span>
-          <p className="text-paper">
-            Express delivery across Kolkata, West Bengal & Worldwide.{" "}
-            <span className="text-paper-muted">
-              Order in the next few hours for dispatch today.
-            </span>
-          </p>
-        </div>
-
         {/* ---------------- WORLDWIDE DELIVERY ESTIMATOR ---------------- */}
         <div className="rounded-2xl border border-line bg-ink p-4 space-y-3.5">
           <div className="flex items-center justify-between">
@@ -683,7 +671,7 @@ export default function ProductDetails({ product }: Props) {
                 </span>
                 <div>
                   <p className="font-medium text-paper">Secure checkout</p>
-                  <p className="text-paper-muted">UPI, cards & COD</p>
+                  <p className="text-paper-muted">UPI & COD</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">

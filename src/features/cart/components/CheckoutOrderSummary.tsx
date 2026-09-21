@@ -15,6 +15,8 @@ type Props = {
   onRemoveCoupon?: () => void;
   isApplyingCoupon?: boolean;
   couponError?: string | null;
+  selectedPincode?: string;
+  deliveryZoneLabel?: string;
 };
 
 export default function CheckoutOrderSummary({
@@ -27,6 +29,8 @@ export default function CheckoutOrderSummary({
   onRemoveCoupon,
   isApplyingCoupon = false,
   couponError,
+  selectedPincode,
+  deliveryZoneLabel,
 }: Props) {
   const [couponInput, setCouponInput] = useState("");
   return (
@@ -178,9 +182,23 @@ export default function CheckoutOrderSummary({
           </div>
         )}
         <div className="flex items-center justify-between">
-          <dt>Delivery fee</dt>
-          <dd className="font-medium text-paper">
-            {delivery === 0 ? "FREE" : formatPrice(delivery)}
+          <dt className="flex flex-col">
+            <span>Delivery fee</span>
+            {selectedPincode ? (
+              <span className="text-[10px] text-paper-muted">
+                {deliveryZoneLabel || "By PIN"} ({selectedPincode})
+              </span>
+            ) : null}
+          </dt>
+          <dd className="text-right">
+            {delivery === 0 ? (
+              <div className="flex flex-col items-end">
+                <span className="font-semibold text-emerald-400">FREE</span>
+                <span className="text-[10px] text-emerald-400/80 font-medium">Orders over ₹999</span>
+              </div>
+            ) : (
+              <span className="font-medium text-paper">{formatPrice(delivery)}</span>
+            )}
           </dd>
         </div>
         <div className="mt-1 flex items-center justify-between border-t border-line pt-4 text-base">

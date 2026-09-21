@@ -51,7 +51,7 @@ export default function ReturnsPolicyPage() {
           <section>
             <h2 className="font-display text-lg font-medium text-paper">5. Refund Processing</h2>
             <p className="mt-3">
-              Upon successful quality clearance, the refund is initiated immediately to your original payment source (Credit/Debit Card, UPI, Net Banking). Bank processing typically reflects within <strong className="text-paper">5 to 7 business days</strong>.
+              Upon successful quality clearance, the refund is initiated immediately to your original payment source (UPI or direct bank transfer for COD). Bank processing typically reflects within <strong className="text-paper">5 to 7 business days</strong>.
             </p>
           </section>
 
