@@ -52,7 +52,7 @@ export default function ShippingPolicyPage() {
           <section>
             <h2 className="font-display text-lg font-medium text-paper">4. Tracking Your Order</h2>
             <p className="mt-3">
-              Once your shipment is picked up, an Air Waybill (AWB) tracking number and live tracking link will be sent to your registered email and mobile number via SMS. You can monitor the real-time transit status directly via our carrier tracking portal or through your KamiraFit Account dashboard.
+              Once your shipment is picked up, an Air Waybill (AWB) tracking number and live tracking link will be sent to your registered email. You can also monitor the real-time transit status directly through your KamiraFit Account dashboard.
             </p>
           </section>
 

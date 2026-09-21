@@ -2,7 +2,7 @@
 
 import { buttonClasses } from "@/components/ui/Button";
 import type { SortKey } from "../types";
-import { ChevronDownIcon, FilterIcon } from "./icons";
+import { FilterIcon } from "./icons";
 
 type Props = {
   sort: SortKey;
@@ -54,11 +54,6 @@ export default function SortBar({
               </option>
             ))}
           </select>
-          <ChevronDownIcon
-            width={14}
-            height={14}
-            className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gold"
-          />
         </label>
       </div>
     </div>

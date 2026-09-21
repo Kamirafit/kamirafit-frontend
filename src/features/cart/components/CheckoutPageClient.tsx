@@ -93,7 +93,6 @@ export default function CheckoutPageClient() {
   const dispatch = useAppDispatch();
 
   const resolved = resolveCartItems(items, products);
-  const { subtotal, delivery } = calculateTotals(resolved);
 
   // Address queries and mutations
   const addressesQuery = useAddresses();
@@ -105,6 +104,10 @@ export default function CheckoutPageClient() {
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
   const hasAutoOpenedModalRef = useRef(false);
+
+  // Selected address object
+  const selectedAddress = addresses.find((a) => a.id === selectedAddressId) || addresses[0] || null;
+  const { subtotal, delivery } = calculateTotals(resolved, selectedAddress?.pincode, selectedAddress?.country);
 
   // Coupon state
   const [appliedCoupon, setAppliedCoupon] = useState<CouponValidationResult | null>(null);
@@ -139,9 +142,6 @@ export default function CheckoutPageClient() {
       setIsAddressModalOpen(true);
     }
   }, [addresses, selectedAddressId, isAddressesLoading]);
-
-  // Selected address object
-  const selectedAddress = addresses.find((a) => a.id === selectedAddressId) || addresses[0] || null;
 
   // Calculate final total with coupon discount
   const discountAmount = appliedCoupon ? appliedCoupon.discountAmount : 0;
@@ -290,8 +290,8 @@ export default function CheckoutPageClient() {
         order_id: paymentInfo?.orderId,
         prefill: {
           name: selectedAddress.fullName,
-          contact: selectedAddress.phoneNumber,
         },
+        send_sms_hash: false,
         notes: {
           orderId: result.order.id,
           orderNumber: orderNumber,
@@ -384,7 +384,10 @@ export default function CheckoutPageClient() {
           has been placed {placedPaymentMethod === "COD" ? "via COD" : "via UPI"}.
         </p>
         <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-          <Link href="/shop" className={buttonClasses("primary", "md")}>
+          <Link href="/account/orders" className={buttonClasses("primary", "md")}>
+            View My Orders
+          </Link>
+          <Link href="/shop" className={buttonClasses("secondary", "md")}>
             Continue shopping
           </Link>
           <Link href="/" className={buttonClasses("secondary", "md")}>

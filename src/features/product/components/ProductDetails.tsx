@@ -7,6 +7,7 @@ import { useAppDispatch, useAppSelector } from "../hooks/redux";
 import { addToCart } from "../store/cartSlice";
 import { useOptimisticWishlist } from "@/services/wishlist";
 import { orderService, type DeliveryEstimateResult } from "@/services/order";
+import { calculateDeliveryCharge } from "@/lib/delivery";
 import type { Color, Product, Size } from "../types";
 import ColorSelector from "./ColorSelector";
 import { HeartIcon, StarIcon } from "./icons";
@@ -220,11 +221,56 @@ export default function ProductDetails({ product }: Props) {
         localStorage.setItem("kamirafit_postal_code", clean);
         localStorage.setItem("kamirafit_country", countryToUse);
       }
-    } catch (err: unknown) {
-      const errorObj = err as { response?: { data?: { message?: string } }; message?: string };
-      const msg = errorObj?.response?.data?.message || errorObj?.message || "Delivery estimate not available for this area.";
-      setDeliveryError(msg);
-      setDeliveryResult(null);
+    } catch {
+      // Resilient client-side fallback using tiered calculation
+      const fallback = calculateDeliveryCharge(clean, countryToUse);
+      const targetDate = new Date();
+      let added = 0;
+      while (added < fallback.estimatedDays) {
+        targetDate.setDate(targetDate.getDate() + 1);
+        if (targetDate.getDay() !== 0) added++;
+      }
+      const formattedDate = targetDate.toLocaleDateString("en-IN", {
+        weekday: "long",
+        day: "numeric",
+        month: "short",
+      });
+
+      setDeliveryResult({
+        postalCode: clean,
+        country: countryToUse,
+        isDomestic: fallback.isDomestic,
+        standard: {
+          type: "STANDARD",
+          title: "Standard Delivery",
+          courierName: fallback.courierName,
+          estimatedDays: fallback.estimatedDays,
+          estimatedDate: formattedDate,
+          isoEstimatedDate: targetDate.toISOString(),
+          rate: fallback.rate,
+          currency: "INR",
+          isFree: false,
+          description: `${fallback.zoneLabel} • Delivered by ${formattedDate}`,
+        },
+        prime: {
+          type: "PRIME",
+          title: "Prime Delivery",
+          courierName: "Blue Dart Priority Air",
+          estimatedDays: Math.max(1, Math.floor(fallback.estimatedDays / 2)),
+          estimatedDate: formattedDate,
+          isoEstimatedDate: targetDate.toISOString(),
+          rate: fallback.rate + 100,
+          currency: "INR",
+          isFree: false,
+          description: `Express • Delivered by ${formattedDate}`,
+        },
+        cheapestMethod: "STANDARD",
+        fastestMethod: "PRIME",
+      });
+      if (typeof window !== "undefined") {
+        localStorage.setItem("kamirafit_postal_code", clean);
+        localStorage.setItem("kamirafit_country", countryToUse);
+      }
     } finally {
       setIsCheckingDelivery(false);
     }
@@ -382,7 +428,7 @@ export default function ProductDetails({ product }: Props) {
             <TruckIcon />
           </span>
           <p className="text-paper">
-            Free delivery on orders over ₹999.{" "}
+            Express delivery across Kolkata, West Bengal & Worldwide.{" "}
             <span className="text-paper-muted">
               Order in the next few hours for dispatch today.
             </span>
@@ -424,11 +470,6 @@ export default function ProductDetails({ product }: Props) {
                     </option>
                   ))}
                 </select>
-                <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-paper-muted">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="m6 9 6 6 6-6" />
-                  </svg>
-                </div>
               </div>
 
               {/* Postal Code Input */}
@@ -492,11 +533,30 @@ export default function ProductDetails({ product }: Props) {
                     </p>
                   </div>
                   <div className="text-right">
-                    <span className={`text-xs font-bold ${product.price >= 999 || deliveryResult.standard.isFree ? "text-emerald-400" : "text-paper"}`}>
-                      {product.price >= 999 || deliveryResult.standard.isFree ? "FREE" : `₹${deliveryResult.standard.rate.toLocaleString()}`}
-                    </span>
+                    {product.price > 999 ? (
+                      <div className="flex items-center gap-1.5 justify-end">
+                        <span className="text-[11px] text-paper-muted line-through">
+                          ₹{deliveryResult.standard.rate.toLocaleString()}
+                        </span>
+                        <span className="text-xs font-bold text-emerald-400">FREE</span>
+                      </div>
+                    ) : (
+                      <span className="text-xs font-bold text-gold">
+                        {deliveryResult.standard.rate > 0
+                          ? `₹${deliveryResult.standard.rate.toLocaleString()}`
+                          : "FREE"}
+                      </span>
+                    )}
                     <p className="text-[10px] text-paper-muted">
-                      {product.price >= 999 ? "Order above ₹999" : "Free on orders above ₹999"}
+                      {product.price > 999
+                        ? "Free on orders over ₹999"
+                        : deliveryResult.standard.rate === 99
+                        ? "Kolkata Local"
+                        : deliveryResult.standard.rate === 199
+                        ? "West Bengal"
+                        : deliveryResult.isDomestic
+                        ? "Rest of India"
+                        : "Worldwide"}
                     </p>
                   </div>
                 </div>

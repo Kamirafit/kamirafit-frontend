@@ -1,8 +1,9 @@
 import type { CartItem } from "@/features/product/store/cartSlice";
 import type { Product } from "@/features/product/types";
+import { calculateDeliveryCharge } from "@/lib/delivery";
 
 export const FREE_SHIPPING_THRESHOLD = 999;
-export const DELIVERY_FEE = 50;
+export const DELIVERY_FEE = 199;
 
 export type ResolvedCartItem = {
   item: CartItem;
@@ -10,9 +11,34 @@ export type ResolvedCartItem = {
   lineTotal: number;
 };
 
-export function calculateShippingFee(subtotal: number): number {
+/**
+ * Calculates delivery fee based on customer region & destination pincode.
+ * Falls back to saved localStorage pincode or West Bengal standard rate.
+ */
+export function calculateShippingFee(
+  subtotal: number,
+  pincode?: string,
+  country?: string
+): number {
   if (subtotal <= 0) return 0;
-  return subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : DELIVERY_FEE;
+  if (subtotal > FREE_SHIPPING_THRESHOLD) return 0;
+
+  if (pincode || country) {
+    return calculateDeliveryCharge(pincode, country).rate;
+  }
+
+  if (typeof window !== "undefined") {
+    const savedPin =
+      localStorage.getItem("kamirafit_postal_code") ||
+      localStorage.getItem("kamirafit_pincode");
+    const savedCountry = localStorage.getItem("kamirafit_country");
+    if (savedPin || savedCountry) {
+      return calculateDeliveryCharge(savedPin || undefined, savedCountry || undefined).rate;
+    }
+  }
+
+  // Default regional delivery rate
+  return 199;
 }
 
 export function resolveCartItems(items: CartItem[], products: Product[]): ResolvedCartItem[] {
@@ -29,9 +55,13 @@ export function resolveCartItems(items: CartItem[], products: Product[]): Resolv
     .filter((v): v is ResolvedCartItem => v !== null);
 }
 
-export function calculateTotals(resolved: ResolvedCartItem[]) {
+export function calculateTotals(
+  resolved: ResolvedCartItem[],
+  pincode?: string,
+  country?: string
+) {
   const subtotal = resolved.reduce((sum, r) => sum + r.lineTotal, 0);
-  const delivery = calculateShippingFee(subtotal);
+  const delivery = calculateShippingFee(subtotal, pincode, country);
   const total = subtotal + delivery;
   return { subtotal, delivery, total };
 }
