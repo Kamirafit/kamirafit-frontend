@@ -117,9 +117,8 @@ function Accordion({ title, defaultOpen = false, children }: AccordionProps) {
         <ChevronIcon open={open} />
       </button>
       <div
-        className={`grid transition-[grid-template-rows] duration-300 ease-out ${
-          open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
-        }`}
+        className={`grid transition-[grid-template-rows] duration-300 ease-out ${open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+          }`}
       >
         <div className="overflow-hidden">
           <div className="pb-5 text-[13.5px] leading-relaxed text-paper-muted">
@@ -361,15 +360,15 @@ export default function ProductDetails({ product }: Props) {
   const activeMrp = typeof selectedVariant?.mrp === "number" && selectedVariant.mrp > 0
     ? selectedVariant.mrp
     : typeof product.mrp === "number"
-    ? product.mrp
-    : typeof product.baseMrp === "number"
-    ? product.baseMrp
-    : 0;
+      ? product.mrp
+      : typeof product.baseMrp === "number"
+        ? product.baseMrp
+        : 0;
   const activePrice = typeof selectedVariant?.price === "number" && selectedVariant.price > 0
     ? selectedVariant.price
     : typeof product.price === "number"
-    ? product.price
-    : 0;
+      ? product.price
+      : 0;
   const hasDiscount = activeMrp > 0 && activePrice > 0 && activeMrp > activePrice;
   const discountPercent = hasDiscount ? Math.round(((activeMrp - activePrice) / activeMrp) * 100) : 0;
 
@@ -428,7 +427,7 @@ export default function ProductDetails({ product }: Props) {
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-paper-muted flex items-center gap-1.5">
               <LocationPinIcon />
-              Worldwide Delivery & Speed Estimator
+              Delivery Estimator
             </span>
             <span className="text-[10px] font-semibold text-gold/90 bg-gold/10 px-2 py-0.5 rounded-full border border-gold/20 flex items-center gap-1">
               <GlobeIcon />
@@ -516,9 +515,6 @@ export default function ProductDetails({ product }: Props) {
                     <p className="text-xs font-semibold text-paper">
                       Standard Delivery
                     </p>
-                    <p className="text-[11px] text-paper-muted mt-0.5">
-                      Via {deliveryResult.standard.courierName || "Express Courier"}
-                    </p>
                   </div>
                   <div className="text-right">
                     {product.price > 999 ? (
@@ -539,12 +535,12 @@ export default function ProductDetails({ product }: Props) {
                       {product.price > 999
                         ? "Free on orders over ₹999"
                         : deliveryResult.standard.rate === 99
-                        ? "Kolkata Local"
-                        : deliveryResult.standard.rate === 199
-                        ? "West Bengal"
-                        : deliveryResult.isDomestic
-                        ? "Rest of India"
-                        : "Worldwide"}
+                          ? "Kolkata Local"
+                          : deliveryResult.standard.rate === 199
+                            ? "West Bengal"
+                            : deliveryResult.isDomestic
+                              ? "Rest of India"
+                              : "Worldwide"}
                     </p>
                   </div>
                 </div>
@@ -628,11 +624,10 @@ export default function ProductDetails({ product }: Props) {
             aria-pressed={saved}
             aria-label={saved ? "Remove from wishlist" : "Add to wishlist"}
             onClick={handleToggleWishlist}
-            className={`inline-flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full border transition-all ${
-              saved
-                ? "border-transparent bg-[#DC2626]/10 text-[#DC2626]"
-                : "border-line-strong text-paper hover:border-[#DC2626] hover:text-[#DC2626]"
-            }`}
+            className={`inline-flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full border transition-all ${saved
+              ? "border-transparent bg-[#DC2626]/10 text-[#DC2626]"
+              : "border-line-strong text-paper hover:border-[#DC2626] hover:text-[#DC2626]"
+              }`}
           >
             <HeartIcon filled={saved} width={18} height={18} />
           </button>

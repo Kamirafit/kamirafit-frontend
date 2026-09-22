@@ -29,27 +29,20 @@ export default function ReturnsPolicyPage() {
             <p className="mt-3">To qualify for a full refund or exchange, items must satisfy the following conditions:</p>
             <ul className="mt-3 list-disc space-y-2 pl-5">
               <li>Item must be completely unworn, unwashed, and free from any perfumes, stains, or pet hair.</li>
-              <li>All original brand tags, neck labels, and eco-packaging must be intact and attached.</li>
+              <li>All original brand tags, neck labels, and packaging must be intact.</li>
               <li>Free promotional gifts or bundled accessories included in the original order must be returned together.</li>
             </ul>
           </section>
 
           <section>
-            <h2 className="font-display text-lg font-medium text-paper">3. Non-Returnable Items</h2>
+            <h2 className="font-display text-lg font-medium text-paper">3. Reverse Pickup & Quality Check</h2>
             <p className="mt-3">
-              For hygiene and safety standards, undergarments, socks, and items marked as &quot;Final Sale&quot; or &quot;Clearance&quot; cannot be returned or exchanged unless they arrive defective or damaged.
+              Once your return request is logged, our logistics partner will arrange a complimentary doorstep reverse pickup within 3-4 business days. Once the parcel reaches our warehouse, our quality audit team inspects the garment within 48 hours.
             </p>
           </section>
 
           <section>
-            <h2 className="font-display text-lg font-medium text-paper">4. Reverse Pickup & Quality Check</h2>
-            <p className="mt-3">
-              Once your return request is logged, our logistics partner will arrange a complimentary doorstep reverse pickup within 2–3 business days. Once the parcel reaches our warehouse, our quality audit team inspects the garment within 48 hours.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="font-display text-lg font-medium text-paper">5. Refund Processing</h2>
+            <h2 className="font-display text-lg font-medium text-paper">4. Refund Processing</h2>
             <p className="mt-3">
               Upon successful quality clearance, the refund is initiated immediately to your original payment source (UPI or direct bank transfer for COD). Bank processing typically reflects within <strong className="text-paper">5 to 7 business days</strong>.
             </p>
@@ -58,7 +51,7 @@ export default function ReturnsPolicyPage() {
           <section>
             <h2 className="font-display text-lg font-medium text-paper">6. How to Initiate a Return</h2>
             <p className="mt-3">
-              Log into your KamiraFit Account, navigate to <strong className="text-paper">Orders</strong>, select the relevant item, and click &quot;Request Return / Exchange&quot;. Alternatively, email our concierge team at <a href="mailto:support@kamirafit.com" className="text-gold hover:underline">support@kamirafit.com</a> with your order number.
+              Log into your KamiraFit Account, navigate to <strong className="text-paper">Orders</strong>, select the relevant item, and click &quot;Request Return / Exchange&quot;.
             </p>
           </section>
         </div>

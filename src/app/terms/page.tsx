@@ -55,7 +55,7 @@ export default function TermsOfServicePage() {
           <section>
             <h2 className="font-display text-lg font-medium text-paper">6. Governing Law & Jurisdiction</h2>
             <p className="mt-3">
-              These terms shall be governed by and construed in accordance with the laws of India. Any disputes arising out of or related to these terms or transactions shall be subject to the exclusive jurisdiction of the competent courts in Mumbai, Maharashtra, India.
+              These terms shall be governed by and construed in accordance with the laws of India. Any disputes arising out of or related to these terms or transactions shall be subject to the exclusive jurisdiction of the competent courts in Kolkata, West Bengal, India.
             </p>
           </section>
         </div>

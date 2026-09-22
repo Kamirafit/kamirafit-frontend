@@ -7,7 +7,6 @@ import {
   useAdminStats,
   useAdminCategories,
   useAdminProducts,
-  useAdminUsers,
 } from "@/services/admin";
 import type { AdminCategory } from "@/types/entities";
 import AdminCard from "../components/AdminCard";
@@ -54,14 +53,12 @@ function PanelHeader({
 
 export default function DashboardPage() {
   const statsQuery = useAdminStats();
-  const productsQuery = useAdminProducts();
-  const usersQuery = useAdminUsers();
+  const productsQuery = useAdminProducts({ limit: 6 });
   const categoriesQuery = useAdminCategories();
 
   const isOnline = useOnlineStatus();
   const stats = statsQuery.data;
   const products = useMemo(() => productsQuery.data ?? [], [productsQuery.data]);
-  const users = useMemo(() => usersQuery.data ?? [], [usersQuery.data]);
   const categories = useMemo(() => categoriesQuery.data ?? [], [categoriesQuery.data]);
 
   const kpis: Kpi[] = useMemo(() => {
@@ -69,22 +66,22 @@ export default function DashboardPage() {
       return [
         {
           label: "Total Revenue",
-          value: formatPrice(stats.totalRevenue ?? 0),
-          hint: `${stats.totalOrders ?? 0} total orders`,
+          value: formatPrice(stats.totalRevenue ?? stats.salesTotal ?? 0),
+          hint: `${stats.totalOrders ?? stats.ordersCount ?? 0} total orders`,
         },
         {
           label: "Products",
-          value: String(stats.totalProducts ?? products.length),
+          value: String(stats.totalProducts ?? stats.productsCount ?? products.length),
           hint: `${categories.length} categories on file`,
         },
         {
           label: "Customers",
-          value: String(stats.totalUsers ?? users.length),
+          value: String(stats.totalUsers ?? stats.usersCount ?? 0),
           hint: "Registered community",
         },
         {
           label: "Orders",
-          value: String(stats.totalOrders ?? 0),
+          value: String(stats.totalOrders ?? stats.ordersCount ?? 0),
           hint: `${stats.orderStatusCounts?.DELIVERED ?? 0} delivered`,
         },
       ];
@@ -106,7 +103,7 @@ export default function DashboardPage() {
       },
       {
         label: "Customers",
-        value: String(users.length),
+        value: "—",
         hint: "Contact details on file",
       },
       {
@@ -120,23 +117,21 @@ export default function DashboardPage() {
         hint: "Active SKUs only",
       },
     ];
-  }, [stats, products, users, categories]);
+  }, [stats, products, categories]);
 
   const recentProducts = useMemo(() => products.slice(0, 6), [products]);
 
   const isLoading =
-    statsQuery.isLoading &&
-    productsQuery.isLoading &&
-    usersQuery.isLoading &&
+    statsQuery.isLoading ||
+    productsQuery.isLoading ||
     categoriesQuery.isLoading;
 
-  if (!isOnline && !stats && products.length === 0 && users.length === 0) {
+  if (!isOnline && !stats && products.length === 0) {
     return (
       <OfflineState
         onRetry={() => {
           void statsQuery.refetch();
           void productsQuery.refetch();
-          void usersQuery.refetch();
           void categoriesQuery.refetch();
         }}
       />

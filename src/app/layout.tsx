@@ -143,8 +143,11 @@ export default function RootLayout({
   const safeWebSchema = JSON.stringify(websiteJsonLd).replace(/</g, "\\u003c").replace(/>/g, "\\u003e");
 
   return (
-    <html lang="en">
-      <head>
+    <html lang="en" suppressHydrationWarning>
+      <body
+        suppressHydrationWarning
+        className={`${inter.variable} ${playfair.variable} font-sans antialiased bg-ink text-paper`}
+      >
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: safeOrgSchema }}
@@ -153,10 +156,6 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: safeWebSchema }}
         />
-      </head>
-      <body
-        className={`${inter.variable} ${playfair.variable} font-sans antialiased bg-ink text-paper`}
-      >
         <Providers>{children}</Providers>
       </body>
     </html>

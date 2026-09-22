@@ -52,7 +52,7 @@ export default function PrivacyPolicyPage() {
             <ul className="mt-3 list-disc space-y-2 pl-5">
               <li><strong className="text-paper">Logistics Partners:</strong> Courier aggregators (e.g. Shiprocket, Delhivery, BlueDart) to deliver your parcels.</li>
               <li><strong className="text-paper">Payment Processors:</strong> Tokenized payment transactions via PCI-DSS Level 1 certified gateways.</li>
-              <li><strong className="text-paper">Communication Gateways:</strong> Transactional SMS and Email service providers.</li>
+              <li><strong className="text-paper">Communication Gateways:</strong> Email service providers.</li>
             </ul>
           </section>
 
@@ -66,13 +66,8 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2 className="font-display text-lg font-medium text-paper">6. Your Rights & Contact</h2>
             <p className="mt-3">
-              You have the right to review, update, or request the deletion of your account and personal details. For privacy-related inquiries, please contact our Data Grievance Officer at <a href="mailto:privacy@kamirafit.com" className="text-gold underline underline-offset-4 hover:text-gold/80">privacy@kamirafit.com</a> or write to us at:
+              You have the right to review, update, or request the deletion of your account and personal details. For privacy-related inquiries, please contact our Data Grievance Officer at <a href="mailto:privacy@kamirafit.com" className="text-gold underline underline-offset-4 hover:text-gold/80">support@kamirafit.com</a> or write to us at:
             </p>
-            <div className="mt-4 rounded-xl border border-line bg-ink-2/40 p-4 text-xs">
-              <p className="font-semibold text-paper">KamiraFit Customer Care & Grievance Cell</p>
-              <p className="mt-1">123 Fashion Street, Bandra West, Mumbai, Maharashtra - 400050, India</p>
-              <p className="mt-1">Email: support@kamirafit.com</p>
-            </div>
           </section>
         </div>
       </div>
