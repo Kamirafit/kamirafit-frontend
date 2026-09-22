@@ -5,6 +5,9 @@ import { useMemo, useState } from "react";
 import SectionHeader from "@/components/ui/SectionHeader";
 import AdminCard from "../components/AdminCard";
 import SearchField from "../components/SearchField";
+import AiAnalyticsSection from "../components/AiAnalyticsSection";
+import MiniSparkline from "../components/MiniSparkline";
+import AnalyticsTrendGraph from "../components/AnalyticsTrendGraph";
 import { useBusinessAnalytics } from "@/services/admin";
 import type {
   ProductPerformance,
@@ -72,6 +75,8 @@ export default function AnalyticsPage() {
   const { data: analytics, isLoading, isError, refetch } = useBusinessAnalytics(timeframe);
 
   const summary = analytics?.summary;
+  const timeline = analytics?.timeline;
+  const trends = analytics?.trends;
   const products = useMemo(() => analytics?.rankedProducts || [], [analytics?.rankedProducts]);
   const categories = useMemo(() => analytics?.rankedCategories || [], [analytics?.rankedCategories]);
   const deadStock = useMemo(() => analytics?.deadStockReport || [], [analytics?.deadStockReport]);
@@ -202,18 +207,44 @@ export default function AnalyticsPage() {
         </div>
       ) : (
         <>
-          {/* Executive KPI Cards */}
+          {/* Executive KPI Cards with Sparklines & Trend Indicators */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {/* Total Revenue & AOV */}
             <AdminCard padding="md">
-              <div className="flex flex-col">
-                <span className="text-xs font-medium uppercase tracking-wider text-paper-muted">
-                  Gross Revenue ({TIMEFRAME_LABELS[timeframe]})
-                </span>
-                <span className="mt-2 text-2xl font-bold tracking-tight text-gold">
-                  ₹{Math.round(summary.totalRevenue || 0).toLocaleString("en-IN")}
-                </span>
-                <div className="mt-2 flex items-center justify-between text-xs text-paper-muted border-t border-line/60 pt-2">
+              <div className="flex flex-col justify-between h-full">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium uppercase tracking-wider text-paper-muted">
+                      Gross Revenue ({TIMEFRAME_LABELS[timeframe]})
+                    </span>
+                    {trends && (
+                      <span
+                        className={`inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                          trends.revenueGrowth > 0
+                            ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                            : trends.revenueGrowth < 0
+                            ? "bg-rose-500/15 text-rose-400 border border-rose-500/30"
+                            : "bg-neutral-500/15 text-paper-muted border border-line"
+                        }`}
+                      >
+                        {trends.revenueGrowth > 0 ? "▲ +" : trends.revenueGrowth < 0 ? "▼ " : "— "}
+                        {trends.revenueGrowth}%
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-2 flex items-baseline justify-between gap-2">
+                    <span className="text-2xl font-bold tracking-tight text-gold">
+                      ₹{Math.round(summary.totalRevenue || 0).toLocaleString("en-IN")}
+                    </span>
+                    <MiniSparkline
+                      data={trends?.revenueSparkline}
+                      color="gold"
+                      width={84}
+                      height={32}
+                    />
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center justify-between text-xs text-paper-muted border-t border-line/60 pt-2">
                   <span>AOV: ₹{Math.round(summary.averageOrderValue || 0).toLocaleString("en-IN")}</span>
                   <span>{summary.totalOrders ?? 0} Orders</span>
                 </div>
@@ -222,15 +253,41 @@ export default function AnalyticsPage() {
 
             {/* Units Sold & Sales Velocity */}
             <AdminCard padding="md">
-              <div className="flex flex-col">
-                <span className="text-xs font-medium uppercase tracking-wider text-paper-muted">
-                  Units Sold & Velocity
-                </span>
-                <span className="mt-2 text-2xl font-bold tracking-tight text-paper">
-                  {(summary.totalUnitsSold || 0).toLocaleString("en-IN")}{" "}
-                  <span className="text-xs font-normal text-paper-muted">units</span>
-                </span>
-                <div className="mt-2 flex items-center justify-between text-xs text-paper-muted border-t border-line/60 pt-2">
+              <div className="flex flex-col justify-between h-full">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium uppercase tracking-wider text-paper-muted">
+                      Units Sold &amp; Velocity
+                    </span>
+                    {trends && (
+                      <span
+                        className={`inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                          trends.unitsGrowth > 0
+                            ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                            : trends.unitsGrowth < 0
+                            ? "bg-rose-500/15 text-rose-400 border border-rose-500/30"
+                            : "bg-neutral-500/15 text-paper-muted border border-line"
+                        }`}
+                      >
+                        {trends.unitsGrowth > 0 ? "▲ +" : trends.unitsGrowth < 0 ? "▼ " : "— "}
+                        {trends.unitsGrowth}%
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-2 flex items-baseline justify-between gap-2">
+                    <span className="text-2xl font-bold tracking-tight text-paper">
+                      {(summary.totalUnitsSold || 0).toLocaleString("en-IN")}{" "}
+                      <span className="text-xs font-normal text-paper-muted">units</span>
+                    </span>
+                    <MiniSparkline
+                      data={trends?.unitsSparkline}
+                      color="emerald"
+                      width={84}
+                      height={32}
+                    />
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center justify-between text-xs text-paper-muted border-t border-line/60 pt-2">
                   <span>Store Velocity:</span>
                   <span className="font-semibold text-emerald-400">
                     {((summary.totalUnitsSold || 0) / Math.max(summary.daysCount || 1, 1)).toFixed(1)} units/day
@@ -241,14 +298,29 @@ export default function AnalyticsPage() {
 
             {/* Total Inventory Stock & Valuation */}
             <AdminCard padding="md">
-              <div className="flex flex-col">
-                <span className="text-xs font-medium uppercase tracking-wider text-paper-muted">
-                  Warehouse Stock & Value
-                </span>
-                <span className="mt-2 text-2xl font-bold tracking-tight text-paper">
-                  ₹{Math.round(summary.totalInventoryValue || 0).toLocaleString("en-IN")}
-                </span>
-                <div className="mt-2 flex items-center justify-between text-xs text-paper-muted border-t border-line/60 pt-2">
+              <div className="flex flex-col justify-between h-full">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium uppercase tracking-wider text-paper-muted">
+                      Warehouse Stock &amp; Value
+                    </span>
+                    <span className="rounded bg-blue-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-blue-400 border border-blue-500/30">
+                      Physical Hold
+                    </span>
+                  </div>
+                  <div className="mt-2 flex items-baseline justify-between gap-2">
+                    <span className="text-2xl font-bold tracking-tight text-paper">
+                      ₹{Math.round(summary.totalInventoryValue || 0).toLocaleString("en-IN")}
+                    </span>
+                    <MiniSparkline
+                      data={trends?.stockSparkline}
+                      color="blue"
+                      width={84}
+                      height={32}
+                    />
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center justify-between text-xs text-paper-muted border-t border-line/60 pt-2">
                   <span>Physical Stock:</span>
                   <span className="font-semibold text-paper">
                     {(summary.totalStockUnits || 0).toLocaleString("en-IN")} units
@@ -259,19 +331,29 @@ export default function AnalyticsPage() {
 
             {/* Dead Stock & Trapped Working Capital */}
             <AdminCard padding="md">
-              <div className="flex flex-col">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium uppercase tracking-wider text-rose-400">
-                    Dead Stock Capital Trapped
-                  </span>
-                  <span className="rounded bg-rose-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-rose-400">
-                    {summary.deadStockCount ?? 0} SKUs
-                  </span>
+              <div className="flex flex-col justify-between h-full">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium uppercase tracking-wider text-rose-400">
+                      Dead Stock Capital Trapped
+                    </span>
+                    <span className="rounded bg-rose-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-rose-400 border border-rose-500/30">
+                      {summary.deadStockCount ?? 0} SKUs
+                    </span>
+                  </div>
+                  <div className="mt-2 flex items-baseline justify-between gap-2">
+                    <span className="text-2xl font-bold tracking-tight text-rose-400">
+                      ₹{Math.round(summary.deadStockValue || 0).toLocaleString("en-IN")}
+                    </span>
+                    <MiniSparkline
+                      data={trends?.deadStockSparkline}
+                      color="rose"
+                      width={84}
+                      height={32}
+                    />
+                  </div>
                 </div>
-                <span className="mt-2 text-2xl font-bold tracking-tight text-rose-400">
-                  ₹{Math.round(summary.deadStockValue || 0).toLocaleString("en-IN")}
-                </span>
-                <div className="mt-2 flex items-center justify-between text-xs text-paper-muted border-t border-line/60 pt-2">
+                <div className="mt-3 flex items-center justify-between text-xs text-paper-muted border-t border-line/60 pt-2">
                   <span>Avg Rating:</span>
                   <span className="font-semibold text-amber-400">
                     ★ {(summary.averageStoreRating || 0).toFixed(1)} / 5.0
@@ -280,6 +362,20 @@ export default function AnalyticsPage() {
               </div>
             </AdminCard>
           </div>
+
+          {/* Interactive Sales Velocity & Revenue Trend Timeline Graph */}
+          <AnalyticsTrendGraph
+            timeline={timeline}
+            trends={trends}
+            timeframe={timeframe}
+            totalRevenue={summary.totalRevenue}
+            totalUnits={summary.totalUnitsSold}
+            totalOrders={summary.totalOrders}
+            averageOrderValue={summary.averageOrderValue}
+          />
+
+          {/* AI Executive Intelligence (Grounded Business Diagnostics) */}
+          <AiAnalyticsSection timeframe={timeframe} />
 
           {/* Critical Executive Alert Banners */}
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

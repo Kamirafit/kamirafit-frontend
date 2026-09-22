@@ -62,8 +62,32 @@ export interface AnalyticsSummary {
   criticalRestockCount: number;
 }
 
+export interface AnalyticsTimelinePoint {
+  date: string;
+  label: string;
+  revenue: number;
+  units: number;
+  orders: number;
+}
+
+export interface AnalyticsTrends {
+  revenueGrowth: number;
+  unitsGrowth: number;
+  ordersGrowth: number;
+  aovGrowth: number;
+  previousPeriodRevenue: number;
+  previousPeriodOrders: number;
+  previousPeriodUnits: number;
+  revenueSparkline: number[];
+  unitsSparkline: number[];
+  stockSparkline: number[];
+  deadStockSparkline: number[];
+}
+
 export interface BusinessAnalytics {
   summary: AnalyticsSummary;
+  timeline?: AnalyticsTimelinePoint[];
+  trends?: AnalyticsTrends;
   rankedProducts: ProductPerformance[];
   rankedCategories: CategoryPerformance[];
   deadStockReport: ProductPerformance[];

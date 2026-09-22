@@ -4,7 +4,6 @@ import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   CATEGORY_OPTIONS,
-  COLOR_OPTIONS,
   COLOR_SWATCH,
   SIZE_OPTIONS,
   type Category,
@@ -14,6 +13,7 @@ import {
   type Size,
 } from "@/features/product/types";
 import { useAdminCategories, useColors, useCreateColor, useDeleteColor } from "@/services/admin";
+import { useAiGenerateProduct } from "@/services/ai";
 import type { AdminCategory } from "@/types/entities";
 import Button from "@/components/ui/Button";
 import { compressImageToDataUrl } from "@/lib/format";
@@ -231,6 +231,49 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
   const [activeMediaColor, setActiveMediaColor] = useState<string>("all");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const objectUrlsRef = useRef<string[]>([]);
+
+  const aiGenerateMutation = useAiGenerateProduct();
+  const [aiGenError, setAiGenError] = useState<string | null>(null);
+
+  const handleGenerateAi = async () => {
+    if (!values.name?.trim()) {
+      setErrors((prev) => ({ ...prev, name: "Please enter product name first." }));
+      return;
+    }
+    setAiGenError(null);
+    try {
+      const result = await aiGenerateMutation.mutateAsync({
+        title: values.name.trim(),
+        category: values.category,
+        subcategory: values.subcategory,
+        colors: values.color,
+      });
+
+      if (result) {
+        let fullDesc = result.description || "";
+        if (result.bulletPoints && result.bulletPoints.length > 0) {
+          fullDesc += `\n\nHighlights:\n• ${result.bulletPoints.join("\n• ")}`;
+        }
+        if (result.careInstructions) {
+          fullDesc += `\n\nCare & Maintenance:\n${result.careInstructions}`;
+        }
+
+        set("description", fullDesc.trim());
+        if (result.suggestedSlug) {
+          set("slug", result.suggestedSlug);
+        }
+        if (result.seoTitle) {
+          set("seoTitle", result.seoTitle);
+        }
+        if (result.seoDescription) {
+          set("seoDescription", result.seoDescription);
+        }
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to generate AI listing. Please try again.";
+      setAiGenError(message);
+    }
+  };
 
   const categoriesList = useMemo(() => {
     if (categoriesProp && categoriesProp.length > 0) return categoriesProp;
@@ -778,9 +821,34 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
               </select>
             </FormField>
           </div>
-          <FormField label="Description" error={errors.description}>
+          <FormField
+            label={
+              <span className="flex items-center justify-between w-full">
+                <span>Description</span>
+                <button
+                  type="button"
+                  disabled={aiGenerateMutation.isPending || !values.name?.trim()}
+                  onClick={handleGenerateAi}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-gold/40 bg-gold/15 text-[11px] font-semibold uppercase tracking-wider text-gold hover:bg-gold hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+                  title="Generate luxury copy, styling notes, care guide, and SEO using Gemini AI"
+                >
+                  {aiGenerateMutation.isPending ? (
+                    <>
+                      <span className="w-3 h-3 border-2 border-gold border-t-transparent rounded-full animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <span>✨</span> Auto-Generate with AI
+                    </>
+                  )}
+                </button>
+              </span>
+            }
+            error={errors.description || aiGenError || undefined}
+          >
             <textarea
-              rows={5}
+              rows={6}
               value={values.description}
               onChange={(event) => set("description", event.target.value)}
               maxLength={5000}
