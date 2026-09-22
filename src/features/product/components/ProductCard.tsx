@@ -8,6 +8,7 @@ import { DEFAULT_PRODUCT_IMAGE, formatPrice, getValidImageSrc } from "@/lib/form
 import { useAppDispatch, useAppSelector } from "../hooks/redux";
 import { addToCart } from "../store/cartSlice";
 import { useOptimisticWishlist } from "@/services/wishlist";
+import { useColorSwatchMap } from "@/services/product";
 import { COLOR_SWATCH, type Product } from "../types";
 import { HeartIcon } from "./icons";
 
@@ -23,16 +24,15 @@ function ProductCartIcon({ filled = false }: { filled?: boolean }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.6"
+      strokeWidth="1.8"
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden
     >
-      <circle cx="9" cy="20" r="1.5" fill={filled ? "currentColor" : "none"} />
-      <circle cx="17" cy="20" r="1.5" fill={filled ? "currentColor" : "none"} />
-      <path d="M3 3h2l.4 2" />
+      <circle cx="8" cy="21" r="1" />
+      <circle cx="19" cy="21" r="1" />
       <path
-        d="M5.4 5L7 13h10l3-8H5.4z"
+        d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"
         fill={filled ? "currentColor" : "none"}
       />
     </svg>
@@ -40,6 +40,7 @@ function ProductCartIcon({ filled = false }: { filled?: boolean }) {
 }
 
 export default function ProductCard({ product }: Props) {
+  const swatchMap = useColorSwatchMap();
   const router = useRouter();
   const pathname = usePathname();
   const dispatch = useAppDispatch();
@@ -160,7 +161,7 @@ export default function ProductCard({ product }: Props) {
                   className={`h-3 w-3 rounded-full border transition-all ${
                     isSelected ? "ring-2 ring-gold scale-125" : "border-line/70 hover:scale-115"
                   }`}
-                  style={{ backgroundColor: COLOR_SWATCH[c] || "#888888" }}
+                  style={{ backgroundColor: swatchMap[c] || COLOR_SWATCH[c] || "#888888" }}
                 />
               );
             })}

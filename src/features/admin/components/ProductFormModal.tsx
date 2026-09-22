@@ -13,7 +13,7 @@ import {
   type ProductStatus,
   type Size,
 } from "@/features/product/types";
-import { useAdminCategories } from "@/services/admin";
+import { useAdminCategories, useColors, useCreateColor, useDeleteColor } from "@/services/admin";
 import type { AdminCategory } from "@/types/entities";
 import Button from "@/components/ui/Button";
 import { compressImageToDataUrl } from "@/lib/format";
@@ -204,10 +204,15 @@ function Toggle({ label, checked, onChange, disabled = false }: { label: string;
 
 export default function ProductFormModal({ open, onClose, onSubmit, initial, categories: categoriesProp, duplicate = false, loading = false }: Props) {
   const categoriesQuery = useAdminCategories();
+  const colorsQuery = useColors();
+  const createColorMutation = useCreateColor();
+  const deleteColorMutation = useDeleteColor();
 
   const [values, setValues] = useState<FormValues>(EMPTY);
   const [productState, setProductState] = useState<ProductState>("draft");
-  const [customColorInput, setCustomColorInput] = useState("");
+  const [customColorName, setCustomColorName] = useState("");
+  const [customColorHex, setCustomColorHex] = useState("#000000");
+  const [colorActionError, setColorActionError] = useState("");
   const [variants, setVariants] = useState<VariantDraft[]>([]);
   const [images, setImages] = useState<ImageDraft[]>([]);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
@@ -248,23 +253,116 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
     [selectedCategoryObj, values.category]
   );
 
+  const availableColors = useMemo(() => {
+    const apiColors = colorsQuery.data;
+    const map = new Map<string, string>();
+
+    if (apiColors && apiColors.length > 0) {
+      apiColors.forEach((c) => {
+        if (c.name) map.set(c.name, c.hex || "#888888");
+      });
+    } else {
+      Object.entries(COLOR_SWATCH).forEach(([name, hex]) => {
+        map.set(name, hex);
+      });
+    }
+
+    // Ensure currently selected colors in product are present
+    values.color.forEach((c) => {
+      if (!map.has(c)) map.set(c, "#888888");
+    });
+    return Array.from(map.entries()).map(([name, hex]) => ({ name, hex }));
+  }, [colorsQuery.data, values.color]);
+
+  const swatchMap = useMemo(() => {
+    const map: Record<string, string> = { ...COLOR_SWATCH };
+    if (colorsQuery.data && Array.isArray(colorsQuery.data)) {
+      colorsQuery.data.forEach((c) => {
+        if (c.name && c.hex) map[c.name] = c.hex;
+      });
+    }
+    return map;
+  }, [colorsQuery.data]);
+
   const displayedImages = useMemo(() => {
     if (activeMediaColor === "all") return images;
     if (activeMediaColor === "unassigned") return images.filter((img) => !img.color || !values.color.includes(img.color as Color));
     return images.filter((img) => img.color === activeMediaColor);
   }, [images, activeMediaColor, values.color]);
 
-  const handleAddCustomColor = () => {
-    const trimmed = customColorInput.trim();
-    if (!trimmed) return;
-    const formatted = trimmed.replace(/\b\w/g, (char) => char.toUpperCase());
-    if (!values.color.includes(formatted)) {
-      set("color", [...values.color, formatted]);
+  const handleToggleColor = (col: string) => {
+    const isSelected = values.color.includes(col as Color);
+    if (isSelected) {
+      // 1. Remove from values.color
+      const nextColors = values.color.filter((c) => c !== col);
+      set("color", nextColors);
+
+      // 2. Unassign images tagged with this unselected color (Bug 1 fix)
+      setImages((prev) =>
+        prev.map((img) => (img.color === col ? { ...img, color: "" } : img))
+      );
+
+      // 3. Reset active media tab if it was set to this unselected color
+      if (activeMediaColor === col) {
+        setActiveMediaColor(nextColors.length > 0 ? nextColors[0] : "all");
+      }
+
+      // 4. Remove generated variants for this unselected color
+      setVariants((prev) => prev.filter((v) => v.color !== col));
+    } else {
+      set("color", [...values.color, col as Color]);
       if (activeMediaColor === "all" && values.color.length === 0) {
-        setActiveMediaColor(formatted);
+        setActiveMediaColor(col);
       }
     }
-    setCustomColorInput("");
+  };
+
+  const handleDeleteColor = async (col: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+
+    if (values.color.includes(col as Color)) {
+      handleToggleColor(col);
+    }
+
+    try {
+      await deleteColorMutation.mutateAsync(col);
+    } catch (err) {
+      console.error("Failed to delete color:", err);
+    }
+  };
+
+  const handleAddCustomColor = async () => {
+    const trimmedName = customColorName.trim();
+    if (!trimmedName) {
+      setColorActionError("Please enter a color name.");
+      return;
+    }
+    let hex = customColorHex.trim();
+    if (!hex.startsWith("#")) hex = `#${hex}`;
+    if (!/^#[0-9a-fA-F]{3,8}$/.test(hex)) {
+      setColorActionError("Please enter a valid hex color code (e.g. #8B1E2D).");
+      return;
+    }
+    setColorActionError("");
+
+    const formattedName = trimmedName.replace(/\b\w/g, (char) => char.toUpperCase());
+
+    try {
+      await createColorMutation.mutateAsync({ name: formattedName, hex });
+    } catch (err) {
+      console.warn("Could not save color to backend API, keeping locally:", err);
+    }
+
+    if (!values.color.includes(formattedName as Color)) {
+      set("color", [...values.color, formattedName as Color]);
+      if (activeMediaColor === "all" && values.color.length === 0) {
+        setActiveMediaColor(formattedName);
+      }
+    }
+
+    setCustomColorName("");
+    setCustomColorHex("#000000");
   };
 
   useEffect(() => {
@@ -926,48 +1024,136 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
 
         <Section title="Variants & inventory">
           <FormField label="Sizes" error={errors.variants}><MultiSelectChips options={SIZE_OPTIONS} value={values.size} onChange={(value) => set("size", value)} /></FormField>
-          <FormField label="Colors">
-            <div className="flex flex-col gap-3">
+          <FormField label="Colors" error={errors.variants}>
+            <div className="flex flex-col gap-4">
+              {/* Dynamic color chips with swatch preview */}
               <div className="flex flex-wrap gap-2">
-                {Array.from(new Set([...COLOR_OPTIONS, ...values.color])).map((col) => {
-                  const active = values.color.includes(col);
+                {availableColors.map((colItem) => {
+                  const active = values.color.includes(colItem.name as Color);
                   return (
-                    <button
-                      key={col}
-                      type="button"
-                      onClick={() => set("color", active ? values.color.filter((c) => c !== col) : [...values.color, col])}
-                      className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[11.5px] font-semibold uppercase tracking-[0.14em] transition-all duration-200 ${
+                    <div
+                      key={colItem.name}
+                      className={`inline-flex items-center rounded-full border transition-all duration-200 ${
                         active
-                          ? "border-gold bg-gold text-ink shadow-[0_6px_18px_-8px_rgba(139,30,45,0.5)]"
-                          : "border-line bg-transparent text-paper-muted hover:border-gold hover:text-gold"
+                          ? "border-gold bg-gold text-ink shadow-[0_6px_18px_-8px_rgba(139,30,45,0.5)] font-bold"
+                          : "border-line bg-ink text-paper-muted hover:border-gold hover:text-gold"
                       }`}
                     >
-                      <span>{col}</span>
-                      {active && !(COLOR_OPTIONS as readonly string[]).includes(col) && (
-                        <span className="text-[10px] font-bold ml-1">×</span>
-                      )}
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleColor(colItem.name)}
+                        className="inline-flex items-center gap-2 pl-3.5 pr-1.5 py-1.5 text-[11.5px] font-semibold uppercase tracking-[0.14em] focus:outline-none"
+                      >
+                        <span
+                          className="inline-block h-3 w-3 rounded-full border border-black/30 shrink-0"
+                          style={{ backgroundColor: colItem.hex }}
+                        />
+                        <span>{colItem.name}</span>
+                        {active && (
+                          <span className="text-[11px] font-bold text-ink">✓</span>
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={(e) => handleDeleteColor(colItem.name, e)}
+                        title={`Delete ${colItem.name} color`}
+                        className={`mr-2 flex h-4 w-4 items-center justify-center rounded-full text-[11px] font-bold transition-all ${
+                          active
+                            ? "text-ink/60 hover:bg-black/20 hover:text-ink"
+                            : "text-paper-muted/50 hover:bg-white/10 hover:text-[#B3261E]"
+                        }`}
+                        aria-label={`Delete ${colItem.name}`}
+                      >
+                        ×
+                      </button>
+                    </div>
                   );
                 })}
               </div>
 
-              <div className="flex gap-2 max-w-md">
-                <input
-                  type="text"
-                  value={customColorInput}
-                  onChange={(e) => setCustomColorInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleAddCustomColor();
-                    }
-                  }}
-                  className={inputClass}
-                  placeholder="Add any custom color (e.g. Olive, Lavender, Mustard)..."
-                />
-                <Button type="button" size="sm" variant="dark" onClick={handleAddCustomColor}>
-                  Add
-                </Button>
+              {/* Color Selector & Hex Code Input */}
+              <div className="rounded-xl border border-line/80 bg-ink-2/60 p-3.5 flex flex-col gap-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-paper">
+                    Add New Color & Swatch
+                  </span>
+                  <span className="text-[11px] text-paper-muted">
+                    Swatch will be displayed to customers on storefront
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <input
+                    type="text"
+                    value={customColorName}
+                    onChange={(e) => {
+                      setCustomColorName(e.target.value);
+                      if (colorActionError) setColorActionError("");
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddCustomColor();
+                      }
+                    }}
+                    className={`${inputClass} flex-1 min-w-[160px]`}
+                    placeholder="Color Name (e.g. Lavender, Sage Green, Mustard)"
+                  />
+
+                  {/* Color Picker & Hex Input Box */}
+                  <div className="flex items-center gap-2 rounded-xl border border-line bg-ink px-2.5 py-1.5">
+                    <input
+                      type="color"
+                      value={customColorHex.length === 7 ? customColorHex : "#000000"}
+                      onChange={(e) => {
+                        setCustomColorHex(e.target.value.toLowerCase());
+                        if (colorActionError) setColorActionError("");
+                      }}
+                      className="h-6 w-6 cursor-pointer rounded border-0 bg-transparent p-0"
+                      title="Click to pick swatch color"
+                    />
+                    <input
+                      type="text"
+                      value={customColorHex}
+                      onChange={(e) => {
+                        setCustomColorHex(e.target.value);
+                        if (colorActionError) setColorActionError("");
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleAddCustomColor();
+                        }
+                      }}
+                      maxLength={7}
+                      placeholder="#000000"
+                      className="w-20 font-mono text-[12px] uppercase bg-transparent text-paper focus:outline-none"
+                    />
+                  </div>
+
+                  {/* Swatch Preview */}
+                  <div className="flex items-center gap-1.5 px-1" title="Swatch preview">
+                    <span
+                      className="inline-block h-6 w-6 rounded-full border border-line shadow-inner"
+                      style={{ backgroundColor: customColorHex }}
+                    />
+                  </div>
+
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="dark"
+                    disabled={createColorMutation.isPending}
+                    onClick={handleAddCustomColor}
+                  >
+                    {createColorMutation.isPending ? "Adding…" : "Add Color"}
+                  </Button>
+                </div>
+
+                {colorActionError ? (
+                  <p className="text-[12px] text-[#B3261E]">{colorActionError}</p>
+                ) : null}
               </div>
             </div>
           </FormField>
@@ -1021,7 +1207,7 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
                     >
                       <span
                         className="inline-block h-2.5 w-2.5 rounded-full border border-black/20"
-                        style={{ backgroundColor: COLOR_SWATCH[col] || "#888888" }}
+                        style={{ backgroundColor: swatchMap[col] || COLOR_SWATCH[col] || "#888888" }}
                       />
                       <span>{col}</span>
                       <span
@@ -1070,7 +1256,7 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
               <div className="flex items-center gap-2 text-gold">
                 <span
                   className="inline-block h-3 w-3 rounded-full border border-line"
-                  style={{ backgroundColor: COLOR_SWATCH[activeMediaColor] || "#888888" }}
+                  style={{ backgroundColor: swatchMap[activeMediaColor] || COLOR_SWATCH[activeMediaColor] || "#888888" }}
                 />
                 <span className="font-semibold">Managing images for: {activeMediaColor}</span>
               </div>
@@ -1199,26 +1385,18 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
                         className="min-w-0 flex-1 rounded-lg bg-ink/90 backdrop-blur px-1.5 py-1 text-[10px] font-medium text-paper focus:outline-none focus:ring-1 focus:ring-gold"
                       >
                         <option value="">Unassigned</option>
-                        {Array.from(
-                          new Set([
-                            ...values.color,
-                            ...(image.color ? [image.color] : []),
-                            ...variants.map((v) => v.color),
-                          ])
-                        )
-                          .filter(Boolean)
-                          .map((color) => (
-                            <option key={color} value={color}>
-                              {color}
-                            </option>
-                          ))}
+                        {values.color.map((color) => (
+                          <option key={color} value={color}>
+                            {color}
+                          </option>
+                        ))}
                       </select>
                     </div>
 
                     {/* Primary Badge or Set Primary Action */}
                     {isPrimaryForCurrentScope ? (
                       <span className="absolute left-1.5 top-1.5 rounded-full bg-gold px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-ink shadow">
-                        ⭐ Primary {image.color ? `(${image.color})` : ""}
+                        ⭐ Primary {image.color && values.color.includes(image.color) ? `(${image.color})` : ""}
                       </span>
                     ) : (
                       <button

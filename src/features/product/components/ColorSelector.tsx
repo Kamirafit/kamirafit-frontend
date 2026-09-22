@@ -2,6 +2,7 @@
 
 import type { Color } from "../types";
 import { COLOR_SWATCH } from "../types";
+import { useColorSwatchMap } from "@/services/product";
 
 type Props = {
   options: Color[];
@@ -10,6 +11,8 @@ type Props = {
 };
 
 export default function ColorSelector({ options, value, onChange }: Props) {
+  const swatchMap = useColorSwatchMap();
+
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
@@ -44,7 +47,7 @@ export default function ColorSelector({ options, value, onChange }: Props) {
             >
               <span
                 className="block h-7 w-7 rounded-full border border-line"
-                style={{ backgroundColor: COLOR_SWATCH[c] }}
+                style={{ backgroundColor: swatchMap[c] || COLOR_SWATCH[c] || "#888888" }}
               />
             </button>
           );

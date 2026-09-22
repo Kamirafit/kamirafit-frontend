@@ -25,6 +25,7 @@ import {
   useSyncAdminOrderWithShiprocket,
   useGetAdminOrderShippingLabel,
   useGetAdminOrderManifest,
+  useColors,
 } from "@/services/admin";
 import { COLOR_OPTIONS, SIZE_OPTIONS } from "@/features/product/types";
 import { orderService } from "@/services/order";
@@ -217,6 +218,16 @@ export default function OrderDetailsModal({ open, onClose, order }: Props) {
   const syncShiprocketMutation = useSyncAdminOrderWithShiprocket();
   const getShippingLabelMutation = useGetAdminOrderShippingLabel();
   const getManifestMutation = useGetAdminOrderManifest();
+  const colorsQuery = useColors();
+
+  const colorList = useMemo(() => {
+    const set = new Set<string>();
+    (colorsQuery.data || []).forEach((c) => {
+      if (c.name) set.add(c.name);
+    });
+    COLOR_OPTIONS.forEach((c) => set.add(c));
+    return Array.from(set);
+  }, [colorsQuery.data]);
 
   useEffect(() => {
     if (open && order) {
@@ -1007,7 +1018,7 @@ export default function OrderDetailsModal({ open, onClose, order }: Props) {
                             }
                             className={selectClass}
                           >
-                            {COLOR_OPTIONS.map((c) => (
+                            {colorList.map((c) => (
                               <option key={c} value={c} className="bg-ink">
                                 {c}
                               </option>

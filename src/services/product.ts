@@ -1,9 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient, unwrapApiResponse } from "@/api/client";
 import { adaptProduct, type Product } from "@/types/entities";
 import { PRODUCTS, getProductById, getRelatedProducts as getFallbackRelated } from "@/data/products";
 import type { CreateProductRequestDto, DeleteProductResponseDto, UpdateProductRequestDto } from "@/types/api/catalog";
+import { COLOR_SWATCH } from "@/features/product/types";
+
+export interface ColorItem {
+  name: string;
+  hex: string;
+}
 
 let productsPromise: Promise<Product[]> | null = null;
 let featuredProductsPromise: Promise<Product[]> | null = null;
@@ -96,6 +103,33 @@ export const productService = {
     unwrapApiResponse<any>(apiClient.put("/products/" + id, product)).then(adaptProduct),
   deleteProduct: (id: string): Promise<DeleteProductResponseDto["data"]["id"]> =>
     unwrapApiResponse<any>(apiClient.delete("/products/" + id)).then((x) => x.id),
+  getColors: (): Promise<ColorItem[]> =>
+    unwrapApiResponse<any>(apiClient.get("/products/colors"))
+      .then((r) => {
+        const items = Array.isArray(r) ? r : r?.data || [];
+        return items
+          .map((item: any) => ({
+            name: String(item.name || item.value || "").trim(),
+            hex: String(item.hex || item.slug || "").trim(),
+          }))
+          .filter((item: ColorItem) => Boolean(item.name));
+      })
+      .catch((err) => {
+        console.warn("API unavailable; using fallback colors:", err?.message || err);
+        return Object.entries(COLOR_SWATCH).map(([name, hex]) => ({ name, hex }));
+      }),
+  createColor: (color: { name: string; hex: string }): Promise<ColorItem> =>
+    unwrapApiResponse<any>(apiClient.post("/products/colors", color)).then((r) => {
+      const item = r?.data || r;
+      return {
+        name: String(item.name || item.value || color.name).trim(),
+        hex: String(item.hex || item.slug || color.hex).trim(),
+      };
+    }),
+  deleteColor: (name: string): Promise<{ name: string }> =>
+    unwrapApiResponse<any>(
+      apiClient.delete(`/products/colors/${encodeURIComponent(name)}`)
+    ).then(() => ({ name })),
 };
 
 export function useProducts() {
@@ -146,3 +180,48 @@ export function useDeleteProduct() {
     onSuccess: () => q.invalidateQueries({ queryKey: ["products"] }),
   });
 }
+
+export function useColors() {
+  return useQuery<ColorItem[]>({
+    queryKey: ["colors"],
+    queryFn: productService.getColors,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+}
+
+export function useCreateColor() {
+  const q = useQueryClient();
+  return useMutation({
+    mutationFn: (color: { name: string; hex: string }) => productService.createColor(color),
+    onSuccess: () => {
+      q.invalidateQueries({ queryKey: ["colors"] });
+    },
+  });
+}
+
+export function useDeleteColor() {
+  const q = useQueryClient();
+  return useMutation({
+    mutationFn: (name: string) => productService.deleteColor(name),
+    onSuccess: () => {
+      q.invalidateQueries({ queryKey: ["colors"] });
+    },
+  });
+}
+
+export function useColorSwatchMap(): Record<string, string> {
+  const { data: colors } = useColors();
+  return useMemo(() => {
+    const map: Record<string, string> = { ...COLOR_SWATCH };
+    if (colors && Array.isArray(colors)) {
+      colors.forEach((c) => {
+        if (c.name && c.hex) {
+          map[c.name] = c.hex;
+        }
+      });
+    }
+    return map;
+  }, [colors]);
+}
+

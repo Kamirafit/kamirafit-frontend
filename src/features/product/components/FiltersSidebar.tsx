@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import {
   CATEGORY_OPTIONS,
   COLOR_OPTIONS,
@@ -13,6 +14,7 @@ import {
 } from "../types";
 import CheckboxGroup from "./CheckboxGroup";
 import PriceSlider from "./PriceSlider";
+import { useColors } from "@/services/product";
 
 type Counts = {
   categories: Record<Category, number>;
@@ -25,6 +27,7 @@ type Props = {
   counts: Counts;
   onChange: (next: Filters) => void;
   onReset: () => void;
+  className?: string;
 };
 
 export default function FiltersSidebar({
@@ -32,13 +35,47 @@ export default function FiltersSidebar({
   counts,
   onChange,
   onReset,
+  className,
 }: Props) {
+  const { data: apiColors } = useColors();
+
+  const colorOptions = useMemo(() => {
+    const list: string[] = [];
+    const seen = new Set<string>();
+
+    if (apiColors && Array.isArray(apiColors)) {
+      apiColors.forEach((c) => {
+        if (c.name && !seen.has(c.name)) {
+          seen.add(c.name);
+          list.push(c.name);
+        }
+      });
+    }
+
+    Object.keys(counts.colors).forEach((c) => {
+      if (!seen.has(c)) {
+        seen.add(c);
+        list.push(c);
+      }
+    });
+
+    if (list.length === 0) {
+      COLOR_OPTIONS.forEach((c) => list.push(c));
+    }
+
+    return list;
+  }, [apiColors, counts.colors]);
+
   const set = <K extends keyof Filters>(key: K, value: Filters[K]) => {
     onChange({ ...filters, [key]: value });
   };
 
   return (
-    <div className="flex flex-col gap-7 rounded-2xl border border-line bg-ink p-5">
+    <div
+      className={`flex flex-col gap-7 rounded-2xl border border-line bg-ink p-5 ${
+        className ?? ""
+      }`}
+    >
       <div className="flex items-center justify-between">
         <h2 className="font-display text-base font-semibold text-paper">
           Filters
@@ -82,7 +119,7 @@ export default function FiltersSidebar({
 
       <CheckboxGroup<Color>
         legend="Color"
-        options={COLOR_OPTIONS.map((c) => ({
+        options={colorOptions.map((c) => ({
           value: c,
           label: c,
           count: counts.colors[c] ?? 0,

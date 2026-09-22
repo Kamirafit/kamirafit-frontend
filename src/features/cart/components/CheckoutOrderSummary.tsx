@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { COLOR_SWATCH } from "@/features/product/types";
+import { useColorSwatchMap } from "@/services/product";
 import { DEFAULT_PRODUCT_IMAGE, getValidImageSrc } from "@/lib/format";
 import { formatPrice, type ResolvedCartItem } from "../utils";
 import type { CouponValidationResult } from "@/services/order";
@@ -28,10 +29,11 @@ export default function CheckoutOrderSummary({
   onApplyCoupon,
   onRemoveCoupon,
   isApplyingCoupon = false,
-  couponError,
+  couponError = null,
   selectedPincode,
   deliveryZoneLabel,
 }: Props) {
+  const swatchMap = useColorSwatchMap();
   const [couponInput, setCouponInput] = useState("");
   return (
     <aside className="relative flex flex-col gap-6 overflow-hidden rounded-2xl border border-line bg-ink-2 p-6 shadow-[0_40px_80px_-40px_rgba(74,14,26,0.15)]">
@@ -81,7 +83,7 @@ export default function CheckoutOrderSummary({
                       <span
                         aria-hidden
                         className="inline-block h-2.5 w-2.5 rounded-full border border-line"
-                        style={{ backgroundColor: COLOR_SWATCH[item.color] }}
+                        style={{ backgroundColor: swatchMap[item.color] || COLOR_SWATCH[item.color] || "#888888" }}
                       />
                       {item.color}
                     </span>

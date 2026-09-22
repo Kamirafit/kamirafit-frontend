@@ -20,7 +20,7 @@ import FiltersSidebar from "./FiltersSidebar";
 import MobileFiltersDrawer from "./MobileFiltersDrawer";
 import ProductGrid from "./ProductGrid";
 import SortBar from "./SortBar";
-import { useProducts } from "@/services/product";
+import { useProducts, useColors } from "@/services/product";
 import type { Product } from "@/types/entities";
 import { ErrorState, OfflineState } from "@/components/states";
 import ProductGridSkeleton from "@/components/skeleton/ProductGridSkeleton";
@@ -69,6 +69,7 @@ export default function ShopPageClient({ initialCategorySlug, initialProducts = 
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const productsQuery = useProducts();
+  const colorsQuery = useColors();
   const { data: latestProducts = [], isError, refetch } = productsQuery;
   const isOnline = useOnlineStatus();
 
@@ -89,13 +90,18 @@ export default function ShopPageClient({ initialCategorySlug, initialProducts = 
     for (const c of CATEGORY_OPTIONS) cat[c] = 0;
     for (const s of SIZE_OPTIONS) sz[s] = 0;
     for (const c of COLOR_OPTIONS) col[c] = 0;
+    if (colorsQuery.data && Array.isArray(colorsQuery.data)) {
+      for (const c of colorsQuery.data) {
+        if (c.name) col[c.name] = 0;
+      }
+    }
     for (const p of activeProducts) {
       cat[p.category] = (cat[p.category] ?? 0) + 1;
       for (const s of p.size) sz[s] = (sz[s] ?? 0) + 1;
       for (const c of p.color) col[c] = (col[c] ?? 0) + 1;
     }
     return { categories: cat, sizes: sz, colors: col };
-  }, [activeProducts]);
+  }, [activeProducts, colorsQuery.data]);
 
   return (
     <Container className="py-8 lg:py-10">

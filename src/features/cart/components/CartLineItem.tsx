@@ -8,6 +8,7 @@ import {
   removeFromCart,
 } from "@/features/product/store/cartSlice";
 import { COLOR_SWATCH } from "@/features/product/types";
+import { useColorSwatchMap } from "@/services/product";
 import { DEFAULT_PRODUCT_IMAGE, getValidImageSrc } from "@/lib/format";
 import { formatPrice, type ResolvedCartItem } from "../utils";
 import QuantityStepper from "./QuantityStepper";
@@ -17,6 +18,7 @@ type Props = {
 };
 
 export default function CartLineItem({ resolved }: Props) {
+  const swatchMap = useColorSwatchMap();
   const dispatch = useAppDispatch();
   const { item, product, lineTotal } = resolved;
   const key = { id: item.id, size: item.size, color: item.color };
@@ -90,7 +92,7 @@ export default function CartLineItem({ resolved }: Props) {
               <span
                 aria-hidden
                 className="inline-block h-3 w-3 rounded-full border border-line"
-                style={{ backgroundColor: COLOR_SWATCH[item.color] }}
+                style={{ backgroundColor: swatchMap[item.color] || COLOR_SWATCH[item.color] || "#888888" }}
               />
               <span className="font-medium text-paper">{item.color}</span>
             </span>

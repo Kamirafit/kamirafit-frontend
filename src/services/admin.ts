@@ -677,4 +677,7 @@ export function useDeleteAdminCoupon() {
   });
 }
 
+export { useColors, useCreateColor, useDeleteColor, useColorSwatchMap, type ColorItem } from "./product";
+
+
 
