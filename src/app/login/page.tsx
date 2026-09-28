@@ -9,6 +9,7 @@ import PageShell from "@/components/layout/PageShell";
 import Button from "@/components/ui/Button";
 
 import { COUNTRY_CODES, getCountryPhoneRule } from "@/data/countryCodes";
+import TermsModal from "@/features/auth/components/TermsModal";
 
 function EyeIcon() {
   return (
@@ -52,6 +53,8 @@ function LoginContent() {
   const [serverError, setServerError] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
 
   // ---------------- EMAIL OTP STATE ----------------
   const [isEmailVerified, setIsEmailVerified] = useState(false);
@@ -282,6 +285,7 @@ function LoginContent() {
       newTouched.phoneNumber = true;
       newTouched.password = true;
       newTouched.confirmPassword = true;
+      newTouched.terms = true;
 
       newErrors.firstName = validateField("firstName", firstName, { mode, countryCode });
       newErrors.lastName = validateField("lastName", lastName, { mode, countryCode });
@@ -290,6 +294,9 @@ function LoginContent() {
       newErrors.phoneNumber = validateField("phoneNumber", phoneNumber, { mode, countryCode });
       newErrors.password = validateField("password", password, { mode, countryCode });
       newErrors.confirmPassword = validateField("confirmPassword", confirmPassword, { password, mode, countryCode });
+      if (!agreedToTerms) {
+        newErrors.terms = "You must agree to the Terms of Service to create an account.";
+      }
     } else {
       newTouched.email = true;
       newTouched.password = true;
@@ -311,6 +318,12 @@ function LoginContent() {
     if (mode === "signup") {
       if (!isEmailVerified || !emailVerificationToken) {
         setServerError("Please verify your email address with the OTP before creating your account.");
+        return;
+      }
+      if (!agreedToTerms) {
+        setTouched((prev) => ({ ...prev, terms: true }));
+        setErrors((prev) => ({ ...prev, terms: "You must agree to the Terms of Service to create an account." }));
+        setServerError("Please accept the Terms of Service to create your account.");
         return;
       }
     }
@@ -391,7 +404,8 @@ function LoginContent() {
     password === confirmPassword &&
     isFirstNameValid &&
     isLastNameValid &&
-    isPhoneValid;
+    isPhoneValid &&
+    agreedToTerms;
 
   return (
     <div className={`mx-auto my-3 sm:my-6 w-full px-4 transition-all duration-300 ${mode === "signup" ? "max-w-2xl" : "max-w-md"}`}>
@@ -794,6 +808,45 @@ function LoginContent() {
                     </span>
                   </div>
                 </div>
+
+                {/* Terms of Service Acceptance Checkbox */}
+                <div className="pt-2 pb-1">
+                  <label className="flex items-start gap-2.5 cursor-pointer select-none group">
+                    <input
+                      type="checkbox"
+                      id="agreeTerms"
+                      checked={agreedToTerms}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setAgreedToTerms(checked);
+                        if (errors.terms) {
+                          setErrors((prev) => ({ ...prev, terms: "" }));
+                        }
+                      }}
+                      className="mt-0.5 h-4 w-4 rounded border-line bg-ink-2 text-gold focus:ring-gold/30 focus:ring-offset-0 focus:outline-none cursor-pointer accent-[#C5A880] transition-colors"
+                    />
+                    <span className="text-xs text-paper-muted leading-relaxed">
+                      I agree to the{" "}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setIsTermsModalOpen(true);
+                        }}
+                        className="text-gold font-semibold underline underline-offset-2 hover:text-gold-light transition-colors focus:outline-none cursor-pointer"
+                      >
+                        Terms of Service
+                      </button>{" "}
+                      and acknowledge the store policies.
+                    </span>
+                  </label>
+                  {touched.terms && errors.terms && (
+                    <p className="text-[10px] font-medium text-red-500 mt-1 pl-6">
+                      {errors.terms}
+                    </p>
+                  )}
+                </div>
               </>
             ) : (
               <>
@@ -870,9 +923,13 @@ function LoginContent() {
               >
                 {mode === "signin"
                   ? "Sign In"
+                  : !isEmailVerified
+                  ? "Verify Email to Create Account"
+                  : !agreedToTerms
+                  ? "Accept Terms to Create Account"
                   : isSignupReady
                   ? "Create Account"
-                  : "Verify Email to Create Account"}
+                  : "Complete Details to Create Account"}
               </Button>
             </div>
           </form>
@@ -884,6 +941,17 @@ function LoginContent() {
           )}
         </div>
       </div>
+
+      <TermsModal
+        open={isTermsModalOpen}
+        onClose={() => setIsTermsModalOpen(false)}
+        onAccept={() => {
+          setAgreedToTerms(true);
+          setIsTermsModalOpen(false);
+          setErrors((prev) => ({ ...prev, terms: "" }));
+        }}
+        isAccepted={agreedToTerms}
+      />
     </div>
   );
 }

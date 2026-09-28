@@ -13,19 +13,19 @@ const FEATURES: Feature[] = [
   {
     title: "Premium Quality",
     description:
-      "Heavyweight organic cotton and ethically sourced materials, built to last season after season.",
+      "Organic cotton and ethically sourced materials, built to last season after season.",
     Icon: QualityIcon,
   },
   {
     title: "Fast Delivery",
     description:
-      "Free carbon-neutral shipping on orders over $75. Most orders arrive in 2–4 business days.",
+      "Free carbon-neutral shipping on orders over 999. Most orders arrive in 2–4 business days.",
     Icon: DeliveryIcon,
   },
   {
     title: "Easy Returns",
     description:
-      "Changed your mind? Return anything within 30 days — no questions, no fuss.",
+      "Changed your mind? Return anything within 7 days — no fuss.",
     Icon: ReturnsIcon,
   },
 ];
