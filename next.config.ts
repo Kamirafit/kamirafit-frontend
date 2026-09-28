@@ -21,12 +21,6 @@ const connectSources = [
   "'self'",
   "http://localhost:10000",
   "https://kamirafit-backend.onrender.com",
-  "https://identitytoolkit.googleapis.com",
-  "https://securetoken.googleapis.com",
-  "https://www.googleapis.com",
-  "https://*.firebaseio.com",
-  "https://*.firebase.com",
-  "https://*.googleapis.com",
   "https://www.google.com",
   apiConnectHost,
 ]
@@ -35,7 +29,7 @@ const connectSources = [
 
 const contentSecurityPolicy = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline' https://www.google.com https://www.gstatic.com https://apis.google.com https://www.gstatic.com/recaptcha/${
+  `script-src 'self' 'unsafe-inline' https://www.google.com https://www.gstatic.com ${
     isDev ? " 'unsafe-eval'" : ""
   }`,
   "style-src 'self' 'unsafe-inline' https://www.gstatic.com",
@@ -44,7 +38,7 @@ const contentSecurityPolicy = [
     .join(" ")}`,
   "font-src 'self' data: https://fonts.gstatic.com",
   `connect-src ${connectSources}`,
-  "frame-src 'self' https://www.google.com https://recaptcha.google.com https://kamirafit.firebaseapp.com https://*.firebaseapp.com",
+  "frame-src 'self' https://www.google.com",
   "media-src 'self'",
   "object-src 'none'",
   "base-uri 'self'",

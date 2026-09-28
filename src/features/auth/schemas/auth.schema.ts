@@ -38,5 +38,4 @@ export const RegisterRequestDtoSchema = z.object({
   phoneNumber: z.string().min(1, "Phone number is required"),
   gender: z.string().min(1, "Gender is required"),
   emailVerificationToken: z.string().optional(),
-  phoneVerificationToken: z.string().optional(),
 });

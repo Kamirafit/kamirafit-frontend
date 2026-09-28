@@ -102,11 +102,5 @@ export const authService = {
   async verifyEmailOtp(email: string, otp: string, emailOtpToken: string): Promise<{ success: boolean; verifiedToken?: string; message?: string }> {
     return unwrapApiResponse(apiClient.post("/auth/verify-email-otp", { email, otp, emailOtpToken }));
   },
-  async sendPhoneOtp(countryCode: string, phoneNumber: string): Promise<{ success: boolean; phoneOtpToken: string; message?: string }> {
-    return unwrapApiResponse(apiClient.post("/auth/send-phone-otp", { countryCode, phoneNumber }));
-  },
-  async verifyPhoneOtp(countryCode: string, phoneNumber: string, otp: string, phoneOtpToken: string): Promise<{ success: boolean; verifiedToken?: string; message?: string }> {
-    return unwrapApiResponse(apiClient.post("/auth/verify-phone-otp", { countryCode, phoneNumber, otp, phoneOtpToken }));
-  },
 };
 
