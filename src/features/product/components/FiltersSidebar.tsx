@@ -27,6 +27,7 @@ type Props = {
   counts: Counts;
   onChange: (next: Filters) => void;
   onReset: () => void;
+  showCategoryFilter?: boolean;
   className?: string;
 };
 
@@ -35,6 +36,7 @@ export default function FiltersSidebar({
   counts,
   onChange,
   onReset,
+  showCategoryFilter = true,
   className,
 }: Props) {
   const { data: apiColors } = useColors();
@@ -89,19 +91,23 @@ export default function FiltersSidebar({
         </button>
       </div>
 
-      <CheckboxGroup<Category>
-        legend="Category"
-        options={CATEGORY_OPTIONS.map((c) => ({
-          value: c,
-          label: c,
-          count: counts.categories[c] ?? 0,
-        }))}
-        selected={filters.categories}
-        onChange={(v) => set("categories", v)}
-        onReset={() => set("categories", [])}
-      />
+      {showCategoryFilter && filters.categories.length === 0 && (
+        <>
+          <CheckboxGroup<Category>
+            legend="Category"
+            options={CATEGORY_OPTIONS.map((c) => ({
+              value: c,
+              label: c,
+              count: counts.categories[c] ?? 0,
+            }))}
+            selected={filters.categories}
+            onChange={(v) => set("categories", v)}
+            onReset={() => set("categories", [])}
+          />
 
-      <div className="h-px w-full bg-line" />
+          <div className="h-px w-full bg-line" />
+        </>
+      )}
 
       <CheckboxGroup<Size>
         legend="Size"

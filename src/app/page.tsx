@@ -4,6 +4,7 @@ import FeaturedProducts from "@/components/home/FeaturedProducts";
 import Hero from "@/components/home/Hero";
 import Testimonials from "@/components/home/Testimonials";
 import WhyChooseUs from "@/components/home/WhyChooseUs";
+import ScrollToTopOnHome from "@/components/home/ScrollToTopOnHome";
 import PageShell from "@/components/layout/PageShell";
 import { productService } from "@/services/product";
 
@@ -82,6 +83,7 @@ export default async function Home() {
 
   return (
     <PageShell>
+      <ScrollToTopOnHome />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: safeFaqSchema }}

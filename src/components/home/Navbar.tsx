@@ -41,7 +41,7 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 w-full">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-14 -z-10 border-b border-white/10 bg-ink/75 shadow-[0_8px_32px_-12px_rgba(0,0,0,0.35)] backdrop-blur-xl supports-[backdrop-filter]:bg-ink/55 sm:h-16" />
       <div className="flex h-14 w-full items-center justify-between px-4 sm:h-16 sm:px-6 lg:px-10">
-        <Link href="/" className="font-display text-xl font-semibold tracking-[0.08em] text-paper transition-colors hover:text-gold">Kamira<span className="text-gold">Fit</span></Link>
+        <Link href="/" scroll={true} className="font-display text-xl font-semibold tracking-[0.08em] text-paper transition-colors hover:text-gold">Kamira<span className="text-gold">Fit</span></Link>
         <nav className="hidden items-center gap-10 md:flex">
           {NAV_LINKS.map((link) => <NavLink key={link.label} href={link.href} label={link.label} />)}
           <DesktopCategoriesMenu />
@@ -82,7 +82,7 @@ function MobileBottomNav({ pathname, cartCount, wishlistCount, isAuthenticated, 
     { label: isAuthenticated ? "Account" : "Login", href: isAuthenticated ? "/account" : "/login", Icon: UserIcon, active: pathname.startsWith("/account") || pathname.startsWith("/login") },
   ];
 
-  return <nav className="fixed inset-x-0 bottom-0 z-[60] border-t border-line bg-ink/90 px-2 pb-[calc(env(safe-area-inset-bottom)+0.35rem)] pt-2 shadow-[0_-12px_30px_-20px_rgba(26,26,26,0.5)] backdrop-blur-xl md:hidden" aria-label="Mobile navigation"><div className="mx-auto grid max-w-md grid-cols-6 gap-1">{items.map(({ label, href, Icon, active, count, onClick }) => onClick ? <button key={label} type="button" onClick={onClick} className="relative flex min-h-12 flex-col items-center justify-center gap-1 rounded-xl text-[10px] font-medium tracking-wide text-paper-muted transition-colors"><span className="relative"><Icon width={21} height={21} strokeWidth={1.6} /></span><span>{label}</span></button> : <Link key={label} href={href} aria-current={active ? "page" : undefined} className={active ? "relative flex min-h-12 flex-col items-center justify-center gap-1 rounded-xl bg-gold/10 text-[10px] font-medium tracking-wide text-gold transition-colors" : "relative flex min-h-12 flex-col items-center justify-center gap-1 rounded-xl text-[10px] font-medium tracking-wide text-paper-muted transition-colors"}><span className="relative"><Icon width={21} height={21} strokeWidth={active ? 2 : 1.6} />{count ? <CountBadge count={count} /> : null}</span><span>{label}</span></Link>)}</div></nav>;
+  return <nav className="fixed inset-x-0 bottom-0 z-[60] border-t border-line bg-ink/90 px-2 pb-[calc(env(safe-area-inset-bottom)+0.35rem)] pt-2 shadow-[0_-12px_30px_-20px_rgba(26,26,26,0.5)] backdrop-blur-xl md:hidden" aria-label="Mobile navigation"><div className="mx-auto grid max-w-md grid-cols-6 gap-1">{items.map(({ label, href, Icon, active, count, onClick }) => onClick ? <button key={label} type="button" onClick={onClick} className="relative flex min-h-12 flex-col items-center justify-center gap-1 rounded-xl text-[10px] font-medium tracking-wide text-paper-muted transition-colors"><span className="relative"><Icon width={21} height={21} strokeWidth={1.6} /></span><span>{label}</span></button> : <Link key={label} href={href} scroll={true} aria-current={active ? "page" : undefined} className={active ? "relative flex min-h-12 flex-col items-center justify-center gap-1 rounded-xl bg-gold/10 text-[10px] font-medium tracking-wide text-gold transition-colors" : "relative flex min-h-12 flex-col items-center justify-center gap-1 rounded-xl text-[10px] font-medium tracking-wide text-paper-muted transition-colors"}><span className="relative"><Icon width={21} height={21} strokeWidth={active ? 2 : 1.6} />{count ? <CountBadge count={count} /> : null}</span><span>{label}</span></Link>)}</div></nav>;
 }
 
 function HomeIcon(props: React.ComponentProps<"svg">) {
@@ -97,6 +97,7 @@ function NavLink({ label, href }: { label: string; href: string }) {
   return (
     <Link
       href={href}
+      scroll={true}
       className="group relative text-[12px] font-medium uppercase tracking-[0.22em] text-paper transition-colors duration-300 hover:text-gold"
     >
       {label}

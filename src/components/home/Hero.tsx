@@ -1,9 +1,19 @@
+"use client";
+
 import Image from "next/image";
+import Link from "next/link";
 import { buttonClasses } from "@/components/ui/Button";
 import Container from "@/components/ui/Container";
 import { ArrowRightIcon } from "./icons";
 
 export default function Hero() {
+  const handleExploreCategories = () => {
+    const el = document.getElementById("categories");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   return (
     <section className="relative isolate flex min-h-[60vh] w-full items-center overflow-hidden border-b border-line bg-ink text-paper">
       <div
@@ -34,16 +44,21 @@ export default function Hero() {
             designed to move with you, day after day.
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-4">
-            <a
+            <Link
               href="/shop"
+              scroll={true}
               className={`${buttonClasses("primary", "lg")} group`}
             >
               Shop Now
               <ArrowRightIcon className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-            </a>
-            <a href="#categories" className={buttonClasses("secondary", "lg")}>
+            </Link>
+            <button
+              type="button"
+              onClick={handleExploreCategories}
+              className={buttonClasses("secondary", "lg")}
+            >
               Explore Categories
-            </a>
+            </button>
           </div>
 
           <dl className="mt-8 grid grid-cols-3 gap-6 border-t border-line pt-5">

@@ -19,6 +19,7 @@ type Props = {
   counts: Counts;
   onChange: (next: Filters) => void;
   onReset: () => void;
+  showCategoryFilter?: boolean;
 };
 
 export default function MobileFiltersDrawer({
@@ -28,6 +29,7 @@ export default function MobileFiltersDrawer({
   counts,
   onChange,
   onReset,
+  showCategoryFilter = true,
 }: Props) {
   useEffect(() => {
     if (!open) return;
@@ -74,6 +76,7 @@ export default function MobileFiltersDrawer({
             counts={counts}
             onChange={onChange}
             onReset={onReset}
+            showCategoryFilter={showCategoryFilter}
           />
         </div>
 

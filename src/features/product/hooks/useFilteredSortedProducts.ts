@@ -16,7 +16,12 @@ function matchesFilters(product: Product, filters: Filters): boolean {
   }
   if (
     filters.categories.length > 0 &&
-    !filters.categories.includes(product.category)
+    !filters.categories.some(
+      (c) =>
+        c.toLowerCase() === product.category?.toLowerCase() ||
+        c.toLowerCase().replace(/[\s_]+/g, "-") ===
+          product.category?.toLowerCase().replace(/[\s_]+/g, "-"),
+    )
   ) {
     return false;
   }
