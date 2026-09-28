@@ -18,6 +18,7 @@ export default function robots(): MetadataRoute.Robots {
           "/returns",
           "/size-guide",
           "/contact",
+          "/api/feed/",
         ],
         disallow: [
           "/admin",
