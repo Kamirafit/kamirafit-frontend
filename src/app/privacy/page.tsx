@@ -4,6 +4,15 @@ import PageShell from "@/components/layout/PageShell";
 export const metadata: Metadata = {
   title: "Privacy Policy | KamiraFit",
   description: "Learn how KamiraFit collects, protects, and handles your personal data.",
+  alternates: {
+    canonical: "/privacy",
+  },
+  openGraph: {
+    title: "Privacy Policy | KamiraFit",
+    description: "Data protection, customer security standards, and privacy rights at KamiraFit.",
+    url: "https://kamirafit.com/privacy",
+    type: "website",
+  },
 };
 
 export default function PrivacyPolicyPage() {

@@ -4,6 +4,15 @@ import PageShell from "@/components/layout/PageShell";
 export const metadata: Metadata = {
   title: "Cookie Policy | KamiraFit",
   description: "Understand how KamiraFit uses cookies and web technologies to ensure a seamless shopping experience.",
+  alternates: {
+    canonical: "/cookies",
+  },
+  openGraph: {
+    title: "Cookie Policy | KamiraFit",
+    description: "Transparency regarding cookies, local storage, and session preferences at KamiraFit.",
+    url: "https://kamirafit.com/cookies",
+    type: "website",
+  },
 };
 
 export default function CookiePolicyPage() {

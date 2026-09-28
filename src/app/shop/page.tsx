@@ -38,6 +38,35 @@ const CATEGORY_SEO_TITLES: Record<string, { title: string; desc: string }> = {
   },
 };
 
+function resolveCategorySeo(categoryParam?: string): { title: string; desc: string; canonicalCategory: string; name: string } | null {
+  if (!categoryParam) return null;
+  const raw = categoryParam.trim();
+  const lower = raw.toLowerCase().replace(/[\s_]+/g, "-");
+
+  if (lower === "dresses" || lower === "dress" || lower === "western-wear" || lower === "western") {
+    return { ...CATEGORY_SEO_TITLES["Dresses"], canonicalCategory: "Dresses", name: "Dresses & Western Wear" };
+  }
+  if (lower === "kurti" || lower === "kurtis" || lower === "indian" || lower === "ethnic") {
+    return { ...CATEGORY_SEO_TITLES["Kurti"], canonicalCategory: "Kurti", name: "Designer Kurtis" };
+  }
+  if (lower.includes("coord") || lower.includes("co-ord") || lower === "indo-western") {
+    return { ...CATEGORY_SEO_TITLES["Co-ords Sets"], canonicalCategory: "Co-ords Sets", name: "Co-ords Sets" };
+  }
+  if (lower.includes("oversized")) {
+    return { ...CATEGORY_SEO_TITLES["Oversized T-Shirts"], canonicalCategory: "Oversized T-Shirts", name: "Oversized T-Shirts" };
+  }
+  if (lower.includes("t-shirt") || lower.includes("tee")) {
+    return { ...CATEGORY_SEO_TITLES["T-Shirts"], canonicalCategory: "T-Shirts", name: "T-Shirts" };
+  }
+  if (lower.includes("hoodie")) {
+    return { ...CATEGORY_SEO_TITLES["Hoodies"], canonicalCategory: "Hoodies", name: "Hoodies" };
+  }
+  if (CATEGORY_SEO_TITLES[raw]) {
+    return { ...CATEGORY_SEO_TITLES[raw], canonicalCategory: raw, name: raw };
+  }
+  return null;
+}
+
 export async function generateMetadata({
   searchParams,
 }: {
@@ -45,19 +74,19 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { category } = await searchParams;
   const activeCategory = Array.isArray(category) ? category[0] : category;
+  const seo = resolveCategorySeo(activeCategory);
 
-  if (activeCategory && CATEGORY_SEO_TITLES[activeCategory]) {
-    const seo = CATEGORY_SEO_TITLES[activeCategory];
+  if (seo) {
     return {
       title: seo.title,
       description: seo.desc,
       alternates: {
-        canonical: `/shop?category=${encodeURIComponent(activeCategory)}`,
+        canonical: `/shop?category=${encodeURIComponent(activeCategory || seo.canonicalCategory)}`,
       },
       openGraph: {
         title: seo.title,
         description: seo.desc,
-        url: `${siteUrl}/shop?category=${encodeURIComponent(activeCategory)}`,
+        url: `${siteUrl}/shop?category=${encodeURIComponent(activeCategory || seo.canonicalCategory)}`,
         type: "website",
       },
     };
@@ -90,12 +119,14 @@ export default async function ShopPage({
 
   const initialProducts = await productService.getProducts().catch(() => []);
 
+  const resolvedSeo = resolveCategorySeo(initialCategorySlug);
+
   // CollectionPage & BreadcrumbList Schema for Google SERP
   const collectionSchema = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    name: initialCategorySlug ? `${initialCategorySlug} Collection` : "Women's Clothing & Designer Apparel",
-    description: "Browse KamiraFit's complete online clothing catalog with express shipping across India.",
+    name: resolvedSeo ? `${resolvedSeo.name} Collection` : "Women's Clothing & Designer Apparel",
+    description: resolvedSeo ? resolvedSeo.desc : "Browse KamiraFit's complete online clothing catalog with express shipping across India.",
     url: initialCategorySlug ? `${siteUrl}/shop?category=${encodeURIComponent(initialCategorySlug)}` : `${siteUrl}/shop`,
     isPartOf: {
       "@type": "WebSite",

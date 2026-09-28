@@ -4,6 +4,15 @@ import PageShell from "@/components/layout/PageShell";
 export const metadata: Metadata = {
   title: "Shipping & Delivery Policy | KamiraFit",
   description: "Information about KamiraFit delivery timelines, shipping charges, tracking, and courier partners across India.",
+  alternates: {
+    canonical: "/shipping",
+  },
+  openGraph: {
+    title: "Shipping & Delivery Policy | KamiraFit",
+    description: "Worldwide express delivery timelines, shipping charges, and courier partners.",
+    url: "https://kamirafit.com/shipping",
+    type: "website",
+  },
 };
 
 export default function ShippingPolicyPage() {

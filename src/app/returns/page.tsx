@@ -2,8 +2,17 @@ import type { Metadata } from "next";
 import PageShell from "@/components/layout/PageShell";
 
 export const metadata: Metadata = {
-  title: "Returns & Exchanges | KamiraFit",
-  description: "Learn about KamiraFit's 7-day hassle-free return and exchange policy.",
+  title: "Returns & Exchanges Policy | KamiraFit",
+  description: "Learn about KamiraFit's 7-day hassle-free doorstep return, refund, and size exchange policy.",
+  alternates: {
+    canonical: "/returns",
+  },
+  openGraph: {
+    title: "Returns & Exchanges Policy | KamiraFit",
+    description: "7-Day hassle-free return and size exchange policy for all apparel items.",
+    url: "https://kamirafit.com/returns",
+    type: "website",
+  },
 };
 
 export default function ReturnsPolicyPage() {

@@ -2,8 +2,17 @@ import type { Metadata } from "next";
 import PageShell from "@/components/layout/PageShell";
 
 export const metadata: Metadata = {
-  title: "Size Guide | KamiraFit",
-  description: "Accurate garment dimensions and sizing charts for KamiraFit oversized tees, regular essentials, and hoodies.",
+  title: "Size Guide & Garment Measurement Charts | KamiraFit",
+  description: "Find your perfect fit with accurate garment measurements and sizing charts for KamiraFit kurtis, co-ords, dresses, tees, and apparel.",
+  alternates: {
+    canonical: "/size-guide",
+  },
+  openGraph: {
+    title: "Size Guide & Measurement Charts | KamiraFit",
+    description: "Detailed size charts and body measurement guidelines for all KamiraFit apparel.",
+    url: "https://kamirafit.com/size-guide",
+    type: "website",
+  },
 };
 
 export default function SizeGuidePage() {

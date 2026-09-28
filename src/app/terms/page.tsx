@@ -4,6 +4,15 @@ import PageShell from "@/components/layout/PageShell";
 export const metadata: Metadata = {
   title: "Terms of Service | KamiraFit",
   description: "Terms and conditions governing the purchase and use of KamiraFit products and services.",
+  alternates: {
+    canonical: "/terms",
+  },
+  openGraph: {
+    title: "Terms of Service | KamiraFit",
+    description: "Legal terms, conditions, and customer agreements for KamiraFit.",
+    url: "https://kamirafit.com/terms",
+    type: "website",
+  },
 };
 
 export default function TermsOfServicePage() {
