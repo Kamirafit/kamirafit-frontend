@@ -19,29 +19,11 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://kamirafit.com";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "KamiraFit® | Buy Women's Clothing, Kurtis, Co-ord Sets & Dresses Online",
-    template: "%s | KamiraFit Clothing & Apparel",
+    default: "KamiraFit® | Women's Clothing & Designer Apparel",
+    template: "%s | KamiraFit",
   },
   description:
-    "Shop premium women's clothing & designer apparel at KamiraFit. Explore handcrafted kurtis, matching co-ord sets, chic dresses, oversized tees & luxury streetwear. Free shipping over ₹999 across India.",
-  keywords: [
-    "clothing online",
-    "buy clothing online India",
-    "women apparel online",
-    "designer kurtis",
-    "co ord sets for women",
-    "western dresses online",
-    "oversized t-shirts India",
-    "hoodies and streetwear",
-    "ethnic wear online",
-    "Indo-western dresses",
-    "KamiraFit clothing",
-    "fashion apparel India",
-    "luxury everyday wear",
-    "apparel brand Kolkata",
-    "cotton kurtas online",
-    "party wear dresses",
-  ],
+    "Shop handcrafted kurtis, matching co-ord sets, dresses, and luxury streetwear at KamiraFit. Free express shipping across India on orders over ₹999.",
   authors: [{ name: "KamiraFit Creation Pvt Ltd", url: siteUrl }],
   creator: "KamiraFit",
   publisher: "KamiraFit Creation Pvt Ltd",
@@ -54,9 +36,9 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   openGraph: {
-    title: "KamiraFit® — Elevate Your Everyday Style | Designer Clothing & Apparel",
+    title: "KamiraFit® | Women's Clothing & Designer Apparel",
     description:
-      "Shop handcrafted kurtis, luxury co-ord sets, elegant dresses & oversized streetwear. Premium quality fabrics, contemporary silhouettes & express delivery worldwide.",
+      "Shop handcrafted kurtis, luxury co-ord sets, elegant dresses & oversized streetwear at KamiraFit. Free express shipping across India on orders over ₹999.",
     url: siteUrl,
     siteName: "KamiraFit",
     locale: "en_IN",
@@ -64,9 +46,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "KamiraFit® — Premium Clothing & Designer Apparel",
+    title: "KamiraFit® | Women's Clothing & Designer Apparel",
     description:
-      "Discover the latest designer collection of kurtis, co-ords, dresses, and luxury streetwear essentials at KamiraFit.",
+      "Shop handcrafted kurtis, matching co-ord sets, dresses, and luxury streetwear at KamiraFit with express shipping across India.",
   },
   robots: {
     index: true,

@@ -54,10 +54,6 @@ const contentSecurityPolicy = [
 
 const securityHeaders = [
   {
-    key: "Content-Security-Policy",
-    value: contentSecurityPolicy,
-  },
-  {
     key: "Referrer-Policy",
     value: "strict-origin-when-cross-origin",
   },

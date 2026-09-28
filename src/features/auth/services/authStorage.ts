@@ -147,8 +147,7 @@ export const AuthStorage = {
     });
   },
 
-  // Admin Auth: Bearer tokens are NEVER persisted into localStorage.
-  // We keep session-scoped admin credentials in sessionStorage (scoped to the tab/window).
+  // Admin Auth (Stored in sessionStorage WITHOUT accessToken; authentication relies on HttpOnly cookies)
   getAdminAuth(): AuthState | null {
     if (typeof window === "undefined") return null;
 
@@ -162,6 +161,10 @@ export const AuthStorage = {
 
     try {
       const parsed: AuthState = JSON.parse(sessionData);
+      if (parsed.accessToken) {
+        delete parsed.accessToken;
+        sessionStorage.setItem("kamira_admin_session", JSON.stringify(parsed));
+      }
       return parsed;
     } catch {
       return null;
@@ -171,13 +174,17 @@ export const AuthStorage = {
   setAdminAuth(state: AuthState): void {
     if (typeof window === "undefined") return;
 
-    sessionStorage.setItem("kamira_admin_session", JSON.stringify(state));
+    // Strip accessToken so it is never exposed in browser sessionStorage (XSS hardening)
+    const safeState = { ...state };
+    delete safeState.accessToken;
+
+    sessionStorage.setItem("kamira_admin_session", JSON.stringify(safeState));
     localStorage.removeItem("kamira_auth_admin"); // Ensure localStorage is pristine
 
     broadcastAuthEvent({
       type: "LOGIN",
       target: "admin",
-      state,
+      state: safeState,
       timestamp: Date.now(),
     });
   },

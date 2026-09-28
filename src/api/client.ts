@@ -114,25 +114,23 @@ apiClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const refreshResponse = await apiClient.post("/auth/refresh");
-        const newAccessToken = refreshResponse.data?.data?.accessToken;
-
-        if (newAccessToken) {
-          const pathname = window.location.pathname;
-          if (pathname.startsWith("/dedicated-admin")) {
-            const adminState = AuthStorage.getAdminAuth();
-            if (adminState) {
-              AuthStorage.setAdminAuth({ ...adminState, accessToken: newAccessToken });
-            }
-          } else {
-            const customerState = AuthStorage.getCustomerAuth();
-            if (customerState) {
-              AuthStorage.setCustomerAuth({ ...customerState, accessToken: newAccessToken });
-            }
+        await apiClient.post("/auth/refresh");
+        // /auth/refresh automatically issues and rotates Set-Cookie: access_token=... and refresh_token=... HttpOnly cookies.
+        // Neither customer nor admin access tokens are persisted into browser storage (XSS hardening).
+        const pathname = window.location.pathname;
+        if (pathname.startsWith("/dedicated-admin")) {
+          const adminState = AuthStorage.getAdminAuth();
+          if (adminState) {
+            AuthStorage.setAdminAuth({ ...adminState });
           }
-          processQueue(null);
-          return apiClient(originalRequest);
+        } else {
+          const customerState = AuthStorage.getCustomerAuth();
+          if (customerState) {
+            AuthStorage.setCustomerAuth({ ...customerState });
+          }
         }
+        processQueue(null);
+        return apiClient(originalRequest);
       } catch (refreshErr: unknown) {
         processQueue(refreshErr instanceof Error ? refreshErr : new Error("Token refresh failed"));
         const pathname = window.location.pathname;

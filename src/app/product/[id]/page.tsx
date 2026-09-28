@@ -6,7 +6,9 @@ import Container from "@/components/ui/Container";
 import ProductDetails from "@/features/product/components/ProductDetails";
 import ProductReviews from "@/features/product/components/ProductReviews";
 import RelatedProducts from "@/features/product/components/RelatedProducts";
+import ErrorState from "@/components/states/ErrorState";
 import { productService } from "@/services/product";
+import type { Product } from "@/types/entities";
 
 type PageParams = { id: string };
 
@@ -14,17 +16,13 @@ export const revalidate = 60; // ISR - Revalidate detail pages every 60s
 
 export async function generateStaticParams(): Promise<PageParams[]> {
   try {
-    const products = await productService.getProducts();
-    if (!Array.isArray(products) || products.length === 0) {
-      return [];
-    }
-    // Filter out mock IDs in production
-    const isProd = process.env.NODE_ENV === "production";
-    const validProducts = isProd ? products.filter((p) => !p.id.startsWith("p-0")) : products;
     const paramsMap = new Map<string, PageParams>();
-    for (const p of validProducts) {
-      if (p.slug) paramsMap.set(p.slug, { id: p.slug });
-      if (p.id) paramsMap.set(p.id, { id: p.id });
+    for await (const batch of productService.crawlAllProducts(100)) {
+      for (const p of batch) {
+        if (!p || p.isActive === false) continue;
+        if (p.slug) paramsMap.set(p.slug, { id: p.slug });
+        if (p.id) paramsMap.set(p.id, { id: p.id });
+      }
     }
     return Array.from(paramsMap.values());
   } catch {
@@ -43,26 +41,32 @@ export async function generateMetadata({
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://kamirafit.com";
     const imageUrl = product.images?.[0] || `${siteUrl}/images/og-default.jpg`;
     const canonicalId = product.slug || product.id;
-    const cleanDesc = (product.description || "").replace(/\s+/g, " ").trim().slice(0, 140);
+
+    // Google SERP Title optimization (strict <= 60 chars)
+    const titleCandidate = `${product.name} — ₹${product.price} | KamiraFit`;
+    const seoTitle =
+      titleCandidate.length <= 60
+        ? titleCandidate
+        : `${product.name.slice(0, 45).trim()}… | KamiraFit`;
+
+    // Google SERP Description optimization (strict <= 155 chars)
+    const rawSnippet = (product.description || "").replace(/\s+/g, " ").trim();
+    const snippet = rawSnippet || `Handcrafted ${product.category || "apparel"} with tailored silhouette.`;
+    const descCandidate = `Buy ${product.name} online at ₹${product.price}. ${snippet}`;
+    const seoDesc =
+      descCandidate.length <= 152
+        ? descCandidate
+        : `${descCandidate.slice(0, 151).trim()}…`;
 
     return {
-      title: `${product.name} | Women's ${product.category || "Apparel"} — Buy Online at ₹${product.price} | KamiraFit`,
-      description: `Buy ${product.name} online at KamiraFit for ₹${product.price}. ${cleanDesc}. Free express shipping over ₹999 across India.`,
-      keywords: [
-        product.name,
-        `${product.name} online`,
-        product.category || "Clothing",
-        `buy ${product.category || "clothing"} online`,
-        "women apparel India",
-        "KamiraFit",
-        "designer clothing",
-      ],
+      title: { absolute: seoTitle },
+      description: seoDesc,
       alternates: {
         canonical: `${siteUrl}/product/${canonicalId}`,
       },
       openGraph: {
-        title: `${product.name} | Women's ${product.category || "Apparel"} — KamiraFit`,
-        description: `Shop ${product.name} for ₹${product.price} at KamiraFit. Premium quality fabrics and fast delivery across India.`,
+        title: seoTitle,
+        description: seoDesc,
         url: `${siteUrl}/product/${canonicalId}`,
         type: "website",
         images: [
@@ -76,14 +80,14 @@ export async function generateMetadata({
       },
       twitter: {
         card: "summary_large_image",
-        title: `${product.name} — KamiraFit Clothing`,
-        description: `Buy ${product.name} online at KamiraFit for ₹${product.price}. Premium apparel with express delivery.`,
+        title: seoTitle,
+        description: seoDesc,
         images: [imageUrl],
       },
     };
   } catch {
     return {
-      title: "Product Not Found — KamiraFit",
+      title: { absolute: "Product Not Found | KamiraFit" },
       description: "The requested apparel item is unavailable or does not exist.",
     };
   }
@@ -95,15 +99,36 @@ export default async function ProductPage({
   params: Promise<PageParams>;
 }) {
   const { id } = await params;
-  let product;
+  let product: Product | null = null;
+  let isApiError = false;
+
   try {
     product = await productService.getProduct(id);
-  } catch {
-    notFound();
+  } catch (err: unknown) {
+    const errorObj = err as { status?: number; response?: { status?: number } };
+    const status = errorObj?.status || errorObj?.response?.status;
+    if (status === 404) {
+      notFound();
+    }
+    isApiError = true;
   }
 
-  if (!product) {
-    notFound();
+  if (isApiError || !product) {
+    if (!product && !isApiError) {
+      notFound();
+    }
+    return (
+      <PageShell mainClassName="bg-ink flex items-center justify-center min-h-[calc(100vh-14rem)] py-12 px-4">
+        <ErrorState
+          title="Product Unavailable"
+          message="We couldn't load this product right now because our servers are momentarily unreachable. Please try again shortly."
+          retryLabel="Explore Shop"
+          onRetry={() => {
+            if (typeof window !== "undefined") window.location.href = "/shop";
+          }}
+        />
+      </PageShell>
+    );
   }
 
   const related = await productService.getRelatedProducts(product.id, 4);

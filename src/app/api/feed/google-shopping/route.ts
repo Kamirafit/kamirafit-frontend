@@ -34,15 +34,17 @@ export async function GET() {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://kamirafit.com";
 
   try {
-    const products = await productService.getProducts();
-    const activeProducts = (products || []).filter(
-      (p) => p && p.isActive !== false && (!p.id.startsWith("p-0") || process.env.NODE_ENV !== "production")
-    );
-
     let itemsXml = "";
+    let totalItems = 0;
 
-    for (const product of activeProducts) {
-      const canonicalId = product.slug || product.id;
+    for await (const batch of productService.crawlAllProducts(100)) {
+      const activeProducts = (batch || []).filter(
+        (p) => p && p.isActive !== false
+      );
+
+      for (const product of activeProducts) {
+        totalItems++;
+        const canonicalId = product.slug || product.id;
       const productUrl = `${baseUrl}/product/${canonicalId}`;
       const title = escapeXml(product.name);
       const description = escapeXml(
@@ -126,8 +128,22 @@ export async function GET() {
     </item>`;
       }
     }
+  }
 
-    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+  if (totalItems === 0 && process.env.NODE_ENV === "production") {
+    return new NextResponse(
+      `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>Catalog Temporarily Unavailable</title></channel></rss>`,
+      {
+        status: 503,
+        headers: {
+          "Content-Type": "application/xml; charset=utf-8",
+          "Retry-After": "300",
+        },
+      }
+    );
+  }
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
   <channel>
     <title>KamiraFit Google Merchant Product Feed</title>
@@ -147,10 +163,13 @@ export async function GET() {
   } catch (error) {
     console.error("Failed to generate Google Shopping feed:", error);
     return new NextResponse(
-      `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>Error</title></channel></rss>`,
+      `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>Catalog Temporarily Unavailable</title></channel></rss>`,
       {
-        status: 500,
-        headers: { "Content-Type": "application/xml; charset=utf-8" },
+        status: 503,
+        headers: {
+          "Content-Type": "application/xml; charset=utf-8",
+          "Retry-After": "300",
+        },
       }
     );
   }

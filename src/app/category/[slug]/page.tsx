@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import PageShell from "@/components/layout/PageShell";
 import ShopPageClient from "@/features/product/components/ShopPageClient";
 import { productService } from "@/services/product";
+import type { Product } from "@/types/entities";
 
 export const revalidate = 60; // ISR - Revalidate category listings every minute
 
@@ -20,64 +21,64 @@ export const CATEGORY_MAP: Record<string, CategorySeoConfig> = {
   kurtis: {
     name: "Designer Kurtis & Ethnic Tops",
     categoryFilter: "Kurti",
-    title: "Designer Kurtis & Ethnic Tops Online | Women's Clothing — KamiraFit",
-    desc: "Shop handcrafted designer kurtis, embroidered tunics, and contemporary ethnic wear online at KamiraFit. Pure cotton, rayon & festive silks with fast delivery across India.",
+    title: "Designer Kurtis & Ethnic Tops | KamiraFit",
+    desc: "Shop handcrafted designer kurtis and ethnic tops online at KamiraFit. Pure cotton, rayon & festive silks with fast delivery across India.",
     canonicalSlug: "kurtis",
   },
   kurti: {
     name: "Designer Kurtis & Ethnic Tops",
     categoryFilter: "Kurti",
-    title: "Designer Kurtis & Ethnic Tops Online | Women's Clothing — KamiraFit",
-    desc: "Shop handcrafted designer kurtis, embroidered tunics, and contemporary ethnic wear online at KamiraFit. Pure cotton, rayon & festive silks with fast delivery across India.",
+    title: "Designer Kurtis & Ethnic Tops | KamiraFit",
+    desc: "Shop handcrafted designer kurtis and ethnic tops online at KamiraFit. Pure cotton, rayon & festive silks with fast delivery across India.",
     canonicalSlug: "kurtis",
   },
   "co-ord-sets": {
     name: "Women's Co-ord Sets",
     categoryFilter: "Co-ords Sets",
-    title: "Women's Co-ord Sets & Matching 2-Piece Outfits | KamiraFit Clothing",
-    desc: "Discover chic two-piece and three-piece co-ord sets for women at KamiraFit. Breathable linens, resort prints, and tailored coords for every occasion.",
+    title: "Women's Co-ord Sets & Matching Outfits | KamiraFit",
+    desc: "Discover chic 2-piece and 3-piece co-ord sets for women at KamiraFit. Breathable linens, resort prints, and tailored coords for every occasion.",
     canonicalSlug: "co-ord-sets",
   },
   "co-ords-sets": {
     name: "Women's Co-ord Sets",
     categoryFilter: "Co-ords Sets",
-    title: "Women's Co-ord Sets & Matching 2-Piece Outfits | KamiraFit Clothing",
-    desc: "Discover chic two-piece and three-piece co-ord sets for women at KamiraFit. Breathable linens, resort prints, and tailored coords for every occasion.",
+    title: "Women's Co-ord Sets & Matching Outfits | KamiraFit",
+    desc: "Discover chic 2-piece and 3-piece co-ord sets for women at KamiraFit. Breathable linens, resort prints, and tailored coords for every occasion.",
     canonicalSlug: "co-ord-sets",
   },
   dresses: {
     name: "Women's Dresses & Western Gowns",
     categoryFilter: "Dresses",
-    title: "Women's Dresses & Western Gowns Online | Buy Fashion Clothing — KamiraFit",
-    desc: "Explore elegant slip dresses, A-line gowns, floral day dresses, and evening silhouettes at KamiraFit. Modern cuts crafted for effortless sophistication.",
+    title: "Women's Dresses & Western Wear | KamiraFit",
+    desc: "Explore slip dresses, gowns, floral day dresses, and evening styles at KamiraFit. Contemporary cuts crafted for effortless sophistication.",
     canonicalSlug: "dresses",
   },
   "western-wear": {
     name: "Western Wear & Dresses",
     categoryFilter: "Dresses",
-    title: "Women's Dresses & Western Gowns Online | Buy Fashion Clothing — KamiraFit",
-    desc: "Explore elegant slip dresses, A-line gowns, floral day dresses, and evening silhouettes at KamiraFit. Modern cuts crafted for effortless sophistication.",
+    title: "Women's Dresses & Western Wear | KamiraFit",
+    desc: "Explore slip dresses, gowns, floral day dresses, and evening styles at KamiraFit. Contemporary cuts crafted for effortless sophistication.",
     canonicalSlug: "western-wear",
   },
   "t-shirts": {
     name: "Women's T-Shirts & Tops",
     categoryFilter: "T-Shirts",
-    title: "Women's T-Shirts & Casual Tops | Premium Cotton Apparel — KamiraFit",
+    title: "Women's T-Shirts & Casual Tops | KamiraFit",
     desc: "Shop premium combed-cotton regular fit t-shirts, crew necks, and versatile daily apparel from KamiraFit with all-day comfort.",
     canonicalSlug: "t-shirts",
   },
   "oversized-t-shirts": {
     name: "Oversized Graphic T-Shirts",
     categoryFilter: "Oversized T-Shirts",
-    title: "Oversized Graphic T-Shirts for Women | Luxury Streetwear — KamiraFit",
-    desc: "Elevate your streetwear collection with heavyweight oversized tees, drop-shoulder fits, and minimalist typography prints from KamiraFit.",
+    title: "Oversized Graphic T-Shirts for Women | KamiraFit",
+    desc: "Elevate your streetwear with heavyweight oversized tees, drop-shoulder fits, and minimalist graphic prints from KamiraFit.",
     canonicalSlug: "oversized-t-shirts",
   },
   hoodies: {
     name: "Premium Fleece Hoodies & Sweatshirts",
     categoryFilter: "Hoodies",
-    title: "Premium Fleece Hoodies & Sweatshirts | Streetwear Apparel — KamiraFit",
-    desc: "Cozy up in luxury fleece hoodies, relaxed fit pullovers, and contemporary winterwear from KamiraFit. Premium warmth with modern aesthetics.",
+    title: "Premium Fleece Hoodies & Sweatshirts | KamiraFit",
+    desc: "Cozy up in luxury fleece hoodies, relaxed fit pullovers, and contemporary winterwear from KamiraFit with express India shipping.",
     canonicalSlug: "hoodies",
   },
 };
@@ -93,11 +94,14 @@ export function resolveCategoryFromSlug(rawSlug: string): CategorySeoConfig | nu
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(" ");
 
+  const titleCandidate = `${readable} | Women's Fashion — KamiraFit`;
+  const cleanTitle = titleCandidate.length <= 60 ? titleCandidate : `${readable} | KamiraFit`;
+
   return {
     name: readable,
     categoryFilter: readable,
-    title: `${readable} Online | Women's Fashion & Apparel — KamiraFit`,
-    desc: `Discover ${readable} from KamiraFit. Premium quality fabrics, contemporary silhouettes, and fast doorstep delivery across India.`,
+    title: cleanTitle,
+    desc: `Shop ${readable} from KamiraFit. Premium quality fabrics, contemporary silhouettes, and fast doorstep delivery across India.`,
     canonicalSlug: normalized,
   };
 }
@@ -112,14 +116,14 @@ export async function generateMetadata({
 
   if (!config) {
     return {
-      title: "Collection Not Found | KamiraFit",
+      title: { absolute: "Collection Not Found | KamiraFit" },
     };
   }
 
   const canonicalUrl = `${siteUrl}/category/${config.canonicalSlug}`;
 
   return {
-    title: config.title,
+    title: { absolute: config.title },
     description: config.desc,
     alternates: {
       canonical: canonicalUrl,
@@ -151,7 +155,15 @@ export default async function CategoryPage({
     notFound();
   }
 
-  const initialProducts = await productService.getProducts().catch(() => []);
+  let initialProducts: Product[] = [];
+  let initialError = false;
+  try {
+    initialProducts = await productService.getProducts();
+  } catch (err) {
+    console.error(`CategoryPage [${slug}]: Failed to fetch products from API:`, err);
+    initialError = true;
+    initialProducts = [];
+  }
 
   // Filter products matching category for real schema items
   const matchedProducts = initialProducts.filter((p) => {
@@ -241,6 +253,7 @@ export default async function CategoryPage({
       <ShopPageClient
         initialCategorySlug={config.categoryFilter}
         initialProducts={initialProducts}
+        initialError={initialError}
       />
     </PageShell>
   );

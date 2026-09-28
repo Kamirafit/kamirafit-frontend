@@ -3,7 +3,6 @@ import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient, unwrapApiResponse } from "@/api/client";
 import { adaptProduct, type Product } from "@/types/entities";
-import { PRODUCTS, getProductById, getRelatedProducts as getFallbackRelated } from "@/data/products";
 import type { CreateProductRequestDto, DeleteProductResponseDto, UpdateProductRequestDto } from "@/types/api/catalog";
 import { COLOR_SWATCH } from "@/features/product/types";
 
@@ -15,12 +14,6 @@ export interface ColorItem {
 let productsPromise: Promise<Product[]> | null = null;
 let featuredProductsPromise: Promise<Product[]> | null = null;
 
-const isMockEnabled = (): boolean => {
-  return process.env.NEXT_PUBLIC_USE_MOCK_API === "true" && process.env.NODE_ENV !== "production";
-};
-
-const fallbackProducts = () => PRODUCTS.map(adaptProduct);
-
 const list = (params?: Record<string, unknown>): Promise<Product[]> => {
   if (!params || Object.keys(params).length === 0) {
     if (productsPromise) return productsPromise;
@@ -30,8 +23,8 @@ const list = (params?: Record<string, unknown>): Promise<Product[]> => {
         return items.map(adaptProduct);
       })
       .catch((err) => {
-        console.warn("API unavailable; using fallback products:", err?.message || err);
-        return fallbackProducts();
+        productsPromise = null;
+        throw err;
       })
       .finally(() => {
         setTimeout(() => {
@@ -45,15 +38,56 @@ const list = (params?: Record<string, unknown>): Promise<Product[]> => {
     .then((r) => {
       const items = Array.isArray(r) ? r : r?.data || [];
       return items.map(adaptProduct);
-    })
-    .catch((err) => {
-      console.warn("API unavailable; using fallback products:", err?.message || err);
-      return fallbackProducts();
     });
 };
 
+export interface PaginatedProductsResponse {
+  products: Product[];
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+}
+
 export const productService = {
   getProducts: () => list(),
+  getProductsPage: async (
+    params: { page?: number; limit?: number; [key: string]: unknown } = {}
+  ): Promise<PaginatedProductsResponse> => {
+    const res = await apiClient.get("/products", { params });
+    const body = res.data;
+    const items = Array.isArray(body?.data) ? body.data : Array.isArray(body) ? body : [];
+    const total = Number(body?.total ?? items.length);
+    const page = Number(body?.page ?? params.page ?? 1);
+    const limit = Number(body?.limit ?? params.limit ?? 20);
+    const pages = Number(body?.pages ?? (limit > 0 ? Math.ceil(total / limit) : 1));
+
+    return {
+      products: items.map(adaptProduct),
+      total,
+      page,
+      limit,
+      pages,
+    };
+  },
+  crawlAllProducts: async function* (batchSize = 100): AsyncGenerator<Product[]> {
+    const safeLimit = Math.min(100, Math.max(1, batchSize));
+    let currentPage = 1;
+    let totalPages = 1;
+
+    while (currentPage <= totalPages) {
+      const result = await productService.getProductsPage({
+        page: currentPage,
+        limit: safeLimit,
+      });
+      if (!result.products || result.products.length === 0) {
+        break;
+      }
+      yield result.products;
+      totalPages = result.pages;
+      currentPage += 1;
+    }
+  },
   getFeaturedProducts: () => {
     if (featuredProductsPromise) return featuredProductsPromise;
     featuredProductsPromise = unwrapApiResponse<any[]>(apiClient.get("/products/featured"))
@@ -62,11 +96,8 @@ export const productService = {
         return items.map(adaptProduct);
       })
       .catch((err) => {
-        if (isMockEnabled()) {
-          console.warn("API unavailable; using dev mock fallback featured products:", err);
-          return fallbackProducts().slice(0, 4);
-        }
-        return [];
+        featuredProductsPromise = null;
+        throw err;
       })
       .finally(() => {
         setTimeout(() => {
@@ -79,10 +110,6 @@ export const productService = {
     unwrapApiResponse<any>(apiClient.get("/products/" + id))
       .then(adaptProduct)
       .catch((err) => {
-        if (isMockEnabled()) {
-          const local = getProductById(id);
-          if (local) return adaptProduct(local);
-        }
         throw err instanceof Error ? err : new Error("Product not found");
       }),
   getRelatedProducts: (id: string, limit = 4) =>
@@ -91,12 +118,7 @@ export const productService = {
         const items = Array.isArray(x) ? x : [];
         return items.map(adaptProduct);
       })
-      .catch(() => {
-        if (isMockEnabled()) {
-          return getFallbackRelated(id, limit).map(adaptProduct);
-        }
-        return [];
-      }),
+      .catch(() => []),
   createProduct: (product: CreateProductRequestDto) =>
     unwrapApiResponse<any>(apiClient.post("/products", product)).then(adaptProduct),
   updateProduct: (id: string, product: UpdateProductRequestDto["data"]) =>
@@ -114,10 +136,7 @@ export const productService = {
           }))
           .filter((item: ColorItem) => Boolean(item.name));
       })
-      .catch((err) => {
-        console.warn("API unavailable; using fallback colors:", err?.message || err);
-        return Object.entries(COLOR_SWATCH).map(([name, hex]) => ({ name, hex }));
-      }),
+      .catch(() => []),
   createColor: (color: { name: string; hex: string }): Promise<ColorItem> =>
     unwrapApiResponse<any>(apiClient.post("/admin/colors", color)).then((r) => {
       const item = r?.data || r;

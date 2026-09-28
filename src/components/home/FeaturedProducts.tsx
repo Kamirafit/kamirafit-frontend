@@ -4,8 +4,15 @@ import ProductCard from "@/features/product/components/ProductCard";
 
 import { Product } from "@/types/api";
 import EmptyState from "@/components/states/EmptyState";
+import ErrorState from "@/components/states/ErrorState";
 
-export default function FeaturedProducts({ products = [] }: { products?: Product[] }) {
+export default function FeaturedProducts({
+  products = [],
+  isError = false,
+}: {
+  products?: Product[];
+  isError?: boolean;
+}) {
   return (
     <Section id="shop">
       <SectionHeader
@@ -27,11 +34,31 @@ export default function FeaturedProducts({ products = [] }: { products?: Product
         }
       />
 
-      {products.length === 0 ? <div className="mt-12"><EmptyState title="No featured products" description="Our next edit is being prepared. Browse the full shop in the meantime." /></div> : <div className="mt-12 grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 lg:mt-16 lg:grid-cols-4 lg:gap-x-8">
-        {products.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </div>}
+      {isError ? (
+        <div className="mt-12">
+          <ErrorState
+            title="Featured Collection Unavailable"
+            message="We couldn't load this week's featured edit right now. Browse our full shop or check back shortly."
+            retryLabel="Browse Full Shop"
+            onRetry={() => {
+              if (typeof window !== "undefined") window.location.href = "/shop";
+            }}
+          />
+        </div>
+      ) : products.length === 0 ? (
+        <div className="mt-12">
+          <EmptyState
+            title="No featured products"
+            description="Our next edit is being prepared. Browse the full shop in the meantime."
+          />
+        </div>
+      ) : (
+        <div className="mt-12 grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 lg:mt-16 lg:grid-cols-4 lg:gap-x-8">
+          {products.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      )}
     </Section>
   );
 }

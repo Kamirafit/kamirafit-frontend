@@ -2,39 +2,47 @@ import type { Metadata } from "next";
 import PageShell from "@/components/layout/PageShell";
 import ShopPageClient from "@/features/product/components/ShopPageClient";
 import { productService } from "@/services/product";
+import type { Product } from "@/types/entities";
 
 export const revalidate = 60; // ISR - Revalidate shop listings every minute
 
 type ShopSearchParams = {
   category?: string | string[];
+  sort?: string | string[];
+  size?: string | string[];
+  color?: string | string[];
+  priceMin?: string | string[];
+  priceMax?: string | string[];
+  q?: string | string[];
+  [key: string]: string | string[] | undefined;
 };
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://kamirafit.com";
 
 const CATEGORY_SEO_TITLES: Record<string, { title: string; desc: string }> = {
   Kurti: {
-    title: "Designer Kurtis & Ethnic Tops Online | Women's Clothing — KamiraFit",
-    desc: "Shop handcrafted designer kurtis, embroidered tunics, and contemporary ethnic wear online at KamiraFit. Pure cotton, rayon & festive silks with fast delivery across India.",
+    title: "Designer Kurtis & Ethnic Tops | KamiraFit",
+    desc: "Shop handcrafted designer kurtis and ethnic tops online at KamiraFit. Pure cotton, rayon & festive silks with fast delivery across India.",
   },
   "Co-ords Sets": {
-    title: "Women's Co-ord Sets & Matching 2-Piece Outfits | KamiraFit Clothing",
-    desc: "Discover chic two-piece and three-piece co-ord sets for women at KamiraFit. Breathable linens, resort prints, and tailored coords for every occasion.",
+    title: "Women's Co-ord Sets & Matching Outfits | KamiraFit",
+    desc: "Discover chic 2-piece and 3-piece co-ord sets for women at KamiraFit. Breathable linens, resort prints, and tailored coords for every occasion.",
   },
   Dresses: {
-    title: "Women's Dresses & Western Gowns Online | Buy Fashion Clothing — KamiraFit",
-    desc: "Explore elegant slip dresses, A-line gowns, floral day dresses, and evening silhouettes at KamiraFit. Modern cuts crafted for effortless sophistication.",
+    title: "Women's Dresses & Western Wear | KamiraFit",
+    desc: "Explore slip dresses, gowns, floral day dresses, and evening styles at KamiraFit. Contemporary cuts crafted for effortless sophistication.",
   },
   "T-Shirts": {
-    title: "Women's T-Shirts & Casual Tops | Premium Cotton Apparel — KamiraFit",
+    title: "Women's T-Shirts & Casual Tops | KamiraFit",
     desc: "Shop premium combed-cotton regular fit t-shirts, crew necks, and versatile daily apparel from KamiraFit with all-day comfort.",
   },
   "Oversized T-Shirts": {
-    title: "Oversized Graphic T-Shirts for Women | Luxury Streetwear — KamiraFit",
-    desc: "Elevate your streetwear collection with heavyweight oversized tees, drop-shoulder fits, and minimalist typography prints from KamiraFit.",
+    title: "Oversized Graphic T-Shirts for Women | KamiraFit",
+    desc: "Elevate your streetwear with heavyweight oversized tees, drop-shoulder fits, and minimalist graphic prints from KamiraFit.",
   },
   Hoodies: {
-    title: "Premium Fleece Hoodies & Sweatshirts | Streetwear Apparel — KamiraFit",
-    desc: "Cozy up in luxury fleece hoodies, relaxed fit pullovers, and contemporary winterwear from KamiraFit. Premium warmth with modern aesthetics.",
+    title: "Premium Fleece Hoodies & Sweatshirts | KamiraFit",
+    desc: "Cozy up in luxury fleece hoodies, relaxed fit pullovers, and contemporary winterwear from KamiraFit with express India shipping.",
   },
 };
 
@@ -72,9 +80,15 @@ export async function generateMetadata({
 }: {
   searchParams: Promise<ShopSearchParams>;
 }): Promise<Metadata> {
-  const { category } = await searchParams;
+  const resolvedParams = await searchParams;
+  const { category, ...filters } = resolvedParams;
   const activeCategory = Array.isArray(category) ? category[0] : category;
   const seo = resolveCategorySeo(activeCategory);
+
+  // Check if filtering/sorting query parameters are active
+  const hasFilterParams = Object.keys(filters).some(
+    (k) => filters[k] !== undefined && filters[k] !== ""
+  );
 
   if (seo) {
     const slugMap: Record<string, string> = {
@@ -85,14 +99,16 @@ export async function generateMetadata({
       "Oversized T-Shirts": "oversized-t-shirts",
       Hoodies: "hoodies",
     };
-    const targetSlug = slugMap[seo.canonicalCategory];
-    const canonicalPath = targetSlug
-      ? `/category/${targetSlug}`
-      : `/shop?category=${encodeURIComponent(activeCategory || seo.canonicalCategory)}`;
+    const targetSlug =
+      slugMap[seo.canonicalCategory] ||
+      activeCategory?.toLowerCase().trim().replace(/[\s_]+/g, "-") ||
+      "kurtis";
+    const canonicalPath = `/category/${encodeURIComponent(targetSlug)}`;
 
     return {
       title: seo.title,
       description: seo.desc,
+      robots: hasFilterParams ? { index: false, follow: true } : undefined,
       alternates: {
         canonical: canonicalPath,
       },
@@ -105,17 +121,21 @@ export async function generateMetadata({
     };
   }
 
+  // Canonical for general /shop always points to clean /shop, never query-strings
+  const defaultTitle = "Shop Women's Clothing & Designer Apparel | KamiraFit";
+  const defaultDesc =
+    "Browse KamiraFit's curated catalog of designer kurtis, co-ords, dresses, and streetwear. Free delivery on orders over ₹999 across India.";
+
   return {
-    title: "Shop Women's Clothing, Kurtis, Co-ord Sets & Dresses Online | KamiraFit",
-    description:
-      "Browse the complete KamiraFit designer apparel catalog. Filter by category, size, color, and price. Free delivery on orders over ₹999 across India.",
+    title: defaultTitle,
+    description: defaultDesc,
+    robots: (hasFilterParams || activeCategory) ? { index: false, follow: true } : undefined,
     alternates: {
       canonical: "/shop",
     },
     openGraph: {
-      title: "Shop Women's Clothing, Kurtis, Co-ord Sets & Dresses Online | KamiraFit",
-      description:
-        "Explore KamiraFit's curated fashion collection of designer kurtis, linen co-ords, evening dresses, and oversized streetwear.",
+      title: defaultTitle,
+      description: defaultDesc,
       url: `${siteUrl}/shop`,
       type: "website",
     },
@@ -130,7 +150,15 @@ export default async function ShopPage({
   const { category } = await searchParams;
   const initialCategorySlug = Array.isArray(category) ? category[0] : category;
 
-  const initialProducts = await productService.getProducts().catch(() => []);
+  let initialProducts: Product[] = [];
+  let initialError = false;
+  try {
+    initialProducts = await productService.getProducts();
+  } catch (err) {
+    console.error("ShopPage: Failed to load products from API:", err);
+    initialError = true;
+    initialProducts = [];
+  }
 
   const resolvedSeo = resolveCategorySeo(initialCategorySlug);
 
@@ -186,6 +214,7 @@ export default async function ShopPage({
       <ShopPageClient
         initialCategorySlug={initialCategorySlug}
         initialProducts={initialProducts}
+        initialError={initialError}
       />
     </PageShell>
   );

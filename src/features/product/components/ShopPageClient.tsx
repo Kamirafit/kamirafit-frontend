@@ -138,9 +138,14 @@ const INITIAL_FILTERS: Filters = {
 type Props = {
   initialCategorySlug?: string;
   initialProducts?: Product[];
+  initialError?: boolean;
 };
 
-export default function ShopPageClient({ initialCategorySlug, initialProducts = [] }: Props) {
+export default function ShopPageClient({
+  initialCategorySlug,
+  initialProducts = [],
+  initialError = false,
+}: Props) {
   const [activeCategorySlug, setActiveCategorySlug] = useState<string | undefined>(
     initialCategorySlug,
   );
@@ -378,12 +383,16 @@ export default function ShopPageClient({ initialCategorySlug, initialProducts = 
           )}
 
           <div className="mt-6">
-            {!isOnline && latestProducts.length === 0 ? (
+            {!isOnline && activeProducts.length === 0 ? (
               <OfflineState onRetry={() => void refetch()} />
-            ) : isUpdating ? (
+            ) : isUpdating && activeProducts.length === 0 ? (
               <ProductGridSkeleton count={8} />
-            ) : isError && latestProducts.length === 0 ? (
-              <ErrorState message="We couldn’t load the shop right now." onRetry={() => void refetch()} />
+            ) : (isError || (initialError && latestProducts.length === 0)) && activeProducts.length === 0 ? (
+              <ErrorState
+                title="Catalog Unavailable"
+                message="We couldn’t load the products right now. Please try again."
+                onRetry={() => void refetch()}
+              />
             ) : (
               <ProductGrid products={products} />
             )}

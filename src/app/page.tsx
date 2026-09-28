@@ -7,29 +7,41 @@ import WhyChooseUs from "@/components/home/WhyChooseUs";
 import ScrollToTopOnHome from "@/components/home/ScrollToTopOnHome";
 import PageShell from "@/components/layout/PageShell";
 import { productService } from "@/services/product";
+import type { Product } from "@/types/entities";
 
 export const revalidate = 60; // ISR - Revalidate every 60 seconds
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://kamirafit.com";
 
 export const metadata: Metadata = {
-  title: "KamiraFit® | Buy Women's Clothing Online India — Kurtis, Co-ords, Dresses & Apparel",
+  title: {
+    absolute: "KamiraFit® | Buy Women's Clothing & Designer Apparel",
+  },
   description:
-    "Shop premium Indian & Western apparel at KamiraFit. Discover handcrafted designer kurtis, linen co-ords, satin evening dresses, and luxury streetwear. Express pan-India delivery & complimentary shipping over ₹999.",
+    "Shop handcrafted kurtis, linen co-ords, chic dresses, and streetwear at KamiraFit. Fast pan-India delivery and free shipping on orders over ₹999.",
   alternates: {
     canonical: "/",
   },
   openGraph: {
-    title: "KamiraFit® | Buy Women's Clothing Online India — Kurtis, Co-ords, Dresses & Apparel",
+    title: "KamiraFit® | Buy Women's Clothing & Designer Apparel",
     description:
-      "Explore contemporary Indian kurtis, co-ords sets, dresses, and luxury everyday clothing online at KamiraFit. Premium fabrics, tailored silhouettes, and fast doorstep delivery.",
+      "Shop handcrafted kurtis, linen co-ords, chic dresses, and streetwear at KamiraFit. Fast pan-India delivery and free shipping on orders over ₹999.",
     url: siteUrl,
     type: "website",
   },
 };
 
 export default async function Home() {
-  const products = await productService.getFeaturedProducts().catch(() => []);
+  let products: Product[] = [];
+  let isError = false;
+
+  try {
+    products = await productService.getFeaturedProducts();
+  } catch (err) {
+    console.error("Home: Failed to fetch featured products from API:", err);
+    isError = true;
+    products = [];
+  }
 
   // Google SERP Rich FAQ Schema
   const faqSchema = {
@@ -89,7 +101,7 @@ export default async function Home() {
         dangerouslySetInnerHTML={{ __html: safeFaqSchema }}
       />
       <Hero />
-      <FeaturedProducts products={products} />
+      <FeaturedProducts products={products} isError={isError} />
       <Categories />
       <WhyChooseUs />
       <Testimonials />
