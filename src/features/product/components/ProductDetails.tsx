@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, type ReactNode } from "react";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { formatPrice } from "@/lib/format";
 import { useAppDispatch, useAppSelector } from "../hooks/redux";
 import { addToCart } from "../store/cartSlice";
@@ -145,10 +145,7 @@ const POPULAR_COUNTRIES = [
 
 export default function ProductDetails({ product }: Props) {
   const dispatch = useAppDispatch();
-  const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { isAuthenticated } = useAppSelector((s) => s.auth);
   const { isSaved, toggle: toggleWishlistOptimistic } = useOptimisticWishlist();
   const saved = isSaved(product.id);
 
@@ -325,12 +322,6 @@ export default function ProductDetails({ product }: Props) {
   const isMaxInCart = availableStock > 0 && inCartQty >= availableStock;
 
   const handleAddToCart = () => {
-    if (!isAuthenticated) {
-      const current = pathname || `/product/${product.slug || product.id}`;
-      router.push(`/login?redirect=${encodeURIComponent(current)}`);
-      return;
-    }
-
     if (isOutOfStock || isMaxInCart) {
       return;
     }

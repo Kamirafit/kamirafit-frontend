@@ -6,6 +6,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { setAuthHydrated, logoutSuccess } from "../store/authSlice";
 import { clearWishlist } from "@/features/product/store/wishlistSlice";
+import { clearCart, clearCartStorage } from "@/features/product/store/cartSlice";
 import { AuthStorage, subscribeAuthSync, type AuthSyncEvent } from "../services/authStorage";
 import type { UserRole } from "@/types/entities";
 
@@ -92,7 +93,8 @@ export default function AuthHydrator({
         dispatch(logoutSuccess());
         if (targetType === "customer") {
           dispatch(clearWishlist());
-          // Cart remains preserved across logout as requested
+          dispatch(clearCart());
+          clearCartStorage();
         }
 
         // Remove user data from React Query cache

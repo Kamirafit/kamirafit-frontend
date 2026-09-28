@@ -26,8 +26,14 @@ export const RegisterRequestDtoSchema = z.object({
     PASSWORD_REGEX,
     "Password must be at least 8 characters and include at least 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character"
   ),
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
+  firstName: z
+    .string()
+    .min(1, "First name is required")
+    .regex(/^[a-zA-Z\s]+$/, "First name cannot contain numbers or special characters"),
+  lastName: z
+    .string()
+    .min(1, "Last name is required")
+    .regex(/^[a-zA-Z\s]+$/, "Last name cannot contain numbers or special characters"),
   countryCode: z.string().min(1, "Country code is required"),
   phoneNumber: z.string().min(1, "Phone number is required"),
   gender: z.string().min(1, "Gender is required"),

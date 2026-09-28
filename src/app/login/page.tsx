@@ -8,7 +8,7 @@ import { getUserFriendlyError } from "@/lib/errors";
 import PageShell from "@/components/layout/PageShell";
 import Button from "@/components/ui/Button";
 
-import { COUNTRY_CODES } from "@/data/countryCodes";
+import { COUNTRY_CODES, getCountryPhoneRule } from "@/data/countryCodes";
 
 function EyeIcon() {
   return (
@@ -84,15 +84,22 @@ function LoginContent() {
   const isPasswordValid = Object.values(passwordCriteria).every(Boolean);
 
   // Validation functions
-  const validateField = (name: string, value: string, extra?: { password?: string; mode?: "signin" | "signup" }): string => {
+  const validateField = (
+    name: string,
+    value: string,
+    extra?: { password?: string; mode?: "signin" | "signup"; countryCode?: string }
+  ): string => {
     const currentMode = extra?.mode || mode;
+    const selectedCountryCode = extra?.countryCode || countryCode;
     switch (name) {
       case "firstName":
         if (!value.trim()) return "First name is required.";
         if (value.trim().length < 2) return "First name must be at least 2 characters.";
+        if (!/^[a-zA-Z\s]+$/.test(value)) return "First name cannot contain numbers or special characters.";
         return "";
       case "lastName":
         if (!value.trim()) return "Last name is required.";
+        if (!/^[a-zA-Z\s]+$/.test(value)) return "Last name cannot contain numbers or special characters.";
         return "";
       case "email":
         if (!value.trim()) return "Email address is required.";
@@ -104,7 +111,16 @@ function LoginContent() {
       case "phoneNumber": {
         const digits = value.replace(/\D/g, "");
         if (!digits) return "Phone number is required.";
-        if (digits.length < 7 || digits.length > 15) return "Please enter a valid 7-15 digit phone number.";
+        const rule = getCountryPhoneRule(selectedCountryCode);
+        if (rule.exact) {
+          if (digits.length !== rule.minLength) {
+            return `Phone number must be exactly ${rule.minLength} digits for ${rule.countryName}.`;
+          }
+        } else {
+          if (digits.length < rule.minLength || digits.length > rule.maxLength) {
+            return `Phone number must be between ${rule.minLength} and ${rule.maxLength} digits for ${rule.countryName}.`;
+          }
+        }
         return "";
       }
       case "password":
@@ -139,14 +155,19 @@ function LoginContent() {
     else if (field === "password") val = password;
     else if (field === "confirmPassword") val = confirmPassword;
 
-    const errMsg = validateField(field, val, { password, mode });
+    const errMsg = validateField(field, val, { password, mode, countryCode });
     setErrors((prev) => ({ ...prev, [field]: errMsg }));
   };
 
   const handleFieldChange = (field: string, value: string) => {
-    if (field === "firstName") setFirstName(value);
-    else if (field === "lastName") setLastName(value);
-    else if (field === "email") {
+    let updatedVal = value;
+    if (field === "firstName") {
+      updatedVal = value.replace(/[^a-zA-Z\s]/g, "");
+      setFirstName(updatedVal);
+    } else if (field === "lastName") {
+      updatedVal = value.replace(/[^a-zA-Z\s]/g, "");
+      setLastName(updatedVal);
+    } else if (field === "email") {
       setEmail(value);
       if (isEmailVerified || isEmailOtpSent) {
         setIsEmailVerified(false);
@@ -155,21 +176,38 @@ function LoginContent() {
         setEmailOtpToken("");
         setEmailVerificationToken("");
       }
-    } else if (field === "gender") setGender(value);
-    else if (field === "phoneNumber") {
-      setPhoneNumber(value.replace(/[^\d\s-]/g, ""));
+    } else if (field === "gender") {
+      setGender(value);
+    } else if (field === "phoneNumber") {
+      const rule = getCountryPhoneRule(countryCode);
+      updatedVal = value.replace(/\D/g, "").slice(0, rule.maxLength);
+      setPhoneNumber(updatedVal);
     } else if (field === "password") {
       setPassword(value);
       if (touched.confirmPassword || errors.confirmPassword) {
-        const confirmErr = validateField("confirmPassword", confirmPassword, { password: value, mode });
+        const confirmErr = validateField("confirmPassword", confirmPassword, { password: value, mode, countryCode });
         setErrors((prev) => ({ ...prev, confirmPassword: confirmErr }));
       }
-    } else if (field === "confirmPassword") setConfirmPassword(value);
+    } else if (field === "confirmPassword") {
+      setConfirmPassword(value);
+    }
 
     // If already touched or errored, validate dynamically in real time
     if (touched[field] || errors[field]) {
-      const errMsg = validateField(field, value, { password, mode });
+      const errMsg = validateField(field, updatedVal, { password, mode, countryCode });
       setErrors((prev) => ({ ...prev, [field]: errMsg }));
+    }
+  };
+
+  const handleCountryCodeChange = (newCode: string) => {
+    setCountryCode(newCode);
+    const rule = getCountryPhoneRule(newCode);
+    const currentDigits = phoneNumber.replace(/\D/g, "");
+    const limited = currentDigits.slice(0, rule.maxLength);
+    setPhoneNumber(limited);
+    if (touched.phoneNumber || errors.phoneNumber) {
+      const errMsg = validateField("phoneNumber", limited, { countryCode: newCode, mode, password });
+      setErrors((prev) => ({ ...prev, phoneNumber: errMsg }));
     }
   };
 
@@ -245,13 +283,13 @@ function LoginContent() {
       newTouched.password = true;
       newTouched.confirmPassword = true;
 
-      newErrors.firstName = validateField("firstName", firstName, { mode });
-      newErrors.lastName = validateField("lastName", lastName, { mode });
-      newErrors.email = validateField("email", email, { mode });
-      newErrors.gender = validateField("gender", gender, { mode });
-      newErrors.phoneNumber = validateField("phoneNumber", phoneNumber, { mode });
-      newErrors.password = validateField("password", password, { mode });
-      newErrors.confirmPassword = validateField("confirmPassword", confirmPassword, { password, mode });
+      newErrors.firstName = validateField("firstName", firstName, { mode, countryCode });
+      newErrors.lastName = validateField("lastName", lastName, { mode, countryCode });
+      newErrors.email = validateField("email", email, { mode, countryCode });
+      newErrors.gender = validateField("gender", gender, { mode, countryCode });
+      newErrors.phoneNumber = validateField("phoneNumber", phoneNumber, { mode, countryCode });
+      newErrors.password = validateField("password", password, { mode, countryCode });
+      newErrors.confirmPassword = validateField("confirmPassword", confirmPassword, { password, mode, countryCode });
     } else {
       newTouched.email = true;
       newTouched.password = true;
@@ -334,15 +372,26 @@ function LoginContent() {
     }`;
   };
 
+  const currentPhoneRule = getCountryPhoneRule(countryCode);
+  const cleanPhone = phoneNumber.replace(/\D/g, "");
+  const isPhoneValid = currentPhoneRule.exact
+    ? cleanPhone.length === currentPhoneRule.minLength
+    : cleanPhone.length >= currentPhoneRule.minLength && cleanPhone.length <= currentPhoneRule.maxLength;
+
+  const isFirstNameValid =
+    firstName.trim().length >= 2 && /^[a-zA-Z\s]+$/.test(firstName);
+  const isLastNameValid =
+    lastName.trim().length >= 1 && /^[a-zA-Z\s]+$/.test(lastName);
+
   const isSignupReady =
     mode === "signup" &&
     isEmailVerified &&
     Boolean(emailVerificationToken) &&
     isPasswordValid &&
     password === confirmPassword &&
-    firstName.trim().length > 0 &&
-    lastName.trim().length > 0 &&
-    phoneNumber.trim().replace(/\D/g, "").length >= 7;
+    isFirstNameValid &&
+    isLastNameValid &&
+    isPhoneValid;
 
   return (
     <div className={`mx-auto my-3 sm:my-6 w-full px-4 transition-all duration-300 ${mode === "signup" ? "max-w-2xl" : "max-w-md"}`}>
@@ -608,7 +657,7 @@ function LoginContent() {
                           id="countryCode"
                           aria-label="Country Code"
                           value={countryCode}
-                          onChange={(e) => setCountryCode(e.target.value)}
+                          onChange={(e) => handleCountryCodeChange(e.target.value)}
                           className="w-full rounded-xl border border-line bg-ink-2 px-2 py-2.5 text-xs text-paper focus:border-gold focus:outline-none transition-colors cursor-pointer"
                         >
                           {COUNTRY_CODES.map((item) => (
@@ -622,11 +671,12 @@ function LoginContent() {
                         <input
                           id="phoneNumber"
                           type="tel"
+                          maxLength={currentPhoneRule.maxLength}
                           value={phoneNumber}
                           onChange={(e) => handleFieldChange("phoneNumber", e.target.value)}
                           onBlur={() => handleBlur("phoneNumber")}
                           className={getInputClass("phoneNumber")}
-                          placeholder="98765 43210"
+                          placeholder={currentPhoneRule.placeholder}
                         />
                       </div>
                     </div>

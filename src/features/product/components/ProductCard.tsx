@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
 import { DEFAULT_PRODUCT_IMAGE, formatPrice, getValidImageSrc } from "@/lib/format";
 import { useAppDispatch, useAppSelector } from "../hooks/redux";
@@ -42,9 +42,7 @@ function ProductCartIcon({ filled = false }: { filled?: boolean }) {
 export default function ProductCard({ product }: Props) {
   const swatchMap = useColorSwatchMap();
   const router = useRouter();
-  const pathname = usePathname();
   const dispatch = useAppDispatch();
-  const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
   const { isSaved, toggle } = useOptimisticWishlist();
   const saved = isSaved(product.id);
   const inCart = useAppSelector((s) =>
@@ -66,16 +64,6 @@ export default function ProductCard({ product }: Props) {
     setImgSrc(getValidImageSrc(product.image, DEFAULT_PRODUCT_IMAGE));
   }, [selectedColor, product.image, product.imageColorMap, product.images]);
 
-  const handleActionWithAuth = (e: React.MouseEvent, action: () => void) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!isAuthenticated) {
-      const current = pathname || "/shop";
-      router.push(`/login?redirect=${encodeURIComponent(current)}`);
-      return;
-    }
-    action();
-  };
 
   const productHref = selectedColor
     ? `/product/${product.slug || product.id}?color=${encodeURIComponent(selectedColor)}`
@@ -215,24 +203,25 @@ export default function ProductCard({ product }: Props) {
               aria-pressed={inCart}
               disabled={isCardOutOfStock}
               onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 if (isCardOutOfStock) return;
-                // If product has multiple sizes or colors, route to detail page for selection
-                if ((product.size && product.size.length > 1) || (product.color && product.color.length > 1)) {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  router.push(productHref);
-                  return;
-                }
-                const firstVar = product.variants?.[0];
-                handleActionWithAuth(e, () =>
-                  dispatch(
-                    addToCart({
-                      id: product.id,
-                      variantId: firstVar?.id,
-                      size: firstVar?.size || product.size?.[0],
-                      color: firstVar?.color || product.color?.[0],
-                    })
-                  )
+
+                const matchingVariant = product.variants?.find((v) =>
+                  (!selectedColor || v.color?.toLowerCase() === selectedColor.toLowerCase())
+                ) || product.variants?.[0];
+
+                const chosenSize = matchingVariant?.size || product.size?.[0] || "M";
+                const chosenColor = matchingVariant?.color || selectedColor || product.color?.[0];
+
+                dispatch(
+                  addToCart({
+                    id: product.id,
+                    variantId: matchingVariant?.id,
+                    size: chosenSize,
+                    color: chosenColor,
+                    quantity: 1,
+                  })
                 );
               }}
               className={`inline-flex h-9 w-9 items-center justify-center rounded-full border-2 transition-all duration-300 ease-in-out ${

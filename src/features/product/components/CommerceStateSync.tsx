@@ -4,8 +4,10 @@ import { useEffect, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "@/features/product/hooks/redux";
 import {
   replaceCart,
+  clearCart,
   loadCartFromStorage,
   persistCartToStorage,
+  clearCartStorage,
   type CartItem,
 } from "@/features/product/store/cartSlice";
 import { replaceWishlist } from "@/features/product/store/wishlistSlice";
@@ -47,16 +49,31 @@ export default function CommerceStateSync() {
     persistCartToStorage(cartItems);
   }, [cartItems]);
 
-  // Capture guest cart state when unauthenticated
+  const prevAuthRef = useRef(isAuthenticated);
+
+  // Capture guest cart state when unauthenticated, or clean up when logging out
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (prevAuthRef.current && !isAuthenticated) {
+      // User transitioned from logged-in -> logged-out (LOGOUT)
+      // Empty guest cart buffer so previous user's cart is not adopted by guest
+      localCartBeforeAuthRef.current = [];
+      hasHydratedCartRef.current = false;
+      hasHydratedWishlistRef.current = false;
+      isHydratingCartRef.current = false;
+      lastSyncedCartJsonRef.current = "";
+      dispatch(clearCart());
+      dispatch(replaceWishlist([]));
+      clearCartStorage();
+    } else if (!isAuthenticated) {
+      // User is browsing as an unauthenticated guest
       localCartBeforeAuthRef.current = cartItems;
       hasHydratedCartRef.current = false;
       hasHydratedWishlistRef.current = false;
       isHydratingCartRef.current = false;
       lastSyncedCartJsonRef.current = "";
     }
-  }, [isAuthenticated, cartItems]);
+    prevAuthRef.current = isAuthenticated;
+  }, [isAuthenticated, cartItems, dispatch]);
 
   // 1. Explicit Cart Hydration from Backend API Response
   useEffect(() => {

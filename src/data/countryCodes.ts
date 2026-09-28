@@ -189,3 +189,118 @@ export const COUNTRY_CODES: CountryCode[] = [
 ];
 
 export const DEFAULT_COUNTRY_CODE = "+91";
+
+export interface PhoneRule {
+  countryName: string;
+  minLength: number;
+  maxLength: number;
+  placeholder: string;
+  exact: boolean;
+}
+
+export const COUNTRY_PHONE_RULES: Record<
+  string,
+  { minLength: number; maxLength: number; placeholder: string; name?: string }
+> = {
+  "+91": { minLength: 10, maxLength: 10, placeholder: "98765 43210", name: "India" },
+  "+1": { minLength: 10, maxLength: 10, placeholder: "202 555 0123", name: "United States / Canada" },
+  "+44": { minLength: 10, maxLength: 10, placeholder: "7911 123456", name: "United Kingdom" },
+  "+61": { minLength: 9, maxLength: 9, placeholder: "412 345 678", name: "Australia" },
+  "+64": { minLength: 8, maxLength: 10, placeholder: "21 123 4567", name: "New Zealand" },
+  "+65": { minLength: 8, maxLength: 8, placeholder: "8123 4567", name: "Singapore" },
+  "+60": { minLength: 9, maxLength: 10, placeholder: "12 345 6789", name: "Malaysia" },
+  "+971": { minLength: 9, maxLength: 9, placeholder: "50 123 4567", name: "UAE" },
+  "+966": { minLength: 9, maxLength: 9, placeholder: "50 123 4567", name: "Saudi Arabia" },
+  "+49": { minLength: 10, maxLength: 11, placeholder: "151 23456789", name: "Germany" },
+  "+33": { minLength: 9, maxLength: 9, placeholder: "612 34 56 78", name: "France" },
+  "+39": { minLength: 9, maxLength: 10, placeholder: "312 345 6789", name: "Italy" },
+  "+34": { minLength: 9, maxLength: 9, placeholder: "612 345 678", name: "Spain" },
+  "+31": { minLength: 9, maxLength: 9, placeholder: "6 12345678", name: "Netherlands" },
+  "+41": { minLength: 9, maxLength: 9, placeholder: "78 123 45 67", name: "Switzerland" },
+  "+46": { minLength: 9, maxLength: 9, placeholder: "70 123 45 67", name: "Sweden" },
+  "+47": { minLength: 8, maxLength: 8, placeholder: "412 34 567", name: "Norway" },
+  "+45": { minLength: 8, maxLength: 8, placeholder: "20 12 34 56", name: "Denmark" },
+  "+358": { minLength: 9, maxLength: 10, placeholder: "40 123 4567", name: "Finland" },
+  "+48": { minLength: 9, maxLength: 9, placeholder: "512 345 678", name: "Poland" },
+  "+351": { minLength: 9, maxLength: 9, placeholder: "912 345 678", name: "Portugal" },
+  "+353": { minLength: 9, maxLength: 9, placeholder: "85 123 4567", name: "Ireland" },
+  "+30": { minLength: 10, maxLength: 10, placeholder: "691 234 5678", name: "Greece" },
+  "+7": { minLength: 10, maxLength: 10, placeholder: "912 345 6789", name: "Russia / Kazakhstan" },
+  "+86": { minLength: 11, maxLength: 11, placeholder: "138 0013 8000", name: "China" },
+  "+81": { minLength: 10, maxLength: 10, placeholder: "90 1234 5678", name: "Japan" },
+  "+82": { minLength: 9, maxLength: 10, placeholder: "10 1234 5678", name: "South Korea" },
+  "+852": { minLength: 8, maxLength: 8, placeholder: "9123 4567", name: "Hong Kong" },
+  "+886": { minLength: 9, maxLength: 9, placeholder: "912 345 678", name: "Taiwan" },
+  "+92": { minLength: 10, maxLength: 10, placeholder: "300 1234567", name: "Pakistan" },
+  "+880": { minLength: 10, maxLength: 10, placeholder: "1712 345678", name: "Bangladesh" },
+  "+94": { minLength: 9, maxLength: 9, placeholder: "71 234 5678", name: "Sri Lanka" },
+  "+977": { minLength: 10, maxLength: 10, placeholder: "984 1234567", name: "Nepal" },
+  "+975": { minLength: 8, maxLength: 8, placeholder: "17 12 34 56", name: "Bhutan" },
+  "+62": { minLength: 9, maxLength: 12, placeholder: "812 3456 7890", name: "Indonesia" },
+  "+63": { minLength: 10, maxLength: 10, placeholder: "917 123 4567", name: "Philippines" },
+  "+66": { minLength: 9, maxLength: 9, placeholder: "81 234 5678", name: "Thailand" },
+  "+84": { minLength: 9, maxLength: 10, placeholder: "91 234 5678", name: "Vietnam" },
+  "+27": { minLength: 9, maxLength: 9, placeholder: "71 234 5678", name: "South Africa" },
+  "+234": { minLength: 10, maxLength: 10, placeholder: "802 123 4567", name: "Nigeria" },
+  "+254": { minLength: 9, maxLength: 9, placeholder: "712 345678", name: "Kenya" },
+  "+20": { minLength: 10, maxLength: 10, placeholder: "100 123 4567", name: "Egypt" },
+  "+90": { minLength: 10, maxLength: 10, placeholder: "532 123 4567", name: "Turkey" },
+  "+55": { minLength: 10, maxLength: 11, placeholder: "11 91234 5678", name: "Brazil" },
+  "+54": { minLength: 10, maxLength: 10, placeholder: "9 11 1234 5678", name: "Argentina" },
+  "+52": { minLength: 10, maxLength: 10, placeholder: "55 1234 5678", name: "Mexico" },
+  "+974": { minLength: 8, maxLength: 8, placeholder: "3312 3456", name: "Qatar" },
+  "+965": { minLength: 8, maxLength: 8, placeholder: "9123 4567", name: "Kuwait" },
+  "+973": { minLength: 8, maxLength: 8, placeholder: "3912 3456", name: "Bahrain" },
+  "+968": { minLength: 8, maxLength: 8, placeholder: "9123 4567", name: "Oman" },
+  "+972": { minLength: 9, maxLength: 9, placeholder: "50 123 4567", name: "Israel" },
+  "+962": { minLength: 9, maxLength: 9, placeholder: "7 9012 3456", name: "Jordan" },
+  "+961": { minLength: 7, maxLength: 8, placeholder: "70 123 456", name: "Lebanon" },
+  "+32": { minLength: 9, maxLength: 9, placeholder: "470 12 34 56", name: "Belgium" },
+  "+43": { minLength: 10, maxLength: 11, placeholder: "664 1234567", name: "Austria" },
+  "+420": { minLength: 9, maxLength: 9, placeholder: "601 123 456", name: "Czech Republic" },
+  "+36": { minLength: 9, maxLength: 9, placeholder: "20 123 4567", name: "Hungary" },
+  "+40": { minLength: 9, maxLength: 10, placeholder: "712 345 678", name: "Romania" },
+};
+
+export function getCountryPhoneRule(codeOrCountry: string): PhoneRule {
+  const normalized = (codeOrCountry || "").trim();
+  const cleanCode = normalized.startsWith("+") ? normalized : `+${normalized}`;
+
+  // Try direct match by code
+  if (COUNTRY_PHONE_RULES[cleanCode]) {
+    const item = COUNTRY_PHONE_RULES[cleanCode];
+    const countryObj = COUNTRY_CODES.find((c) => c.code === cleanCode);
+    const countryName = item.name || countryObj?.name || cleanCode;
+    return {
+      countryName,
+      minLength: item.minLength,
+      maxLength: item.maxLength,
+      placeholder: item.placeholder,
+      exact: item.minLength === item.maxLength,
+    };
+  }
+
+  // Try matching by country name
+  const matchByName = COUNTRY_CODES.find(
+    (c) => c.name.toLowerCase() === normalized.toLowerCase()
+  );
+  if (matchByName && COUNTRY_PHONE_RULES[matchByName.code]) {
+    const item = COUNTRY_PHONE_RULES[matchByName.code];
+    return {
+      countryName: matchByName.name,
+      minLength: item.minLength,
+      maxLength: item.maxLength,
+      placeholder: item.placeholder,
+      exact: item.minLength === item.maxLength,
+    };
+  }
+
+  const countryName = matchByName?.name || "selected country";
+  return {
+    countryName,
+    minLength: 7,
+    maxLength: 12,
+    placeholder: "Phone number",
+    exact: false,
+  };
+}

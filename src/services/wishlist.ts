@@ -1,8 +1,10 @@
-import { useCallback } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { QueryClient } from "@tanstack/react-query";
 import { apiClient, unwrapApiResponse } from "@/api/client";
 import { useAppDispatch, useAppSelector } from "@/features/product/hooks/redux";
+import type { AppDispatch } from "@/features/product/store";
 import { replaceWishlist } from "@/features/product/store/wishlistSlice";
 
 export const wishlistService = {
@@ -29,51 +31,123 @@ export function useWishlist(enabled = true) {
   });
 }
 
-export function useToggleWishlist() {
+// Global queue to ensure sequential execution of wishlist toggles across rapid clicks
+const toggleQueue: string[] = [];
+let isProcessingQueue = false;
+let pendingListeners: Array<() => void> = [];
+
+function notifyListeners() {
+  pendingListeners.forEach((fn) => fn());
+}
+
+async function processQueue(queryClient: QueryClient, dispatch: AppDispatch) {
+  if (isProcessingQueue) return;
+  isProcessingQueue = true;
+  notifyListeners();
+
+  let lastServerWishlist: string[] | null = null;
+  let hasError = false;
+
+  while (toggleQueue.length > 0) {
+    const productId = toggleQueue.shift()!;
+    try {
+      lastServerWishlist = await wishlistService.toggleWishlist(productId);
+    } catch (err) {
+      console.error("Failed to toggle wishlist item on server:", err);
+      hasError = true;
+    }
+  }
+
+  isProcessingQueue = false;
+  notifyListeners();
+
+  // If new items were queued in the meantime, continue processing
+  if (toggleQueue.length > 0) {
+    processQueue(queryClient, dispatch);
+    return;
+  }
+
+  // Once the queue is completely drained:
+  if (hasError) {
+    // If an error occurred during the rapid clicks, fetch the actual database state to restore accuracy
+    try {
+      const serverWishlist = await wishlistService.getWishlist();
+      queryClient.setQueryData<string[]>(["wishlist"], serverWishlist);
+      dispatch(replaceWishlist(serverWishlist));
+    } catch {
+      // ignore
+    }
+  } else if (lastServerWishlist && Array.isArray(lastServerWishlist)) {
+    // Authoritatively sync final result
+    queryClient.setQueryData<string[]>(["wishlist"], lastServerWishlist);
+    dispatch(replaceWishlist(lastServerWishlist));
+  }
+}
+
+export function useOptimisticWishlist() {
+  const router = useRouter();
+  const pathname = usePathname();
   const queryClient = useQueryClient();
   const dispatch = useAppDispatch();
+  const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
+  const wishlistIds = useAppSelector((s) => s.wishlist.ids);
+  const [isPending, setIsPending] = useState(isProcessingQueue || toggleQueue.length > 0);
 
-  return useMutation<string[], Error, string, { previousWishlist: string[] }>({
-    mutationFn: (productId: string) => wishlistService.toggleWishlist(productId),
-    onMutate: async (productId: string) => {
-      // 1. Cancel any outgoing refetches so they don't overwrite our optimistic update
-      await queryClient.cancelQueries({ queryKey: ["wishlist"] });
+  useEffect(() => {
+    const updatePending = () => {
+      setIsPending(isProcessingQueue || toggleQueue.length > 0);
+    };
+    pendingListeners.push(updatePending);
+    return () => {
+      pendingListeners = pendingListeners.filter((fn) => fn !== updatePending);
+    };
+  }, []);
 
-      // 2. Snapshot current wishlist from React Query cache
-      const previousWishlist =
-        queryClient.getQueryData<string[]>(["wishlist"]) ?? [];
+  const toggle = useCallback(
+    (productId: string) => {
+      if (!isAuthenticated) {
+        const current = pathname || "/shop";
+        router.push(`/login?redirect=${encodeURIComponent(current)}`);
+        return;
+      }
 
-      // 3. Optimistically compute the next wishlist
-      const isAlreadySaved = previousWishlist.includes(productId);
+      // 1. Immediately compute next optimistic wishlist from synchronous React Query cache (or Redux state)
+      const currentCached = queryClient.getQueryData<string[]>(["wishlist"]) ?? wishlistIds;
+      const isAlreadySaved = currentCached.includes(productId);
       const nextWishlist = isAlreadySaved
-        ? previousWishlist.filter((id) => id !== productId)
-        : [...previousWishlist, productId];
+        ? currentCached.filter((id) => id !== productId)
+        : [...currentCached, productId];
 
-      // 4. Optimistically update React Query cache immediately
+      // 2. Synchronously update Redux store & React Query cache
       queryClient.setQueryData<string[]>(["wishlist"], nextWishlist);
-
-      // 5. Optimistically update Redux store immediately
       dispatch(replaceWishlist(nextWishlist));
 
-      return { previousWishlist };
+      // 3. Queue the network mutation so rapid clicks are processed sequentially without out-of-order responses
+      toggleQueue.push(productId);
+      processQueue(queryClient, dispatch);
     },
-    onError: (_err, _productId, context) => {
-      // Rollback both React Query cache and Redux store to the snapshot on error
-      if (context?.previousWishlist) {
-        queryClient.setQueryData<string[]>(["wishlist"], context.previousWishlist);
-        dispatch(replaceWishlist(context.previousWishlist));
-      }
-    },
-    onSuccess: (data) => {
-      if (Array.isArray(data)) {
-        queryClient.setQueryData<string[]>(["wishlist"], data);
-        dispatch(replaceWishlist(data));
-      }
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["wishlist"] });
-    },
-  });
+    [isAuthenticated, pathname, router, wishlistIds, dispatch, queryClient]
+  );
+
+  const isSaved = useCallback(
+    (productId: string) => wishlistIds.includes(productId),
+    [wishlistIds]
+  );
+
+  return {
+    wishlistIds,
+    isSaved,
+    toggle,
+    isPending,
+  };
+}
+
+export function useToggleWishlist() {
+  const { toggle, isPending } = useOptimisticWishlist();
+  return {
+    mutate: toggle,
+    isPending,
+  };
 }
 
 export function useUpdateWishlist() {
@@ -86,36 +160,4 @@ export function useUpdateWishlist() {
       dispatch(replaceWishlist(d));
     },
   });
-}
-
-export function useOptimisticWishlist() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
-  const wishlistIds = useAppSelector((s) => s.wishlist.ids);
-  const toggleMutation = useToggleWishlist();
-
-  const toggle = useCallback(
-    (productId: string) => {
-      if (!isAuthenticated) {
-        const current = pathname || "/shop";
-        router.push(`/login?redirect=${encodeURIComponent(current)}`);
-        return;
-      }
-      toggleMutation.mutate(productId);
-    },
-    [isAuthenticated, pathname, router, toggleMutation]
-  );
-
-  const isSaved = useCallback(
-    (productId: string) => wishlistIds.includes(productId),
-    [wishlistIds]
-  );
-
-  return {
-    wishlistIds,
-    isSaved,
-    toggle,
-    isPending: toggleMutation.isPending,
-  };
 }

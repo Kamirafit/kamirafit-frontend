@@ -126,6 +126,7 @@ export const AuthStorage = {
   clearCustomerAuth(): void {
     if (typeof window === "undefined") return;
     localStorage.removeItem("kamira_auth_customer");
+    localStorage.removeItem("kamirafit_cart_items");
     broadcastAuthEvent({
       type: "LOGOUT",
       target: "customer",

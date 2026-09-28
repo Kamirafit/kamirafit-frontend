@@ -1,9 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { DEFAULT_PRODUCT_IMAGE, formatPrice, getValidImageSrc } from "@/lib/format";
+import { useAppDispatch } from "@/features/product/hooks/redux";
+import { addToCart } from "@/features/product/store/cartSlice";
 
 export type Product = {
   id: string;
@@ -26,6 +29,8 @@ const BADGE_CLASS: Record<string, string> = {
 
 export default function ProductCard({ product }: Props) {
   const router = useRouter();
+  const dispatch = useAppDispatch();
+  const [added, setAdded] = useState(false);
   const badgeBg = product.tag
     ? BADGE_CLASS[product.tag] ?? "bg-gold"
     : undefined;
@@ -77,16 +82,28 @@ export default function ProductCard({ product }: Props) {
           className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/40 via-black/10 to-transparent"
         />
 
-        {/* Add-to-Cart: wine outline at rest → wine fill + glow on hover */}
+        {/* Add-to-Cart: adds directly without redirection */}
         <button
           type="button"
           onClick={(e) => {
+            e.preventDefault();
             e.stopPropagation();
-            router.push(productHref);
+            dispatch(
+              addToCart({
+                id: product.id,
+                quantity: 1,
+              })
+            );
+            setAdded(true);
+            window.setTimeout(() => setAdded(false), 1800);
           }}
-          className="absolute inset-x-3 bottom-3 inline-flex items-center justify-center gap-2 rounded-full border-2 border-gold bg-white/90 px-4 py-2.5 text-[12px] font-semibold uppercase tracking-[0.18em] text-gold backdrop-blur-md transition-all duration-300 ease-in-out hover:border-gold hover:bg-gold hover:text-white hover:shadow-[0_12px_30px_-10px_rgba(74,14,26,0.55)]"
+          className={`absolute inset-x-3 bottom-3 inline-flex items-center justify-center gap-2 rounded-full border-2 border-gold px-4 py-2.5 text-[12px] font-semibold uppercase tracking-[0.18em] backdrop-blur-md transition-all duration-300 ease-in-out ${
+            added
+              ? "bg-gold text-white shadow-[0_12px_30px_-10px_rgba(74,14,26,0.55)]"
+              : "bg-white/90 text-gold hover:border-gold hover:bg-gold hover:text-white hover:shadow-[0_12px_30px_-10px_rgba(74,14,26,0.55)]"
+          }`}
         >
-          Add to cart
+          {added ? "Added to cart" : "Add to cart"}
         </button>
       </div>
       <div className="mt-5 flex items-start justify-between gap-3">

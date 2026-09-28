@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useDispatch } from "react-redux";
 import { loginSuccess, logoutSuccess } from "@/features/auth/store/authSlice";
+import { clearCart, clearCartStorage } from "@/features/product/store/cartSlice";
+import { clearWishlist } from "@/features/product/store/wishlistSlice";
 import { authService } from "@/features/auth/services/auth.service";
 import { AuthStorage } from "@/features/auth/services/authStorage";
 import type { LoginRequestDto, RegisterRequestDto } from "@/features/auth/types";
@@ -64,6 +66,9 @@ export function useLogout() {
     onSuccess: () => {
       queryClient.cancelQueries();
       dispatch(logoutSuccess());
+      dispatch(clearCart());
+      dispatch(clearWishlist());
+      clearCartStorage();
       queryClient.clear();
     },
   });

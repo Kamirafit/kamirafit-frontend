@@ -7,7 +7,7 @@ import ProfileSkeleton from "@/components/skeleton/ProfileSkeleton";
 import { ErrorState, OfflineState } from "@/components/states";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import Button from "@/components/ui/Button";
-import { COUNTRY_CODES } from "@/data/countryCodes";
+import { COUNTRY_CODES, getCountryPhoneRule } from "@/data/countryCodes";
 
 export default function ProfileForm() {
   const { data: serverProfile, isLoading, isError, refetch } = useProfile();
@@ -49,20 +49,27 @@ export default function ProfileForm() {
     const nextErrors: { firstName?: string; lastName?: string; email?: string; phoneNumber?: string } = {};
     if (!formData.firstName.trim()) {
       nextErrors.firstName = "First name is required";
+    } else if (!/^[a-zA-Z\s]+$/.test(formData.firstName)) {
+      nextErrors.firstName = "First name cannot contain numbers or special characters";
     }
     if (!formData.lastName.trim()) {
       nextErrors.lastName = "Last name is required";
+    } else if (!/^[a-zA-Z\s]+$/.test(formData.lastName)) {
+      nextErrors.lastName = "Last name cannot contain numbers or special characters";
     }
     if (!formData.email.trim()) {
       nextErrors.email = "Email address is required";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
       nextErrors.email = "Please enter a valid email address";
     }
+    const rule = getCountryPhoneRule(formData.countryCode || "+91");
     const cleanPhone = (formData.phoneNumber || "").replace(/\D/g, "");
     if (!formData.phoneNumber?.trim()) {
       nextErrors.phoneNumber = "Phone number is required";
-    } else if (cleanPhone.length < 7 || cleanPhone.length > 15) {
-      nextErrors.phoneNumber = "Please enter a valid phone number (7-15 digits)";
+    } else if (rule.exact ? cleanPhone.length !== rule.minLength : (cleanPhone.length < rule.minLength || cleanPhone.length > rule.maxLength)) {
+      nextErrors.phoneNumber = rule.exact
+        ? `Phone number must be exactly ${rule.minLength} digits for ${rule.countryName}`
+        : `Phone number must be between ${rule.minLength} and ${rule.maxLength} digits for ${rule.countryName}`;
     }
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
@@ -144,7 +151,8 @@ export default function ProfileForm() {
             disabled={!isEditing}
             value={formData.firstName}
             onChange={(e) => {
-              setFormData({ ...formData, firstName: e.target.value });
+              const sanitized = e.target.value.replace(/[^a-zA-Z\s]/g, "");
+              setFormData({ ...formData, firstName: sanitized });
               if (errors.firstName) setErrors((prev) => ({ ...prev, firstName: undefined }));
             }}
             className={`rounded-lg border px-4 py-3 text-[14px] text-paper outline-none transition-colors ${
@@ -169,7 +177,8 @@ export default function ProfileForm() {
             disabled={!isEditing}
             value={formData.lastName}
             onChange={(e) => {
-              setFormData({ ...formData, lastName: e.target.value });
+              const sanitized = e.target.value.replace(/[^a-zA-Z\s]/g, "");
+              setFormData({ ...formData, lastName: sanitized });
               if (errors.lastName) setErrors((prev) => ({ ...prev, lastName: undefined }));
             }}
             className={`rounded-lg border px-4 py-3 text-[14px] text-paper outline-none transition-colors ${
@@ -218,7 +227,14 @@ export default function ProfileForm() {
             <select
               disabled={!isEditing}
               value={formData.countryCode || "+91"}
-              onChange={(e) => setFormData({ ...formData, countryCode: e.target.value })}
+              onChange={(e) => {
+                const newCode = e.target.value;
+                const rule = getCountryPhoneRule(newCode);
+                const currentDigits = (formData.phoneNumber || "").replace(/\D/g, "");
+                const limited = currentDigits.slice(0, rule.maxLength);
+                setFormData({ ...formData, countryCode: newCode, phoneNumber: limited });
+                if (errors.phoneNumber) setErrors((prev) => ({ ...prev, phoneNumber: undefined }));
+              }}
               className={`w-36 sm:w-44 rounded-lg border px-3 py-3 text-[13px] text-paper outline-none transition-colors ${
                 isEditing
                   ? "border-gold/60 bg-ink-2 focus:border-gold focus:ring-1 focus:ring-gold/30 cursor-pointer"
@@ -234,9 +250,13 @@ export default function ProfileForm() {
             <input
               type="tel"
               disabled={!isEditing}
+              maxLength={getCountryPhoneRule(formData.countryCode || "+91").maxLength}
+              placeholder={getCountryPhoneRule(formData.countryCode || "+91").placeholder}
               value={formData.phoneNumber || ""}
               onChange={(e) => {
-                setFormData({ ...formData, phoneNumber: e.target.value });
+                const rule = getCountryPhoneRule(formData.countryCode || "+91");
+                const clean = e.target.value.replace(/\D/g, "").slice(0, rule.maxLength);
+                setFormData({ ...formData, phoneNumber: clean });
                 if (errors.phoneNumber) setErrors((prev) => ({ ...prev, phoneNumber: undefined }));
               }}
               className={`flex-1 rounded-lg border px-4 py-3 text-[14px] text-paper outline-none transition-colors ${
