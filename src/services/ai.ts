@@ -2,6 +2,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiClient, unwrapApiResponse } from "@/api/client";
 
 export interface GeneratedProductCopyResponse {
+  suggestedTitle?: string;
   description: string;
   bulletPoints: string[];
   careInstructions: string;
@@ -49,13 +50,14 @@ export interface AiAnalyticsQueryResponse {
 
 export const aiService = {
   generateProductCopy: (data: {
-    title: string;
+    title?: string;
+    images?: string[];
     category?: string;
     subcategory?: string;
     colors?: string[];
     fabric?: string;
   }): Promise<GeneratedProductCopyResponse> =>
-    unwrapApiResponse<GeneratedProductCopyResponse>(apiClient.post("/ai/generate-product", data, { timeout: 35000 })),
+    unwrapApiResponse<GeneratedProductCopyResponse>(apiClient.post("/ai/generate-product", data, { timeout: 45000 })),
 
   getAnalyticsInsights: (timeframe: string = "30d", forceRefresh = false): Promise<AiAnalyticsInsights> =>
     unwrapApiResponse<AiAnalyticsInsights>(apiClient.post("/ai/analytics-insights", { timeframe, forceRefresh }, { timeout: 25000 })),

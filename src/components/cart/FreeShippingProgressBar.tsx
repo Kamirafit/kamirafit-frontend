@@ -32,8 +32,11 @@ export default function FreeShippingProgressBar() {
     prevCountRef.current = totalQuantity;
   }, [totalQuantity]);
 
-  // Don't display during SSR, on checkout page to avoid form interference, or when cart is empty
-  if (!mounted || !pathname || pathname.startsWith("/checkout") || totalQuantity === 0) {
+  // Don't display during SSR, on admin routes, checkout/cart pages, or when cart is empty
+  const isAdminRoute = pathname.startsWith("/dedicated-admin") || pathname.startsWith("/admin");
+  const isCartOrCheckout = pathname.startsWith("/checkout") || pathname.startsWith("/cart");
+
+  if (!mounted || !pathname || isAdminRoute || isCartOrCheckout || totalQuantity === 0) {
     return null;
   }
 

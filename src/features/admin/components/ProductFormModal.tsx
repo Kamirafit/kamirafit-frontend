@@ -236,17 +236,20 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
   const [aiGenError, setAiGenError] = useState<string | null>(null);
 
   const handleGenerateAi = async () => {
-    if (!values.name?.trim()) {
-      setErrors((prev) => ({ ...prev, name: "Please enter product name first." }));
+    const availableImages = images.map((img) => img.src).filter(Boolean);
+    if (availableImages.length === 0) {
+      setAiGenError("Please upload at least one product image in the section above first so the AI can inspect the garment's style, color, cut, and design.");
       return;
     }
+
     setAiGenError(null);
     try {
       const result = await aiGenerateMutation.mutateAsync({
-        title: values.name.trim(),
-        category: values.category,
-        subcategory: values.subcategory,
-        colors: values.color,
+        images: availableImages.slice(0, 3),
+        title: values.name?.trim() || undefined,
+        category: values.category || undefined,
+        subcategory: values.subcategory || undefined,
+        colors: values.color.length > 0 ? values.color : undefined,
       });
 
       if (result) {
@@ -259,7 +262,18 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
         }
 
         set("description", fullDesc.trim());
-        if (result.suggestedSlug) {
+        setErrors((prev) => ({ ...prev, description: "" }));
+
+        // If product name is currently empty or generic, use suggested title from the image
+        if ((!values.name || !values.name.trim() || values.name === "Ivory Oversized Tee") && result.suggestedTitle) {
+          set("name", result.suggestedTitle);
+          setErrors((prev) => ({ ...prev, name: "" }));
+          if (!values.slug || values.slug === slugify(values.name)) {
+            set("slug", result.suggestedSlug || slugify(result.suggestedTitle));
+          }
+        }
+
+        if (result.suggestedSlug && !values.slug) {
           set("slug", result.suggestedSlug);
         }
         if (result.seoTitle) {
@@ -270,7 +284,7 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
         }
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Failed to generate AI listing. Please try again.";
+      const message = err instanceof Error ? err.message : "Failed to generate AI copy from images. Please try again.";
       setAiGenError(message);
     }
   };
@@ -821,41 +835,7 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
               </select>
             </FormField>
           </div>
-          <FormField
-            label={
-              <span className="flex items-center justify-between w-full">
-                <span>Description</span>
-                <button
-                  type="button"
-                  disabled={aiGenerateMutation.isPending || !values.name?.trim()}
-                  onClick={handleGenerateAi}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-gold/40 bg-gold/15 text-[11px] font-semibold uppercase tracking-wider text-gold hover:bg-gold hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
-                  title="Generate luxury copy, styling notes, care guide, and SEO using Gemini AI"
-                >
-                  {aiGenerateMutation.isPending ? (
-                    <>
-                      <span className="w-3 h-3 border-2 border-gold border-t-transparent rounded-full animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <span>✨</span> Auto-Generate with AI
-                    </>
-                  )}
-                </button>
-              </span>
-            }
-            error={errors.description || aiGenError || undefined}
-          >
-            <textarea
-              rows={6}
-              value={values.description}
-              onChange={(event) => set("description", event.target.value)}
-              maxLength={5000}
-              className={textareaClass}
-              placeholder="Enter product description, styling notes, and specifications..."
-            />
-          </FormField>
+
           <div className="rounded-2xl border border-line bg-ink-2/40 p-4">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <FormField label="Product lifecycle" hint="Draft and archived products are hidden. Active products are published to the storefront.">
@@ -1503,6 +1483,68 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
               )}
             </div>
           )}
+        </Section>
+
+        <Section title="Description & AI Copywriter">
+          <div className="rounded-2xl border border-gold/30 bg-gold/5 p-4 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <span className="text-xl">✨</span>
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-gold">
+                    AI Visual Copywriter (Gemini Vision)
+                  </h4>
+                  <p className="text-[11px] text-paper-muted">
+                    Analyzes your uploaded product images above to generate tailored descriptions, styling highlights, and specifications based on the garment&apos;s cut, color, pattern, and design.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                disabled={aiGenerateMutation.isPending || images.length === 0}
+                onClick={handleGenerateAi}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gold bg-gold/20 text-xs font-semibold uppercase tracking-wider text-gold hover:bg-gold hover:text-ink transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+                title={images.length === 0 ? "Upload at least one product image above first" : "Generate tailored description based on uploaded photos"}
+              >
+                {aiGenerateMutation.isPending ? (
+                  <>
+                    <span className="w-3.5 h-3.5 border-2 border-gold border-t-transparent rounded-full animate-spin" />
+                    Analyzing Images & Writing...
+                  </>
+                ) : (
+                  <>
+                    <span>✨</span> Generate from Images
+                  </>
+                )}
+              </button>
+            </div>
+
+            {images.length === 0 ? (
+              <p className="text-[11px] text-paper-muted/80 italic border-t border-gold/15 pt-2">
+                💡 Tip: Upload one or more product photos in the &ldquo;Media & Color Images&rdquo; section above. The AI will inspect the garment&apos;s silhouette, colorway, and fabric details to write an accurate, unique description.
+              </p>
+            ) : (
+              <p className="text-[11px] text-paper-muted/90 border-t border-gold/15 pt-2 flex items-center gap-1.5">
+                <span className="text-[#16A34A] font-bold">✓</span> {images.length} {images.length === 1 ? "image" : "images"} ready for visual AI inspection. Click &ldquo;Generate from Images&rdquo; to auto-write description, highlights, and care notes.
+              </p>
+            )}
+          </div>
+
+          <FormField
+            label="Product Description"
+            error={errors.description || aiGenError || undefined}
+            hint="Detailed product story, fabric specifications, styling highlights, and care instructions."
+          >
+            <textarea
+              rows={8}
+              value={values.description}
+              onChange={(event) => set("description", event.target.value)}
+              maxLength={5000}
+              className={textareaClass}
+              placeholder="Detailed product story, design specifications, styling advice, and fabric care..."
+            />
+          </FormField>
         </Section>
 
         <Section title="Shipping">
