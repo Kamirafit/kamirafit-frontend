@@ -119,7 +119,7 @@ export const productService = {
         return Object.entries(COLOR_SWATCH).map(([name, hex]) => ({ name, hex }));
       }),
   createColor: (color: { name: string; hex: string }): Promise<ColorItem> =>
-    unwrapApiResponse<any>(apiClient.post("/products/colors", color)).then((r) => {
+    unwrapApiResponse<any>(apiClient.post("/admin/colors", color)).then((r) => {
       const item = r?.data || r;
       return {
         name: String(item.name || item.value || color.name).trim(),
@@ -128,7 +128,7 @@ export const productService = {
     }),
   deleteColor: (name: string): Promise<{ name: string }> =>
     unwrapApiResponse<any>(
-      apiClient.delete(`/products/colors/${encodeURIComponent(name)}`)
+      apiClient.delete(`/admin/colors/${encodeURIComponent(name)}`)
     ).then(() => ({ name })),
 };
 
