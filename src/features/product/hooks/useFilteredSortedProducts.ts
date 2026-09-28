@@ -1,6 +1,17 @@
 import { useMemo } from "react";
 import type { Filters, Product, SortKey } from "../types";
 
+export function matchesCategory(filterCat: string, productCat?: string | null): boolean {
+  if (!productCat || !filterCat) return false;
+  const f = filterCat.trim().toLowerCase();
+  const p = productCat.trim().toLowerCase();
+  if (f === p) return true;
+  if (f.replace(/[\s_]+/g, "-") === p.replace(/[\s_]+/g, "-")) return true;
+  const fNorm = f.replace(/[-_\s]+/g, "").replace(/sets$/, "set");
+  const pNorm = p.replace(/[-_\s]+/g, "").replace(/sets$/, "set");
+  return fNorm === pNorm;
+}
+
 function matchesFilters(product: Product, filters: Filters): boolean {
   if (
     filters.sizes.length > 0 &&
@@ -16,11 +27,8 @@ function matchesFilters(product: Product, filters: Filters): boolean {
   }
   if (
     filters.categories.length > 0 &&
-    !filters.categories.some(
-      (c) =>
-        c.toLowerCase() === product.category?.toLowerCase() ||
-        c.toLowerCase().replace(/[\s_]+/g, "-") ===
-          product.category?.toLowerCase().replace(/[\s_]+/g, "-"),
+    !filters.categories.some((c) =>
+      matchesCategory(c, product.category || (product as { categoryName?: string }).categoryName),
     )
   ) {
     return false;

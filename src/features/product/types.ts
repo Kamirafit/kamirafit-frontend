@@ -1,7 +1,7 @@
-import type { CategoryName, Color, Size } from "@/types/entities";
+import type { Color, Size } from "@/types/entities";
 
 export type {
-  CategoryName as Category,
+  CategoryName,
   Color,
   Product,
   ProductStatus,
@@ -9,12 +9,14 @@ export type {
   Size,
 } from "@/types/entities";
 
+export type Category = string;
+
 export type SortKey = "price-asc" | "price-desc" | "newest" | "popular";
 
 export interface Filters {
   sizes: Size[];
   colors: Color[];
-  categories: CategoryName[];
+  categories: string[];
   priceMin: number;
   priceMax: number;
 }
@@ -25,11 +27,11 @@ export const SIZE_OPTIONS: Size[] = [
 export const COLOR_OPTIONS: Color[] = [
   "Black", "White", "Blue", "Red", "Green", "Yellow", "Pink", "Beige", "Navy", "Maroon", "Grey"
 ];
-export const CATEGORY_OPTIONS: CategoryName[] = [
+export const CATEGORY_OPTIONS: readonly string[] = [
   "Kurti", "Co-ords Sets", "Dresses", "T-Shirts", "Oversized T-Shirts", "Hoodies",
 ];
 export const PRICE_MIN = 0;
-export const PRICE_MAX = 2000;
+export const PRICE_MAX = 10000;
 export const COLOR_SWATCH: Record<string, string> = {
   Black: "#111111", White: "#f5f5f5", Blue: "#2563eb", Red: "#dc2626", Green: "#16a34a", Yellow: "#eab308", Pink: "#ec4899", Beige: "#f5f5dc", Navy: "#1e3a8a", Maroon: "#800000", Grey: "#6b7280",
 };

@@ -2,12 +2,12 @@
 
 import { useEffect } from "react";
 import { buttonClasses } from "@/components/ui/Button";
-import type { Category, Color, Filters, Size } from "../types";
+import type { Color, Filters, Size } from "../types";
 import FiltersSidebar from "./FiltersSidebar";
 import { CloseIcon } from "./icons";
 
 type Counts = {
-  categories: Record<Category, number>;
+  categories: Record<string, number>;
   sizes: Record<Size, number>;
   colors: Record<Color, number>;
 };

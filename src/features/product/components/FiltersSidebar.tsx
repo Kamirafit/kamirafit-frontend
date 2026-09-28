@@ -2,12 +2,10 @@
 
 import { useMemo } from "react";
 import {
-  CATEGORY_OPTIONS,
   COLOR_OPTIONS,
   PRICE_MAX,
   PRICE_MIN,
   SIZE_OPTIONS,
-  type Category,
   type Color,
   type Filters,
   type Size,
@@ -17,7 +15,7 @@ import PriceSlider from "./PriceSlider";
 import { useColors } from "@/services/product";
 
 type Counts = {
-  categories: Record<Category, number>;
+  categories: Record<string, number>;
   sizes: Record<Size, number>;
   colors: Record<Color, number>;
 };
@@ -40,6 +38,17 @@ export default function FiltersSidebar({
   className,
 }: Props) {
   const { data: apiColors } = useColors();
+
+  const categoryOptions = useMemo(() => {
+    return Object.entries(counts.categories)
+      .filter(([cat, count]) => count > 0 || filters.categories.includes(cat))
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .map(([cat, count]) => ({
+        value: cat,
+        label: cat,
+        count,
+      }));
+  }, [counts.categories, filters.categories]);
 
   const colorOptions = useMemo(() => {
     const list: string[] = [];
@@ -91,15 +100,11 @@ export default function FiltersSidebar({
         </button>
       </div>
 
-      {showCategoryFilter && filters.categories.length === 0 && (
+      {showCategoryFilter && categoryOptions.length > 0 && (
         <>
-          <CheckboxGroup<Category>
+          <CheckboxGroup<string>
             legend="Category"
-            options={CATEGORY_OPTIONS.map((c) => ({
-              value: c,
-              label: c,
-              count: counts.categories[c] ?? 0,
-            }))}
+            options={categoryOptions}
             selected={filters.categories}
             onChange={(v) => set("categories", v)}
             onReset={() => set("categories", [])}

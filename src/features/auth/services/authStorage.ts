@@ -107,19 +107,32 @@ export function subscribeAuthSync(onEvent: (event: AuthSyncEvent) => void): () =
 }
 
 export const AuthStorage = {
-  // Customer Auth (Stored in localStorage)
+  // Customer Auth (Stored in localStorage WITHOUT accessToken; authentication relies on HttpOnly cookies)
   getCustomerAuth(): AuthState | null {
     if (typeof window === "undefined") return null;
     const data = localStorage.getItem("kamira_auth_customer");
-    return data ? JSON.parse(data) : null;
+    if (!data) return null;
+    try {
+      const parsed: AuthState = JSON.parse(data);
+      if (parsed.accessToken) {
+        delete parsed.accessToken;
+        localStorage.setItem("kamira_auth_customer", JSON.stringify(parsed));
+      }
+      return parsed;
+    } catch {
+      return null;
+    }
   },
   setCustomerAuth(state: AuthState): void {
     if (typeof window === "undefined") return;
-    localStorage.setItem("kamira_auth_customer", JSON.stringify(state));
+    // Strip accessToken so it is never exposed in browser localStorage (XSS hardening)
+    const safeState = { ...state };
+    delete safeState.accessToken;
+    localStorage.setItem("kamira_auth_customer", JSON.stringify(safeState));
     broadcastAuthEvent({
       type: "LOGIN",
       target: "customer",
-      state,
+      state: safeState,
       timestamp: Date.now(),
     });
   },

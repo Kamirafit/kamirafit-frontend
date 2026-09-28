@@ -33,6 +33,8 @@ export interface AdminProductReview {
   };
 }
 
+import type { AxiosRequestConfig } from "axios";
+
 export function adaptAdminProductReview(raw: any): AdminProductReview {
   const r = raw?.data || raw || {};
   return {
@@ -56,7 +58,7 @@ export function adaptCategory(raw: any): AdminCategory {
   return {
     id: c.id || c._id || "",
     name: c.name || "",
-    slug: c.slug || (c.name ? c.name.toLowerCase().replace(/[\s_]+/g, "-") : ""),
+    slug: c.slug || (c.name ? String(c.name).toLowerCase().replace(/[\s_]+/g, "-") : ""),
     description: c.description || "",
     image: c.image || "",
     subcategories: Array.isArray(c.subcategories)
@@ -179,8 +181,8 @@ export function adaptCoupon(raw: any): AdminCoupon {
 async function adminRequest<T>(
   method: "get" | "post" | "put" | "patch" | "delete",
   path: string,
-  data?: any,
-  config?: any
+  data?: unknown,
+  config?: AxiosRequestConfig
 ): Promise<T> {
   const url = "/admin" + path;
   if (method === "get") {

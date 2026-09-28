@@ -77,16 +77,29 @@ export async function generateMetadata({
   const seo = resolveCategorySeo(activeCategory);
 
   if (seo) {
+    const slugMap: Record<string, string> = {
+      Kurti: "kurtis",
+      "Co-ords Sets": "co-ord-sets",
+      Dresses: "dresses",
+      "T-Shirts": "t-shirts",
+      "Oversized T-Shirts": "oversized-t-shirts",
+      Hoodies: "hoodies",
+    };
+    const targetSlug = slugMap[seo.canonicalCategory];
+    const canonicalPath = targetSlug
+      ? `/category/${targetSlug}`
+      : `/shop?category=${encodeURIComponent(activeCategory || seo.canonicalCategory)}`;
+
     return {
       title: seo.title,
       description: seo.desc,
       alternates: {
-        canonical: `/shop?category=${encodeURIComponent(activeCategory || seo.canonicalCategory)}`,
+        canonical: canonicalPath,
       },
       openGraph: {
         title: seo.title,
         description: seo.desc,
-        url: `${siteUrl}/shop?category=${encodeURIComponent(activeCategory || seo.canonicalCategory)}`,
+        url: `${siteUrl}${canonicalPath}`,
         type: "website",
       },
     };

@@ -3,14 +3,12 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import Container from "@/components/ui/Container";
-import { useFilteredSortedProducts } from "../hooks/useFilteredSortedProducts";
+import { useFilteredSortedProducts, matchesCategory } from "../hooks/useFilteredSortedProducts";
 import {
-  CATEGORY_OPTIONS,
   COLOR_OPTIONS,
   PRICE_MAX,
   PRICE_MIN,
   SIZE_OPTIONS,
-  type Category,
   type Color,
   type Filters,
   type Size,
@@ -26,59 +24,63 @@ import { ErrorState, OfflineState } from "@/components/states";
 import ProductGridSkeleton from "@/components/skeleton/ProductGridSkeleton";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 
-const PARENT_COLLECTIONS: Record<string, { label: string; categories: Category[] }> = {
+const PARENT_COLLECTIONS: Record<string, { label: string; categories: string[] }> = {
   "western-wear": {
     label: "Western Wear",
-    categories: ["Dresses", "Co-ords Sets"],
+    categories: ["Dresses", "Coord Sets", "Co-ords Sets"],
   },
   western: {
     label: "Western Wear",
-    categories: ["Dresses", "Co-ords Sets"],
+    categories: ["Dresses", "Coord Sets", "Co-ords Sets"],
   },
   "indo-western": {
     label: "Indo-Western",
-    categories: ["Co-ords Sets"],
+    categories: ["Coord Sets", "Co-ords Sets"],
   },
   "indian-wear": {
     label: "Indian Wear",
-    categories: ["Kurti"],
+    categories: ["Kurti", "2 Piece Sets (Indian)", "3 Piece Sets (Indian)"],
   },
   indian: {
     label: "Indian Wear",
-    categories: ["Kurti"],
+    categories: ["Kurti", "2 Piece Sets (Indian)", "3 Piece Sets (Indian)"],
   },
   unisex: {
     label: "Unisex Collections",
-    categories: ["T-Shirts", "Oversized T-Shirts", "Hoodies"],
+    categories: ["Regular Fit T-Shirts", "T-Shirts", "Oversized T-Shirts", "Hoodies"],
   },
   "unisex-collections": {
     label: "Unisex Collections",
-    categories: ["T-Shirts", "Oversized T-Shirts", "Hoodies"],
+    categories: ["Regular Fit T-Shirts", "T-Shirts", "Oversized T-Shirts", "Hoodies"],
   },
   "unisex-t-shirts": {
     label: "Unisex T-Shirts",
-    categories: ["T-Shirts", "Oversized T-Shirts", "Hoodies"],
+    categories: ["Regular Fit T-Shirts", "T-Shirts", "Oversized T-Shirts", "Hoodies"],
   },
 };
 
-const CATEGORY_BY_SLUG: Record<string, Category> = {
+const CATEGORY_BY_SLUG: Record<string, string> = {
   kurti: "Kurti",
-  "co-ords-sets": "Co-ords Sets",
-  "coord-sets": "Co-ords Sets",
-  coords: "Co-ords Sets",
+  kurtis: "Kurti",
+  "co-ords-sets": "Coord Sets",
+  "coord-sets": "Coord Sets",
+  coords: "Coord Sets",
   dresses: "Dresses",
   dress: "Dresses",
-  tshirts: "T-Shirts",
-  "t-shirts": "T-Shirts",
+  tshirts: "Regular Fit T-Shirts",
+  "t-shirts": "Regular Fit T-Shirts",
+  "regular-fit-tshirts": "Regular Fit T-Shirts",
   "oversized-tshirts": "Oversized T-Shirts",
   "oversized-t-shirts": "Oversized T-Shirts",
   hoodies: "Hoodies",
   hoodie: "Hoodies",
+  "indian-2-piece-sets": "2 Piece Sets (Indian)",
+  "indian-3-piece-sets": "3 Piece Sets (Indian)",
 };
 
 interface ParsedCategory {
   title: string;
-  categories: Category[];
+  categories: string[];
 }
 
 function parseCategory(slugOrName?: string | null): ParsedCategory | null {
@@ -95,7 +97,7 @@ function parseCategory(slugOrName?: string | null): ParsedCategory | null {
     };
   }
 
-  // 2. Check individual categories
+  // 2. Check individual categories by slug
   if (CATEGORY_BY_SLUG[kebab]) {
     const cat = CATEGORY_BY_SLUG[kebab];
     return {
@@ -104,18 +106,7 @@ function parseCategory(slugOrName?: string | null): ParsedCategory | null {
     };
   }
 
-  // 3. Check exact match in CATEGORY_OPTIONS
-  const option = CATEGORY_OPTIONS.find(
-    (c) => c.toLowerCase() === lower || c.toLowerCase().replace(/[\s_]+/g, "-") === kebab,
-  );
-  if (option) {
-    return {
-      title: option,
-      categories: [option],
-    };
-  }
-
-  // 4. Fallback for any unknown category slug
+  // 3. Fallback for any unknown category slug
   const title = decoded
     .split(/[-_ ]+/)
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
@@ -123,7 +114,7 @@ function parseCategory(slugOrName?: string | null): ParsedCategory | null {
 
   return {
     title,
-    categories: [],
+    categories: [title],
   };
 }
 
@@ -221,7 +212,8 @@ export default function ShopPageClient({ initialCategorySlug, initialProducts = 
   const products = useFilteredSortedProducts(activeProducts, filters, sort);
   const isUpdating = productsQuery.isLoading || productsQuery.isFetching;
 
-  // The category filter should only be present if the user is viewing all products (/shop)
+  // Category collection route from navigation (e.g. /category/dresses or ?category=western-wear)
+  const isCategoryRoute = Boolean(activeCategorySlug);
   const isViewingAllProducts = !activeCategorySlug && filters.categories.length === 0;
 
   const parsedActiveCategory = useMemo(() => {
@@ -231,12 +223,33 @@ export default function ShopPageClient({ initialCategorySlug, initialProducts = 
   const activeCategoryTitle =
     parsedActiveCategory?.title || (filters.categories.length > 0 ? filters.categories.join(", ") : undefined);
 
-  // Counts are computed from the active products set
+  // Products matching all filters EXCEPT category (price, size, color)
+  const productsForCategoryCounts = useMemo(() => {
+    return activeProducts.filter((p) => {
+      if (
+        filters.sizes.length > 0 &&
+        !filters.sizes.some((s) => p.size.includes(s))
+      ) {
+        return false;
+      }
+      if (
+        filters.colors.length > 0 &&
+        !filters.colors.some((c) => p.color.includes(c))
+      ) {
+        return false;
+      }
+      if (p.price < filters.priceMin || p.price > filters.priceMax) {
+        return false;
+      }
+      return true;
+    });
+  }, [activeProducts, filters.sizes, filters.colors, filters.priceMin, filters.priceMax]);
+
+  // Counts are computed dynamically from the products set
   const counts = useMemo(() => {
-    const cat = {} as Record<Category, number>;
+    const cat: Record<string, number> = {};
     const sz = {} as Record<Size, number>;
     const col = {} as Record<Color, number>;
-    for (const c of CATEGORY_OPTIONS) cat[c] = 0;
     for (const s of SIZE_OPTIONS) sz[s] = 0;
     for (const c of COLOR_OPTIONS) col[c] = 0;
     if (colorsQuery.data && Array.isArray(colorsQuery.data)) {
@@ -245,29 +258,29 @@ export default function ShopPageClient({ initialCategorySlug, initialProducts = 
       }
     }
 
+    // Category counts derived dynamically from products matching other filters
+    for (const p of productsForCategoryCounts) {
+      const rawCat = (p as { categoryName?: string }).categoryName || p.category;
+      const catName = typeof rawCat === "string" ? rawCat : (rawCat as { name?: string } | undefined)?.name;
+      if (catName && typeof catName === "string" && catName.trim()) {
+        const trimmed = catName.trim();
+        cat[trimmed] = (cat[trimmed] ?? 0) + 1;
+      }
+    }
+
     const relevantProducts =
       filters.categories.length > 0
         ? activeProducts.filter((p) =>
-            filters.categories.some(
-              (fc) =>
-                fc.toLowerCase() === p.category?.toLowerCase() ||
-                fc.toLowerCase().replace(/[\s_]+/g, "-") ===
-                  p.category?.toLowerCase().replace(/[\s_]+/g, "-"),
-            ),
+            filters.categories.some((fc) => matchesCategory(fc, p.category || (p as { categoryName?: string }).categoryName)),
           )
         : activeProducts;
 
-    for (const p of activeProducts) {
-      if (p.category && cat[p.category] !== undefined) {
-        cat[p.category] = (cat[p.category] ?? 0) + 1;
-      }
-    }
     for (const p of relevantProducts) {
       for (const s of p.size) sz[s] = (sz[s] ?? 0) + 1;
       for (const c of p.color) col[c] = (col[c] ?? 0) + 1;
     }
     return { categories: cat, sizes: sz, colors: col };
-  }, [activeProducts, colorsQuery.data, filters.categories]);
+  }, [activeProducts, productsForCategoryCounts, colorsQuery.data, filters.categories]);
 
   return (
     <Container className="py-8 lg:py-10">
@@ -327,7 +340,7 @@ export default function ShopPageClient({ initialCategorySlug, initialProducts = 
                 setFilters(nextFilters);
               }}
               onReset={handleResetFilters}
-              showCategoryFilter={isViewingAllProducts}
+              showCategoryFilter={!isCategoryRoute}
             />
           </div>
         </aside>
@@ -393,7 +406,7 @@ export default function ShopPageClient({ initialCategorySlug, initialProducts = 
           setFilters(nextFilters);
         }}
         onReset={handleResetFilters}
-        showCategoryFilter={isViewingAllProducts}
+        showCategoryFilter={!isCategoryRoute}
       />
     </Container>
   );
