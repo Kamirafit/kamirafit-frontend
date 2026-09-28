@@ -41,7 +41,7 @@ function sortProducts(products: Product[], sort: SortKey): Product[] {
     case "newest":
       return copy.sort(
         (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+          (Date.parse(b.createdAt) || 0) - (Date.parse(a.createdAt) || 0),
       );
     case "popular":
       return copy.sort((a, b) => b.popularity - a.popularity);

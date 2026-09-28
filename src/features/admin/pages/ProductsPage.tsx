@@ -14,13 +14,18 @@ import {
 } from "@/services/admin";
 import AdminTableSkeleton from "@/components/skeleton/AdminTableSkeleton";
 import type { Category, Product } from "@/features/product/types";
+import dynamic from "next/dynamic";
 import TableActions from "../components/TableActions";
 import ConfirmDialog from "../components/ConfirmDialog";
 import DataTable, { type Column } from "../components/DataTable";
-import ProductFormModal, {
-  type FormValues,
-} from "../components/ProductFormModal";
-import ProductReviewsModal from "../components/ProductReviewsModal";
+import type { FormValues } from "../components/ProductFormModal";
+
+const ProductFormModal = dynamic(() => import("../components/ProductFormModal"), {
+  ssr: false,
+});
+const ProductReviewsModal = dynamic(() => import("../components/ProductReviewsModal"), {
+  ssr: false,
+});
 import SearchField from "../components/SearchField";
 import StatusPill from "../components/StatusPill";
 import { EmptyState, ErrorState, OfflineState } from "@/components/states";

@@ -19,7 +19,7 @@ const FEATURES: Feature[] = [
   {
     title: "Fast Delivery",
     description:
-      "Free carbon-neutral shipping on orders over 999. Most orders arrive in 2–4 business days.",
+      "Free carbon-neutral shipping on orders over ₹999. Most orders arrive in 2–4 business days.",
     Icon: DeliveryIcon,
   },
   {
