@@ -123,9 +123,7 @@ export default async function ProductPage({
           title="Product Unavailable"
           message="We couldn't load this product right now because our servers are momentarily unreachable. Please try again shortly."
           retryLabel="Explore Shop"
-          onRetry={() => {
-            if (typeof window !== "undefined") window.location.href = "/shop";
-          }}
+          actionHref="/shop"
         />
       </PageShell>
     );

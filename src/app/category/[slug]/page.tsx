@@ -17,7 +17,7 @@ export interface CategorySeoConfig {
   canonicalSlug: string;
 }
 
-export const CATEGORY_MAP: Record<string, CategorySeoConfig> = {
+const CATEGORY_MAP: Record<string, CategorySeoConfig> = {
   kurtis: {
     name: "Designer Kurtis & Ethnic Tops",
     categoryFilter: "Kurti",
@@ -83,7 +83,7 @@ export const CATEGORY_MAP: Record<string, CategorySeoConfig> = {
   },
 };
 
-export function resolveCategoryFromSlug(rawSlug: string): CategorySeoConfig | null {
+function resolveCategoryFromSlug(rawSlug: string): CategorySeoConfig | null {
   const normalized = rawSlug.trim().toLowerCase();
   if (CATEGORY_MAP[normalized]) {
     return CATEGORY_MAP[normalized];

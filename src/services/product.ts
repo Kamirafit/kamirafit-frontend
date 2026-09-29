@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient, unwrapApiResponse } from "@/api/client";
@@ -17,9 +16,9 @@ let featuredProductsPromise: Promise<Product[]> | null = null;
 const list = (params?: Record<string, unknown>): Promise<Product[]> => {
   if (!params || Object.keys(params).length === 0) {
     if (productsPromise) return productsPromise;
-    productsPromise = unwrapApiResponse<any>(apiClient.get("/products"))
+    productsPromise = unwrapApiResponse<unknown>(apiClient.get("/products"))
       .then((r) => {
-        const items = Array.isArray(r) ? r : r?.data || [];
+        const items = Array.isArray(r) ? r : (r && typeof r === "object" && "data" in r && Array.isArray((r as { data: unknown[] }).data) ? (r as { data: unknown[] }).data : []);
         return items.map(adaptProduct);
       })
       .catch((err) => {
@@ -34,9 +33,9 @@ const list = (params?: Record<string, unknown>): Promise<Product[]> => {
     return productsPromise;
   }
 
-  return unwrapApiResponse<any>(apiClient.get("/products", { params }))
+  return unwrapApiResponse<unknown>(apiClient.get("/products", { params }))
     .then((r) => {
-      const items = Array.isArray(r) ? r : r?.data || [];
+      const items = Array.isArray(r) ? r : (r && typeof r === "object" && "data" in r && Array.isArray((r as { data: unknown[] }).data) ? (r as { data: unknown[] }).data : []);
       return items.map(adaptProduct);
     });
 };
@@ -90,7 +89,7 @@ export const productService = {
   },
   getFeaturedProducts: () => {
     if (featuredProductsPromise) return featuredProductsPromise;
-    featuredProductsPromise = unwrapApiResponse<any[]>(apiClient.get("/products/featured"))
+    featuredProductsPromise = unwrapApiResponse<unknown[]>(apiClient.get("/products/featured"))
       .then((x) => {
         const items = Array.isArray(x) ? x : [];
         return items.map(adaptProduct);
@@ -107,46 +106,49 @@ export const productService = {
     return featuredProductsPromise;
   },
   getProduct: (id: string) =>
-    unwrapApiResponse<any>(apiClient.get("/products/" + id))
+    unwrapApiResponse<unknown>(apiClient.get("/products/" + id))
       .then(adaptProduct)
       .catch((err) => {
         throw err instanceof Error ? err : new Error("Product not found");
       }),
   getRelatedProducts: (id: string, limit = 4) =>
-    unwrapApiResponse<any[]>(apiClient.get("/products/" + id + "/related", { params: { limit } }))
+    unwrapApiResponse<unknown[]>(apiClient.get("/products/" + id + "/related", { params: { limit } }))
       .then((x) => {
         const items = Array.isArray(x) ? x : [];
         return items.map(adaptProduct);
       })
       .catch(() => []),
   createProduct: (product: CreateProductRequestDto) =>
-    unwrapApiResponse<any>(apiClient.post("/products", product)).then(adaptProduct),
+    unwrapApiResponse<unknown>(apiClient.post("/products", product)).then(adaptProduct),
   updateProduct: (id: string, product: UpdateProductRequestDto["data"]) =>
-    unwrapApiResponse<any>(apiClient.put("/products/" + id, product)).then(adaptProduct),
+    unwrapApiResponse<unknown>(apiClient.put("/products/" + id, product)).then(adaptProduct),
   deleteProduct: (id: string): Promise<DeleteProductResponseDto["data"]["id"]> =>
-    unwrapApiResponse<any>(apiClient.delete("/products/" + id)).then((x) => x.id),
+    unwrapApiResponse<{ id: string }>(apiClient.delete("/products/" + id)).then((x) => x.id),
   getColors: (): Promise<ColorItem[]> =>
-    unwrapApiResponse<any>(apiClient.get("/products/colors"))
+    unwrapApiResponse<unknown>(apiClient.get("/products/colors"))
       .then((r) => {
-        const items = Array.isArray(r) ? r : r?.data || [];
+        const items = Array.isArray(r) ? r : (r && typeof r === "object" && "data" in r && Array.isArray((r as { data: unknown[] }).data) ? (r as { data: unknown[] }).data : []);
         return items
-          .map((item: any) => ({
-            name: String(item.name || item.value || "").trim(),
-            hex: String(item.hex || item.slug || "").trim(),
-          }))
+          .map((item: unknown) => {
+            const row = (item && typeof item === "object" ? item : {}) as Record<string, unknown>;
+            return {
+              name: String(row.name || row.value || "").trim(),
+              hex: String(row.hex || row.slug || "").trim(),
+            };
+          })
           .filter((item: ColorItem) => Boolean(item.name));
       })
       .catch(() => []),
   createColor: (color: { name: string; hex: string }): Promise<ColorItem> =>
-    unwrapApiResponse<any>(apiClient.post("/admin/colors", color)).then((r) => {
-      const item = r?.data || r;
+    unwrapApiResponse<Record<string, unknown>>(apiClient.post("/admin/colors", color)).then((r) => {
+      const item = (r?.data || r || {}) as Record<string, unknown>;
       return {
         name: String(item.name || item.value || color.name).trim(),
         hex: String(item.hex || item.slug || color.hex).trim(),
       };
     }),
   deleteColor: (name: string): Promise<{ name: string }> =>
-    unwrapApiResponse<any>(
+    unwrapApiResponse<{ name?: string }>(
       apiClient.delete(`/admin/colors/${encodeURIComponent(name)}`)
     ).then(() => ({ name })),
 };

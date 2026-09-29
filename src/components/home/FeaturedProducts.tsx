@@ -40,9 +40,7 @@ export default function FeaturedProducts({
             title="Featured Collection Unavailable"
             message="We couldn't load this week's featured edit right now. Browse our full shop or check back shortly."
             retryLabel="Browse Full Shop"
-            onRetry={() => {
-              if (typeof window !== "undefined") window.location.href = "/shop";
-            }}
+            actionHref="/shop"
           />
         </div>
       ) : products.length === 0 ? (
