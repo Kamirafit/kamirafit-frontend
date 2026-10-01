@@ -360,7 +360,7 @@ function LoginContent() {
 
       // Highlight the relevant field if error specifically mentions email or phone
       const lower = errMsg.toLowerCase();
-      if (lower.includes("email")) {
+      if (lower.includes("email") || lower.includes("account")) {
         setTouched((prev) => ({ ...prev, email: true }));
         setErrors((prev) => ({ ...prev, email: errMsg }));
       } else if (lower.includes("phone") || lower.includes("mobile")) {
@@ -452,8 +452,9 @@ function LoginContent() {
           </div>
 
           {serverError && (
-            <div className="mt-3 rounded-xl border border-red-500/20 bg-red-500/5 px-3 py-2 text-xs font-medium text-red-500">
-              {serverError}
+            <div className="mt-3 rounded-xl border border-red-300 bg-red-50 px-3.5 py-2.5 text-xs font-semibold text-red-900 shadow-sm flex items-start gap-2">
+              <span className="text-red-600 font-bold">⚠️</span>
+              <span className="flex-1">{serverError}</span>
             </div>
           )}
 

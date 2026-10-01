@@ -38,7 +38,9 @@ export default function OrdersPage() {
       const matchesQuery =
         !q ||
         o.id.toLowerCase().includes(q) ||
-        o.customer.name.toLowerCase().includes(q);
+        o.customer.name.toLowerCase().includes(q) ||
+        (o.returnReason && o.returnReason.toLowerCase().includes(q)) ||
+        (o.cancelReason && o.cancelReason.toLowerCase().includes(q));
       const matchesOrder =
         orderFilter === "all" || o.orderStatus === orderFilter;
       const matchesPayment =

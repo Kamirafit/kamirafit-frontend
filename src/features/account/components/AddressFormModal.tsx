@@ -8,7 +8,7 @@ import Button from "@/components/ui/Button";
 type Props = {
   address?: Address; // If provided, we're editing. If not, adding.
   onClose: () => void;
-  onSave: (address: Address) => void;
+  onSave: (address: Address) => Promise<void> | void;
   isSubmitting?: boolean;
 };
 
@@ -17,6 +17,8 @@ interface FormErrors {
   phoneNumber?: string;
   addressLine1?: string;
   pincode?: string;
+  city?: string;
+  state?: string;
 }
 
 export default function AddressFormModal({ address, onClose, onSave, isSubmitting = false }: Props) {
@@ -26,16 +28,32 @@ export default function AddressFormModal({ address, onClose, onSave, isSubmittin
   const [isDetecting, setIsDetecting] = useState(false);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [errors, setErrors] = useState<FormErrors>({});
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // Sync state whenever address prop changes
+  useEffect(() => {
+    setFormData(address || { type: "Home", isDefault: false });
+    setTouched({});
+    setErrors({});
+    setSubmitError(null);
+  }, [address]);
 
   const validateFields = (data: Partial<Address>): FormErrors => {
     const errs: FormErrors = {};
 
-    if (!data.fullName || data.fullName.trim().length < 2) {
-      errs.fullName = "Please enter your full name";
+    const cleanName = (data.fullName || "").trim();
+    if (!cleanName) {
+      errs.fullName = "Full name is required";
+    } else if (cleanName.length < 2) {
+      errs.fullName = "Full name must be at least 2 characters";
+    } else if (!/^[a-zA-Z\s]+$/.test(cleanName)) {
+      errs.fullName = "Full name cannot contain numbers or special characters";
     }
 
     const cleanPhone = (data.phoneNumber || "").replace(/\D/g, "");
-    if (!cleanPhone || cleanPhone.length < 10) {
+    if (!cleanPhone) {
+      errs.phoneNumber = "Phone number is required";
+    } else if (cleanPhone.length !== 10) {
       errs.phoneNumber = "Please enter a valid 10-digit mobile number";
     }
 
@@ -46,8 +64,14 @@ export default function AddressFormModal({ address, onClose, onSave, isSubmittin
     const cleanPin = (data.pincode || "").replace(/\D/g, "");
     if (!cleanPin || cleanPin.length !== 6) {
       errs.pincode = "Please enter a valid 6-digit PIN code";
-    } else if (!data.city || !data.state) {
-      errs.pincode = "Location could not be detected. Please check PIN code";
+    }
+
+    if (!data.city || data.city.trim().length < 2) {
+      errs.city = "City is required";
+    }
+
+    if (!data.state || data.state.trim().length < 2) {
+      errs.state = "State is required";
     }
 
     return errs;
@@ -95,7 +119,13 @@ export default function AddressFormModal({ address, onClose, onSave, isSubmittin
   };
 
   const handleFieldChange = (field: keyof Address, value: string | boolean) => {
-    const updated = { ...formData, [field]: value };
+    let sanitized = value;
+    if (field === "fullName" && typeof value === "string") {
+      sanitized = value.replace(/[^a-zA-Z\s]/g, "");
+    } else if (field === "phoneNumber" && typeof value === "string") {
+      sanitized = value.replace(/\D/g, "").slice(0, 10);
+    }
+    const updated = { ...formData, [field]: sanitized };
     setFormData(updated);
     if (touched[field]) {
       setErrors(validateFields(updated));
@@ -107,13 +137,16 @@ export default function AddressFormModal({ address, onClose, onSave, isSubmittin
     setErrors(validateFields(formData));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitError(null);
     const allTouched = {
       fullName: true,
       phoneNumber: true,
       addressLine1: true,
       pincode: true,
+      city: true,
+      state: true,
     };
     setTouched(allTouched);
 
@@ -124,27 +157,33 @@ export default function AddressFormModal({ address, onClose, onSave, isSubmittin
       return;
     }
 
-    onSave({
-      id: formData.id || `addr-${Date.now()}`,
-      type: formData.type as AddressType,
-      fullName: (formData.fullName || "").trim(),
-      phoneNumber: (formData.phoneNumber || "").trim(),
-      addressLine1: (formData.addressLine1 || "").trim(),
-      addressLine2: (formData.addressLine2 || "").trim(),
-      landmark: (formData.landmark || "").trim(),
-      city: (formData.city || "").trim(),
-      state: (formData.state || "").trim(),
-      pincode: (formData.pincode || "").trim(),
-      country: (formData.country || "India").trim(),
-      isDefault: formData.isDefault || false,
-    });
+    try {
+      await onSave({
+        id: formData.id || `addr-${Date.now()}`,
+        type: (formData.type as AddressType) || "Home",
+        fullName: (formData.fullName || "").trim(),
+        phoneNumber: (formData.phoneNumber || "").trim(),
+        addressLine1: (formData.addressLine1 || "").trim(),
+        addressLine2: (formData.addressLine2 || "").trim(),
+        landmark: (formData.landmark || "").trim(),
+        city: (formData.city || "").trim(),
+        state: (formData.state || "").trim(),
+        pincode: (formData.pincode || "").trim(),
+        country: (formData.country || "India").trim(),
+        isDefault: formData.isDefault || false,
+      });
+    } catch (err: unknown) {
+      const anyErr = err as { message?: string; response?: { data?: { message?: string } } };
+      const msg = anyErr.response?.data?.message || anyErr.message || "Failed to save address. Please check your details.";
+      setSubmitError(msg);
+    }
   };
 
   const getInputClass = (fieldName: keyof FormErrors) => {
     const hasError = Boolean(touched[fieldName] && errors[fieldName]);
     return `w-full rounded-lg border px-4 py-2.5 text-sm text-paper outline-none transition-colors ${
       hasError
-        ? "border-red-500/80 bg-red-500/5 focus:border-red-500 focus:ring-1 focus:ring-red-500/30"
+        ? "border-red-400 bg-red-50/40 text-paper focus:border-red-600 focus:ring-1 focus:ring-red-400"
         : "border-line bg-transparent focus:border-gold"
     }`;
   };
@@ -169,6 +208,13 @@ export default function AddressFormModal({ address, onClose, onSave, isSubmittin
         </div>
 
         <form onSubmit={handleSubmit} noValidate className="p-6 space-y-5">
+          {submitError && (
+            <div className="rounded-xl border border-red-300 bg-red-50 p-3.5 text-xs font-semibold text-red-900 flex items-start gap-2 shadow-sm">
+              <span className="text-red-600 font-bold">⚠️</span>
+              <span className="flex-1">{submitError}</span>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div className="flex flex-col gap-1.5">
               <label className="text-[11px] font-medium text-paper-muted uppercase tracking-wider">Full Name</label>
@@ -181,7 +227,10 @@ export default function AddressFormModal({ address, onClose, onSave, isSubmittin
                 className={getInputClass("fullName")}
               />
               {touched.fullName && errors.fullName && (
-                <p className="text-[11.5px] text-red-400 mt-0.5">{errors.fullName}</p>
+                <p className="text-xs text-red-700 font-semibold mt-1 flex items-center gap-1">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-red-600" />
+                  {errors.fullName}
+                </p>
               )}
             </div>
 
@@ -190,13 +239,16 @@ export default function AddressFormModal({ address, onClose, onSave, isSubmittin
               <input
                 type="tel"
                 value={formData.phoneNumber || ""}
-                onChange={(e) => handleFieldChange("phoneNumber", e.target.value.replace(/[^\d+\s-]/g, ""))}
+                onChange={(e) => handleFieldChange("phoneNumber", e.target.value)}
                 onBlur={() => handleBlur("phoneNumber")}
                 placeholder="10-digit mobile number"
                 className={getInputClass("phoneNumber")}
               />
               {touched.phoneNumber && errors.phoneNumber && (
-                <p className="text-[11.5px] text-red-400 mt-0.5">{errors.phoneNumber}</p>
+                <p className="text-xs text-red-700 font-semibold mt-1 flex items-center gap-1">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-red-600" />
+                  {errors.phoneNumber}
+                </p>
               )}
             </div>
           </div>
@@ -212,7 +264,10 @@ export default function AddressFormModal({ address, onClose, onSave, isSubmittin
               className={getInputClass("addressLine1")}
             />
             {touched.addressLine1 && errors.addressLine1 && (
-              <p className="text-[11.5px] text-red-400 mt-0.5">{errors.addressLine1}</p>
+              <p className="text-xs text-red-700 font-semibold mt-1 flex items-center gap-1">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-red-600" />
+                {errors.addressLine1}
+              </p>
             )}
           </div>
 
@@ -253,34 +308,51 @@ export default function AddressFormModal({ address, onClose, onSave, isSubmittin
                 className={getInputClass("pincode")}
               />
               {touched.pincode && errors.pincode && (
-                <p className="text-[11.5px] text-red-400 mt-0.5">{errors.pincode}</p>
+                <p className="text-xs text-red-700 font-semibold mt-1 flex items-center gap-1">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-red-600" />
+                  {errors.pincode}
+                </p>
               )}
             </div>
 
             <div className="flex flex-col gap-1.5">
               <label className="text-[11px] font-medium text-paper-muted uppercase tracking-wider">
-                City <span className="text-[10px] lowercase text-paper-muted font-normal">(auto-detected)</span>
+                City <span className="text-[10px] lowercase text-paper-muted font-normal">(auto-detected from PIN)</span>
               </label>
               <input
-                disabled
                 type="text"
                 value={formData.city || ""}
-                placeholder={isDetecting ? "Detecting city..." : "Auto-detected from Pincode"}
-                className="w-full rounded-lg border border-line bg-ink-3/50 px-4 py-2.5 text-sm text-paper cursor-not-allowed opacity-80 select-none outline-none"
+                onChange={(e) => handleFieldChange("city", e.target.value)}
+                onBlur={() => handleBlur("city")}
+                placeholder={isDetecting ? "Detecting city..." : "City"}
+                className={getInputClass("city")}
               />
+              {touched.city && errors.city && (
+                <p className="text-xs text-red-700 font-semibold mt-1 flex items-center gap-1">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-red-600" />
+                  {errors.city}
+                </p>
+              )}
             </div>
 
             <div className="flex flex-col gap-1.5">
               <label className="text-[11px] font-medium text-paper-muted uppercase tracking-wider">
-                State <span className="text-[10px] lowercase text-paper-muted font-normal">(auto-detected)</span>
+                State <span className="text-[10px] lowercase text-paper-muted font-normal">(auto-detected from PIN)</span>
               </label>
               <input
-                disabled
                 type="text"
                 value={formData.state || ""}
-                placeholder={isDetecting ? "Detecting state..." : "Auto-detected from Pincode"}
-                className="w-full rounded-lg border border-line bg-ink-3/50 px-4 py-2.5 text-sm text-paper cursor-not-allowed opacity-80 select-none outline-none"
+                onChange={(e) => handleFieldChange("state", e.target.value)}
+                onBlur={() => handleBlur("state")}
+                placeholder={isDetecting ? "Detecting state..." : "State"}
+                className={getInputClass("state")}
               />
+              {touched.state && errors.state && (
+                <p className="text-xs text-red-700 font-semibold mt-1 flex items-center gap-1">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-red-600" />
+                  {errors.state}
+                </p>
+              )}
             </div>
           </div>
 

@@ -400,6 +400,50 @@ export default function OrderDetailsModal({ open, onClose, order }: Props) {
               </div>
             </div>
           ) : null}
+          {order.cancelReason ? (
+            <div className="rounded-2xl border-2 border-red-400 bg-red-50 p-4.5 text-red-950 shadow-md">
+              <div className="flex items-start gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-200 text-red-900 text-base font-bold">
+                  ✕
+                </div>
+                <div className="flex-1 space-y-1.5">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h4 className="font-display text-[15px] font-bold text-red-950">
+                      Order Cancelled by Customer
+                    </h4>
+                    <span className="rounded-full border border-red-400 bg-red-200 px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wider text-red-950">
+                      Cancelled
+                    </span>
+                  </div>
+                  <div className="rounded-xl border border-red-300 bg-white/95 p-3.5 shadow-inner">
+                    <p className="text-[10.5px] font-bold uppercase tracking-wider text-red-900 mb-1">
+                      Reason Provided by Customer:
+                    </p>
+                    <p className="text-[13.5px] leading-relaxed text-red-950 font-semibold whitespace-pre-wrap">
+                      {order.cancelReason.replace(/^Customer cancelled order:\s*/i, "")}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (order.orderStatus === "Cancelled" || (order.orderStatus as string) === "CANCELLED") ? (
+            <div className="rounded-2xl border-2 border-red-400 bg-red-50 p-4 text-red-950 shadow-md">
+              <div className="flex items-start gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-200 text-red-900 text-base font-bold">
+                  ✕
+                </div>
+                <div className="flex-1 space-y-1">
+                  <h4 className="font-display text-[15px] font-bold text-red-950">
+                    Order Cancelled
+                  </h4>
+                  <p className="text-[13px] text-red-900 font-medium">
+                    This order was cancelled by the customer.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
           {order.returnReason ? (
             <div className="rounded-2xl border-2 border-orange-400 bg-orange-50 p-4.5 text-orange-950 shadow-md">
               <div className="flex items-start gap-3">
@@ -420,7 +464,7 @@ export default function OrderDetailsModal({ open, onClose, order }: Props) {
                       Reason Given by Customer:
                     </p>
                     <p className="text-[13.5px] leading-relaxed text-orange-950 font-semibold whitespace-pre-wrap">
-                      {order.returnReason}
+                      {order.returnReason.replace(/^Customer requested return:\s*/i, "")}
                     </p>
                   </div>
                   <p className="text-[12px] text-orange-900 font-medium">

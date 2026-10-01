@@ -17,7 +17,7 @@ export type RemoveCartItemErrorDto = ApiErrorDto;
 export interface CheckoutRequestDto {
   items: CartItem[];
   shippingAddressId?: string;
-  shippingAddress: Omit<Address, "id" | "isDefault">;
+  shippingAddress?: Omit<Address, "id" | "isDefault">;
   paymentMethod: string;
   couponCode?: string;
   idempotencyKey?: string;

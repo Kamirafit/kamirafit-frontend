@@ -45,7 +45,7 @@ export const OrderSchema = z.object({
 export const CheckoutRequestDtoSchema = z.object({
   items: z.array(CartItemSchema),
   shippingAddressId: z.string().optional(),
-  shippingAddress: AddressSchema.omit({ id: true, isDefault: true }),
+  shippingAddress: AddressSchema.omit({ id: true, isDefault: true }).optional(),
   paymentMethod: z.string(),
   couponCode: z.string().optional(),
   idempotencyKey: z.string().optional(),

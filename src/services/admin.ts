@@ -259,6 +259,7 @@ export function adaptOrder(raw: unknown): Order {
     courierName: (o.courierName || o.carrier) as string | undefined,
     trackingUrl: o.trackingUrl as string | undefined,
     notes: o.notes as string | undefined,
+    cancelReason: (o.cancelReason || (o as { cancellationReason?: string }).cancellationReason) as string | undefined,
     returnReason: o.returnReason as string | undefined,
   };
 }

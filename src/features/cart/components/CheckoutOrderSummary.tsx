@@ -136,7 +136,8 @@ export default function CheckoutOrderSummary({
               </button>
             </div>
             {couponError && (
-              <p className="text-[11px] text-red-400 font-medium">
+              <p className="text-xs text-red-700 font-semibold flex items-center gap-1.5 mt-1">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-red-600" />
                 {couponError}
               </p>
             )}

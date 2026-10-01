@@ -381,7 +381,34 @@ export const mockApi = {
         }];
       });
       const totalAmount = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0) + 79;
-      const order: Order = { id: `ORD-KF-${Math.floor(10000 + Math.random() * 90000)}`, date: new Date().toISOString(), status: "Pending", items: orderItems, totalAmount, shippingAddress: { ...input.shippingAddress, id: `addr-${Date.now()}`, isDefault: false }, paymentMethod: input.paymentMethod };
+      const shippingAddr: Address = input.shippingAddress
+        ? {
+            id: `addr-${Date.now()}`,
+            isDefault: false,
+            type: input.shippingAddress.type || "Home",
+            fullName: input.shippingAddress.fullName || "Customer",
+            phoneNumber: input.shippingAddress.phoneNumber || "9876543210",
+            addressLine1: input.shippingAddress.addressLine1 || "123 Street",
+            addressLine2: input.shippingAddress.addressLine2,
+            landmark: input.shippingAddress.landmark,
+            city: input.shippingAddress.city || "Mumbai",
+            state: input.shippingAddress.state || "Maharashtra",
+            pincode: input.shippingAddress.pincode || "400001",
+            country: input.shippingAddress.country || "India",
+          }
+        : {
+            id: `addr-${Date.now()}`,
+            isDefault: false,
+            type: "Home",
+            fullName: "Customer",
+            phoneNumber: "9876543210",
+            addressLine1: "123 Street",
+            city: "Mumbai",
+            state: "Maharashtra",
+            pincode: "400001",
+            country: "India",
+          };
+      const order: Order = { id: `ORD-KF-${Math.floor(10000 + Math.random() * 90000)}`, date: new Date().toISOString(), status: "Pending", items: orderItems, totalAmount, shippingAddress: shippingAddr, paymentMethod: input.paymentMethod };
       customerOrders = [order, ...customerOrders];
       cart = { ...cart, items: [] };
       safeValidate(OrderSchema, order, "checkout.place (response)");

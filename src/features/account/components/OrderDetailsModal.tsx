@@ -22,16 +22,29 @@ export default function OrderDetailsModal({ order, onClose }: Props) {
 
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState("Changed mind / Ordered by mistake");
+  const [cancelOtherText, setCancelOtherText] = useState("");
   const [cancelError, setCancelError] = useState<string | null>(null);
 
   const [returnOpen, setReturnOpen] = useState(false);
   const [returnReason, setReturnReason] = useState("Wrong size / fit issue");
+  const [returnOtherText, setReturnOtherText] = useState("");
   const [returnComments, setReturnComments] = useState("");
   const [returnError, setReturnError] = useState<string | null>(null);
 
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
   const [downloadingInvoice, setDownloadingInvoice] = useState(false);
   const [invoiceError, setInvoiceError] = useState<string | null>(null);
+
+  // Helper to count letters excluding spaces, numbers, and special characters
+  const countLetters = (str: string) => (str.match(/[a-zA-Z]/g) || []).length;
+
+  const isCancelOther = cancelReason === "Other" || cancelReason === "Other reasons";
+  const cancelLetterCount = countLetters(cancelOtherText);
+  const isCancelValid = !isCancelOther || cancelLetterCount >= 10;
+
+  const isReturnOther = returnReason === "Other";
+  const returnLetterCount = countLetters(returnOtherText);
+  const isReturnValid = !isReturnOther || returnLetterCount >= 10;
 
   const customOrder = order as {
     createdAt?: string;
@@ -104,10 +117,23 @@ export default function OrderDetailsModal({ order, onClose }: Props) {
   const handleCancelSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setCancelError(null);
+
+    if (isCancelOther && cancelLetterCount < 10) {
+      setCancelError(
+        "Please enter at least 10 letters describing your reason (excluding spaces, numbers and special characters)."
+      );
+      return;
+    }
+
+    const finalReason = isCancelOther
+      ? `Other: ${cancelOtherText.trim()}`
+      : cancelReason;
+
     try {
-      await cancelOrderMutation.mutateAsync({ id: order.id, reason: cancelReason });
+      await cancelOrderMutation.mutateAsync({ id: order.id, reason: finalReason });
       setActionSuccess("Order cancelled successfully.");
       setCancelOpen(false);
+      setCancelOtherText("");
     } catch (err: unknown) {
       const errorObj = err as { response?: { data?: { message?: string } }; message?: string };
       setCancelError(errorObj?.response?.data?.message || errorObj?.message || "Failed to cancel order.");
@@ -117,14 +143,32 @@ export default function OrderDetailsModal({ order, onClose }: Props) {
   const handleReturnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setReturnError(null);
+
+    if (isReturnOther && returnLetterCount < 10) {
+      setReturnError(
+        "Please enter at least 10 letters describing your reason (excluding spaces, numbers and special characters)."
+      );
+      return;
+    }
+
+    const finalReason = isReturnOther
+      ? `Other: ${returnOtherText.trim()}`
+      : returnReason;
+
+    const finalComments = isReturnOther
+      ? returnOtherText.trim()
+      : returnComments.trim();
+
     try {
       await requestReturnMutation.mutateAsync({
         id: order.id,
-        reason: returnReason,
-        comments: returnComments,
+        reason: finalReason,
+        comments: finalComments || undefined,
       });
       setActionSuccess("Return request submitted successfully. Our team will review it.");
       setReturnOpen(false);
+      setReturnOtherText("");
+      setReturnComments("");
     } catch (err: unknown) {
       const errorObj = err as { response?: { data?: { message?: string } }; message?: string };
       setReturnError(errorObj?.response?.data?.message || errorObj?.message || "Failed to submit return request.");
@@ -416,16 +460,69 @@ export default function OrderDetailsModal({ order, onClose }: Props) {
                 </label>
                 <select
                   value={cancelReason}
-                  onChange={(e) => setCancelReason(e.target.value)}
+                  onChange={(e) => {
+                    setCancelReason(e.target.value);
+                    if (cancelError) setCancelError(null);
+                  }}
                   className="w-full rounded-xl border border-line bg-ink-2 px-3 py-2 text-xs text-paper focus:border-gold focus:outline-none"
                 >
                   <option value="Changed mind / Ordered by mistake">Changed mind / Ordered by mistake</option>
                   <option value="Found a better price elsewhere">Found a better price elsewhere</option>
                   <option value="Estimated delivery time is too long">Estimated delivery time is too long</option>
                   <option value="Need to change shipping address or items">Need to change shipping address or items</option>
-                  <option value="Other reasons">Other reasons</option>
+                  <option value="Other">Other</option>
                 </select>
               </div>
+
+              {isCancelOther && (
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-paper-muted">
+                      Reason Description <span className="text-red-400">*</span>
+                    </label>
+                    <span className="text-[10px] text-paper-muted">
+                      (At least 10 letters required)
+                    </span>
+                  </div>
+                  <textarea
+                    value={cancelOtherText}
+                    onChange={(e) => {
+                      setCancelOtherText(e.target.value);
+                      if (cancelError) setCancelError(null);
+                    }}
+                    rows={3}
+                    placeholder="Please explain your reason for cancellation in detail..."
+                    className={`w-full rounded-xl border p-3 text-xs text-paper placeholder-paper-muted/50 bg-ink-2 focus:outline-none transition-colors ${
+                      cancelLetterCount >= 10
+                        ? "border-emerald-500/50 focus:border-emerald-500"
+                        : cancelOtherText.length > 0
+                        ? "border-amber-500/50 focus:border-amber-500"
+                        : "border-line focus:border-gold"
+                    }`}
+                  />
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span
+                      className={
+                        cancelLetterCount >= 10
+                          ? "text-emerald-400 font-medium"
+                          : cancelOtherText.length > 0
+                          ? "text-amber-400 font-medium"
+                          : "text-paper-muted"
+                      }
+                    >
+                      {cancelLetterCount >= 10
+                        ? `✓ Valid (${cancelLetterCount} letters entered)`
+                        : `${cancelLetterCount}/10 letters entered (excluding numbers & symbols)`}
+                    </span>
+                    {cancelLetterCount < 10 && (
+                      <span className="text-[10.5px] text-paper-muted">
+                        {10 - cancelLetterCount} more letter{10 - cancelLetterCount === 1 ? "" : "s"} needed
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
@@ -436,8 +533,8 @@ export default function OrderDetailsModal({ order, onClose }: Props) {
                 </button>
                 <button
                   type="submit"
-                  disabled={cancelOrderMutation.isPending}
-                  className="rounded-xl bg-red-600 px-4 py-2 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+                  disabled={cancelOrderMutation.isPending || !isCancelValid}
+                  className="rounded-xl bg-red-600 px-4 py-2 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                 >
                   {cancelOrderMutation.isPending ? "Cancelling..." : "Confirm Cancellation"}
                 </button>
@@ -468,7 +565,10 @@ export default function OrderDetailsModal({ order, onClose }: Props) {
                 </label>
                 <select
                   value={returnReason}
-                  onChange={(e) => setReturnReason(e.target.value)}
+                  onChange={(e) => {
+                    setReturnReason(e.target.value);
+                    if (returnError) setReturnError(null);
+                  }}
                   className="w-full rounded-xl border border-line bg-ink-2 px-3 py-2 text-xs text-paper focus:border-gold focus:outline-none"
                 >
                   <option value="Wrong size / fit issue">Wrong size / fit issue</option>
@@ -478,18 +578,69 @@ export default function OrderDetailsModal({ order, onClose }: Props) {
                   <option value="Other">Other</option>
                 </select>
               </div>
-              <div>
-                <label className="block text-[11px] font-semibold uppercase tracking-wider text-paper-muted mb-1.5">
-                  Additional Details / Notes (Optional)
-                </label>
-                <textarea
-                  value={returnComments}
-                  onChange={(e) => setReturnComments(e.target.value)}
-                  rows={3}
-                  placeholder="Provide any helpful details for the returns team..."
-                  className="w-full rounded-xl border border-line bg-ink-2 p-3 text-xs text-paper placeholder-paper-muted/50 focus:border-gold focus:outline-none"
-                />
-              </div>
+
+              {isReturnOther ? (
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-paper-muted">
+                      Reason Description <span className="text-red-400">*</span>
+                    </label>
+                    <span className="text-[10px] text-paper-muted">
+                      (At least 10 letters required)
+                    </span>
+                  </div>
+                  <textarea
+                    value={returnOtherText}
+                    onChange={(e) => {
+                      setReturnOtherText(e.target.value);
+                      if (returnError) setReturnError(null);
+                    }}
+                    rows={3}
+                    placeholder="Please explain why you wish to return this product in detail..."
+                    className={`w-full rounded-xl border p-3 text-xs text-paper placeholder-paper-muted/50 bg-ink-2 focus:outline-none transition-colors ${
+                      returnLetterCount >= 10
+                        ? "border-emerald-500/50 focus:border-emerald-500"
+                        : returnOtherText.length > 0
+                        ? "border-amber-500/50 focus:border-amber-500"
+                        : "border-line focus:border-gold"
+                    }`}
+                  />
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span
+                      className={
+                        returnLetterCount >= 10
+                          ? "text-emerald-400 font-medium"
+                          : returnOtherText.length > 0
+                          ? "text-amber-400 font-medium"
+                          : "text-paper-muted"
+                      }
+                    >
+                      {returnLetterCount >= 10
+                        ? `✓ Valid (${returnLetterCount} letters entered)`
+                        : `${returnLetterCount}/10 letters entered (excluding numbers & symbols)`}
+                    </span>
+                    {returnLetterCount < 10 && (
+                      <span className="text-[10.5px] text-paper-muted">
+                        {10 - returnLetterCount} more letter{10 - returnLetterCount === 1 ? "" : "s"} needed
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-paper-muted mb-1.5">
+                    Additional Details / Notes (Optional)
+                  </label>
+                  <textarea
+                    value={returnComments}
+                    onChange={(e) => setReturnComments(e.target.value)}
+                    rows={3}
+                    placeholder="Provide any helpful details for the returns team..."
+                    className="w-full rounded-xl border border-line bg-ink-2 p-3 text-xs text-paper placeholder-paper-muted/50 focus:border-gold focus:outline-none"
+                  />
+                </div>
+              )}
+
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
@@ -500,8 +651,8 @@ export default function OrderDetailsModal({ order, onClose }: Props) {
                 </button>
                 <button
                   type="submit"
-                  disabled={requestReturnMutation.isPending}
-                  className="rounded-xl bg-gold px-4 py-2 text-xs font-semibold text-white hover:bg-gold/90 disabled:opacity-50"
+                  disabled={requestReturnMutation.isPending || !isReturnValid}
+                  className="rounded-xl bg-gold px-4 py-2 text-xs font-semibold text-white hover:bg-gold/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                 >
                   {requestReturnMutation.isPending ? "Submitting..." : "Submit Return Request"}
                 </button>

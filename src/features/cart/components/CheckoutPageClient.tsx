@@ -19,6 +19,7 @@ import type { Address } from "@/features/account/types";
 import { orderService, useVerifyPayment, type CouponValidationResult } from "@/services/order";
 import { ErrorState, OfflineState } from "@/components/states";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { useProfile } from "@/features/auth/hooks";
 
 function loadRazorpayScript(): Promise<boolean> {
   return new Promise((resolve) => {
@@ -131,6 +132,14 @@ export default function CheckoutPageClient() {
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
   const [couponError, setCouponError] = useState<string | null>(null);
 
+  // User account profile state
+  const authUser = useAppSelector((s) => s.auth.user);
+  const { data: profile } = useProfile();
+  const accountUser = profile || authUser;
+  const accountUserName =
+    [accountUser?.firstName, accountUser?.lastName].filter(Boolean).join(" ") ||
+    "Customer";
+
   // Checkout submission state
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<"COD" | "ONLINE">("ONLINE");
@@ -220,8 +229,8 @@ export default function CheckoutPageClient() {
       setIsAddressModalOpen(false);
       setEditingAddress(null);
       setCheckoutError(null);
-    } catch {
-      // Error handled by mutation state
+    } catch (err) {
+      throw err;
     }
   };
 
@@ -254,21 +263,36 @@ export default function CheckoutPageClient() {
         };
       });
 
+      const isSavedAddress =
+        selectedAddress.id &&
+        !selectedAddress.id.startsWith("temp") &&
+        !selectedAddress.id.startsWith("addr-");
+
+      const userPhone =
+        selectedAddress.phoneNumber ||
+        (accountUser as { phone?: string; phoneNumber?: string; mobileNumber?: string })?.phone ||
+        (accountUser as { phone?: string; phoneNumber?: string; mobileNumber?: string })?.phoneNumber ||
+        (accountUser as { phone?: string; phoneNumber?: string; mobileNumber?: string })?.mobileNumber ||
+        "";
+      const userEmail = (accountUser as { email?: string })?.email || "";
+
       const checkoutPayload = {
         items: formattedItems,
-        shippingAddressId: selectedAddress.id,
-        shippingAddress: {
-          type: selectedAddress.type,
-          fullName: selectedAddress.fullName,
-          phoneNumber: selectedAddress.phoneNumber,
-          addressLine1: selectedAddress.addressLine1,
-          addressLine2: selectedAddress.addressLine2 || undefined,
-          landmark: selectedAddress.landmark || undefined,
-          city: selectedAddress.city,
-          state: selectedAddress.state,
-          pincode: selectedAddress.pincode,
-          country: selectedAddress.country || "India",
-        },
+        shippingAddressId: isSavedAddress ? selectedAddress.id : undefined,
+        shippingAddress: !isSavedAddress
+          ? {
+            type: selectedAddress.type || "Home",
+            fullName: selectedAddress.fullName,
+            phoneNumber: userPhone,
+            addressLine1: selectedAddress.addressLine1,
+            addressLine2: selectedAddress.addressLine2 || undefined,
+            landmark: selectedAddress.landmark || undefined,
+            city: selectedAddress.city,
+            state: selectedAddress.state,
+            pincode: selectedAddress.pincode,
+            country: selectedAddress.country || "India",
+          }
+          : undefined,
         paymentMethod,
         couponCode: appliedCoupon?.code,
         idempotencyKey: idempotencyKeyRef.current,
@@ -279,7 +303,7 @@ export default function CheckoutPageClient() {
       // --- FLOW A: CASH ON DELIVERY (COD) ---
       if (paymentMethod === "COD") {
         setPlacedOrderTotal(result.order.totalAmount);
-        setPlacedRecipientName(selectedAddress.fullName);
+        setPlacedRecipientName(accountUserName);
         setPlacedPaymentMethod("COD");
         dispatch(clearCart());
         setIsSubmitting(false);
@@ -298,7 +322,7 @@ export default function CheckoutPageClient() {
       const keyId = paymentInfo?.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_placeholder";
       const orderNumber = (result.order as { orderNumber?: string }).orderNumber || result.order.id;
 
-      const rzpOptions = {
+      const rzpOptions: Record<string, unknown> = {
         key: keyId,
         amount: paymentInfo?.amount || Math.round(result.order.totalAmount * 100),
         currency: paymentInfo?.currency || "INR",
@@ -306,26 +330,10 @@ export default function CheckoutPageClient() {
         description: `Order #${orderNumber}`,
         order_id: paymentInfo?.orderId,
         prefill: {
-          name: selectedAddress.fullName,
-        },
-        send_sms_hash: false,
-        config: {
-          display: {
-            blocks: {
-              upi: {
-                name: "Pay via UPI",
-                instruments: [
-                  {
-                    method: "upi",
-                  },
-                ],
-              },
-            },
-            sequence: ["block.upi"],
-            preferences: {
-              show_default_blocks: false,
-            },
-          },
+          name: accountUserName,
+          email: userEmail,
+          contact: userPhone,
+          method: "upi",
         },
         notes: {
           orderId: result.order.id,
@@ -353,7 +361,7 @@ export default function CheckoutPageClient() {
               razorpaySignature: response.razorpay_signature,
             });
             setPlacedOrderTotal(result.order.totalAmount);
-            setPlacedRecipientName(selectedAddress.fullName);
+            setPlacedRecipientName(accountUserName);
             setPlacedPaymentMethod("ONLINE");
             dispatch(clearCart());
           } catch {
@@ -495,10 +503,10 @@ export default function CheckoutPageClient() {
       {checkoutError && (
         <div
           role="alert"
-          className="mb-8 flex items-start gap-3 rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-200 animate-fadeIn"
+          className="mb-8 flex items-start gap-3 rounded-2xl border border-red-300 bg-red-50 p-4 text-sm text-red-950 shadow-sm animate-fadeIn"
         >
           <svg
-            className="mt-0.5 h-5 w-5 shrink-0 text-rose-400"
+            className="mt-0.5 h-5 w-5 shrink-0 text-red-600"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -510,7 +518,7 @@ export default function CheckoutPageClient() {
               d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
             />
           </svg>
-          <div className="flex-1 font-medium">{checkoutError}</div>
+          <div className="flex-1 font-semibold leading-relaxed text-red-950">{checkoutError}</div>
         </div>
       )}
 
@@ -557,21 +565,19 @@ export default function CheckoutPageClient() {
                     <div
                       key={addr.id}
                       onClick={() => setSelectedAddressId(addr.id)}
-                      className={`group relative flex flex-col justify-between rounded-2xl border p-4 sm:p-5 cursor-pointer transition-all duration-200 ${
-                        isSelected
-                          ? "border-gold bg-gold/10 shadow-[0_0_20px_rgba(201,162,77,0.15)] ring-1 ring-gold"
-                          : "border-line bg-ink hover:border-gold/40 hover:bg-ink-2/60"
-                      }`}
+                      className={`group relative flex flex-col justify-between rounded-2xl border p-4 sm:p-5 cursor-pointer transition-all duration-200 ${isSelected
+                        ? "border-gold bg-gold/10 shadow-[0_0_20px_rgba(201,162,77,0.15)] ring-1 ring-gold"
+                        : "border-line bg-ink hover:border-gold/40 hover:bg-ink-2/60"
+                        }`}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-start gap-3 min-w-0">
                           {/* Radio Checkmark */}
                           <div
-                            className={`mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-all ${
-                              isSelected
-                                ? "border-gold bg-gold text-ink"
-                                : "border-paper-muted/50 bg-transparent group-hover:border-gold/50"
-                            }`}
+                            className={`mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-all ${isSelected
+                              ? "border-gold bg-gold text-ink"
+                              : "border-paper-muted/50 bg-transparent group-hover:border-gold/50"
+                              }`}
                           >
                             {isSelected && (
                               <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
@@ -725,7 +731,7 @@ export default function CheckoutPageClient() {
                     <span>Order Processing: 24–48 Hours</span>
                   </div>
                   <p className="text-[11px] text-paper-muted leading-relaxed">
-                    Takes <strong>1–2 business days</strong> for verification, tailoring inspection, and packaging at our atelier (<strong>barring Saturdays, Sundays, and national holidays</strong>).
+                    Takes <strong>1–2 business days</strong> for verification and packaging. (<strong>barring Saturdays, Sundays, and national holidays</strong>).
                   </p>
                 </div>
 
@@ -736,7 +742,7 @@ export default function CheckoutPageClient() {
                     <span>Courier Transit: ~{deliveryEstimation.estimatedDays} Days</span>
                   </div>
                   <p className="text-[11px] text-paper-muted leading-relaxed">
-                    Dispatched via <strong>{deliveryEstimation.courierName}</strong> with live tracking. Estimated arrival: <strong className="text-gold font-semibold">{deliveryEstimation.fullDateRange}</strong>.
+                    Estimated arrival: <strong className="text-gold font-semibold">{deliveryEstimation.fullDateRange}</strong>.
                   </p>
                 </div>
               </div>
@@ -763,19 +769,17 @@ export default function CheckoutPageClient() {
               {/* COD */}
               <div
                 onClick={() => setPaymentMethod("COD")}
-                className={`relative flex items-center justify-between rounded-2xl border p-4 sm:p-5 cursor-pointer transition-all duration-200 ${
-                  paymentMethod === "COD"
-                    ? "border-gold bg-gold/10 shadow-[0_0_20px_rgba(201,162,77,0.15)] ring-1 ring-gold"
-                    : "border-line bg-ink hover:border-gold/40 hover:bg-ink-2/60"
-                }`}
+                className={`relative flex items-center justify-between rounded-2xl border p-4 sm:p-5 cursor-pointer transition-all duration-200 ${paymentMethod === "COD"
+                  ? "border-gold bg-gold/10 shadow-[0_0_20px_rgba(201,162,77,0.15)] ring-1 ring-gold"
+                  : "border-line bg-ink hover:border-gold/40 hover:bg-ink-2/60"
+                  }`}
               >
                 <div className="flex items-center gap-3">
                   <div
-                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-all ${
-                      paymentMethod === "COD"
-                        ? "border-gold bg-gold text-ink"
-                        : "border-paper-muted/50 bg-transparent"
-                    }`}
+                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-all ${paymentMethod === "COD"
+                      ? "border-gold bg-gold text-ink"
+                      : "border-paper-muted/50 bg-transparent"
+                      }`}
                   >
                     {paymentMethod === "COD" && (
                       <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
@@ -812,12 +816,38 @@ export default function CheckoutPageClient() {
                       </svg>
                     )}
                   </div>
-                  <span className="font-display text-base font-semibold text-paper tracking-wide">
-                    UPI
-                  </span>
+                  <div className="flex flex-col">
+                    <span className="font-display text-base font-semibold text-paper tracking-wide">
+                      UPI / Online
+                    </span>
+                    <span className="text-[11px] text-paper-muted">
+                      Google Pay, PhonePe, Paytm, QR, Cards & NetBanking
+                    </span>
+                  </div>
+                </div>
+                <div className="hidden sm:flex items-center gap-1.5 text-xs text-gold font-medium">
+                  <span>⚡ 1-Tap UPI</span>
                 </div>
               </div>
             </div>
+
+            {/* UPI Seamless Info */}
+            {paymentMethod === "ONLINE" && (
+              <div className="mt-4 flex items-start gap-3 rounded-2xl border border-gold/25 bg-gold/5 p-4 text-xs text-paper-muted leading-relaxed">
+                <span className="text-xl shrink-0">📱</span>
+                <div className="space-y-1">
+                  <p className="font-semibold text-paper text-xs">
+                    Fast & Secure Payment via Razorpay
+                  </p>
+                  <p className="text-[11.5px]">
+                    <strong>On Mobile:</strong> Directly launches your installed UPI app (Google Pay, PhonePe, Paytm, CRED, etc.) with 1 tap — no typing or QR scanning required.
+                  </p>
+                  <p className="text-[11.5px]">
+                    <strong>On Desktop:</strong> Displays a dynamic QR code for quick scanning with your phone, or choose UPI ID, Card, or NetBanking.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </section>
 
@@ -836,6 +866,17 @@ export default function CheckoutPageClient() {
             selectedPincode={selectedAddress?.pincode}
             deliveryZoneLabel={deliveryEstimation?.zoneLabel}
           />
+          {checkoutError && (
+            <div
+              role="alert"
+              className="rounded-2xl border border-red-300 bg-red-50 p-3.5 text-xs text-red-950 flex items-start gap-2.5 shadow-sm"
+            >
+              <svg className="h-4 w-4 shrink-0 text-red-600 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <div className="flex-1 font-semibold leading-snug text-red-950">{checkoutError}</div>
+            </div>
+          )}
           <button
             type="button"
             onClick={handleCheckoutSubmit}

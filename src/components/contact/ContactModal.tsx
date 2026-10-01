@@ -3,6 +3,8 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { contactService } from "@/services/contact";
 import { COUNTRY_CODES, DEFAULT_COUNTRY_CODE } from "@/data/countryCodes";
+import { useProfile } from "@/features/auth/hooks";
+import { useAppSelector } from "@/features/product/hooks/redux";
 
 interface FormState {
   firstName: string;
@@ -28,6 +30,11 @@ interface Props {
 }
 
 export default function ContactModal({ open, onClose }: Props) {
+  const auth = useAppSelector((state) => state.auth);
+  const { data: profile } = useProfile();
+  const isLoggedIn = auth.isAuthenticated || Boolean(profile);
+  const user = profile || auth.user;
+
   const [formData, setFormData] = useState<FormState>({
     firstName: "",
     lastName: "",
@@ -36,6 +43,20 @@ export default function ContactModal({ open, onClose }: Props) {
     email: "",
     message: "",
   });
+
+  // Auto-fill when logged in, but remains fully editable
+  useEffect(() => {
+    if (isLoggedIn && user) {
+      setFormData((prev) => ({
+        ...prev,
+        firstName: prev.firstName || user.firstName || "",
+        lastName: prev.lastName || user.lastName || "",
+        email: prev.email || user.email || "",
+        countryCode: prev.countryCode || user.countryCode || DEFAULT_COUNTRY_CODE,
+        phone: prev.phone || user.phoneNumber || user.mobileNumber?.replace(/^\+\d+\s*/, "") || "",
+      }));
+    }
+  }, [isLoggedIn, user]);
 
   const [errors, setErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -71,16 +92,16 @@ export default function ContactModal({ open, onClose }: Props) {
       errs.firstName = "First name is required";
     } else if (trimmedFirst.length < 2) {
       errs.firstName = "First name must be at least 2 characters";
-    } else if (!/^[A-Za-z\s'-]+$/.test(trimmedFirst)) {
-      errs.firstName = "First name must contain letters only";
+    } else if (!/^[A-Za-z\s]+$/.test(trimmedFirst)) {
+      errs.firstName = "First name cannot contain numbers or special characters";
     }
 
     // Last Name
     const trimmedLast = data.lastName.trim();
     if (!trimmedLast) {
       errs.lastName = "Last name is required";
-    } else if (!/^[A-Za-z\s'-]+$/.test(trimmedLast)) {
-      errs.lastName = "Last name must contain letters only";
+    } else if (!/^[A-Za-z\s]+$/.test(trimmedLast)) {
+      errs.lastName = "Last name cannot contain numbers or special characters";
     }
 
     // Country Code
@@ -89,11 +110,9 @@ export default function ContactModal({ open, onClose }: Props) {
     }
 
     // Phone
-    const cleanPhone = data.phone.replace(/[\s-]/g, "");
+    const cleanPhone = data.phone.replace(/\D/g, "");
     if (!cleanPhone) {
       errs.phone = "Phone number is required";
-    } else if (!/^\d+$/.test(cleanPhone)) {
-      errs.phone = "Phone number must contain numbers only";
     } else if (data.countryCode === "+91" && cleanPhone.length !== 10) {
       errs.phone = "Please enter a valid 10-digit Indian phone number";
     } else if (cleanPhone.length < 7 || cleanPhone.length > 15) {
@@ -123,7 +142,13 @@ export default function ContactModal({ open, onClose }: Props) {
   };
 
   const handleChange = (field: keyof FormState, value: string) => {
-    const updated = { ...formData, [field]: value };
+    let sanitized = value;
+    if (field === "firstName" || field === "lastName") {
+      sanitized = value.replace(/[^a-zA-Z\s]/g, "");
+    } else if (field === "phone") {
+      sanitized = value.replace(/\D/g, "").slice(0, 10);
+    }
+    const updated = { ...formData, [field]: sanitized };
     setFormData(updated);
 
     if (touched[field]) {
@@ -284,8 +309,9 @@ export default function ContactModal({ open, onClose }: Props) {
             className="mt-7 space-y-4 text-left"
           >
             {submitError && (
-              <div className="rounded-xl border border-rose-500/40 bg-rose-500/10 p-3 text-xs leading-relaxed text-rose-300">
-                {submitError}
+              <div className="rounded-xl border border-red-300 bg-red-50 p-3.5 text-xs font-semibold leading-relaxed text-red-900 shadow-sm flex items-start gap-2">
+                <span className="text-red-600 font-bold">⚠️</span>
+                <span className="flex-1">{submitError}</span>
               </div>
             )}
 
@@ -313,8 +339,8 @@ export default function ContactModal({ open, onClose }: Props) {
                   }`}
                 />
                 {errors.firstName && touched.firstName && (
-                  <p className="mt-1 flex items-center gap-1 text-[11px] text-rose-400">
-                    <span aria-hidden>⚠</span> {errors.firstName}
+                  <p className="mt-1 flex items-center gap-1 text-xs text-red-700 font-semibold">
+                    <span aria-hidden className="text-red-600">⚠</span> {errors.firstName}
                   </p>
                 )}
               </div>
@@ -341,8 +367,8 @@ export default function ContactModal({ open, onClose }: Props) {
                   }`}
                 />
                 {errors.lastName && touched.lastName && (
-                  <p className="mt-1 flex items-center gap-1 text-[11px] text-rose-400">
-                    <span aria-hidden>⚠</span> {errors.lastName}
+                  <p className="mt-1 flex items-center gap-1 text-xs text-red-700 font-semibold">
+                    <span aria-hidden className="text-red-600">⚠</span> {errors.lastName}
                   </p>
                 )}
               </div>
@@ -388,8 +414,8 @@ export default function ContactModal({ open, onClose }: Props) {
                 />
               </div>
               {errors.phone && touched.phone && (
-                <p className="mt-1 flex items-center gap-1 text-[11px] text-rose-400">
-                  <span aria-hidden>⚠</span> {errors.phone}
+                <p className="mt-1 flex items-center gap-1 text-xs text-red-700 font-semibold">
+                  <span aria-hidden className="text-red-600">⚠</span> {errors.phone}
                 </p>
               )}
             </div>
@@ -417,8 +443,8 @@ export default function ContactModal({ open, onClose }: Props) {
                 }`}
               />
               {errors.email && touched.email && (
-                <p className="mt-1 flex items-center gap-1 text-[11px] text-rose-400">
-                  <span aria-hidden>⚠</span> {errors.email}
+                <p className="mt-1 flex items-center gap-1 text-xs text-red-700 font-semibold">
+                  <span aria-hidden className="text-red-600">⚠</span> {errors.email}
                 </p>
               )}
             </div>
@@ -446,8 +472,8 @@ export default function ContactModal({ open, onClose }: Props) {
               />
               <div className="mt-1 flex items-center justify-between text-[11px]">
                 {errors.message && touched.message ? (
-                  <p className="flex items-center gap-1 text-rose-400">
-                    <span aria-hidden>⚠</span> {errors.message}
+                  <p className="flex items-center gap-1 text-xs text-red-700 font-semibold">
+                    <span aria-hidden className="text-red-600">⚠</span> {errors.message}
                   </p>
                 ) : (
                   <span className="text-paper-muted/60">Minimum 10 characters</span>

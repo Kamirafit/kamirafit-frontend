@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { contactService } from "@/services/contact";
+import { useProfile } from "@/features/auth/hooks";
+import { useAppSelector } from "@/features/product/hooks/redux";
 
 interface FormErrors {
   firstName?: string;
@@ -12,6 +14,11 @@ interface FormErrors {
 }
 
 export default function ContactClient() {
+  const auth = useAppSelector((state) => state.auth);
+  const { data: profile } = useProfile();
+  const isLoggedIn = auth.isAuthenticated || Boolean(profile);
+  const user = profile || auth.user;
+
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -20,6 +27,20 @@ export default function ContactClient() {
     email: "",
     message: "",
   });
+
+  // Auto-fill when logged in, but remains fully editable
+  useEffect(() => {
+    if (isLoggedIn && user) {
+      setFormData((prev) => ({
+        ...prev,
+        firstName: prev.firstName || user.firstName || "",
+        lastName: prev.lastName || user.lastName || "",
+        email: prev.email || user.email || "",
+        countryCode: prev.countryCode || user.countryCode || "+91",
+        phone: prev.phone || user.phoneNumber || user.mobileNumber?.replace(/^\+\d+\s*/, "") || "",
+      }));
+    }
+  }, [isLoggedIn, user]);
 
   const [errors, setErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -31,9 +52,11 @@ export default function ContactClient() {
       case "firstName":
         if (!value.trim()) return "First name is required";
         if (value.trim().length < 2) return "First name must be at least 2 characters";
+        if (!/^[a-zA-Z\s]+$/.test(value)) return "First name cannot contain numbers or special characters";
         return "";
       case "lastName":
         if (!value.trim()) return "Last name is required";
+        if (!/^[a-zA-Z\s]+$/.test(value)) return "Last name cannot contain numbers or special characters";
         return "";
       case "email":
         if (!value.trim()) return "Email address is required";
@@ -90,9 +113,15 @@ export default function ContactClient() {
   };
 
   const handleChange = (field: keyof typeof formData, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    let sanitized = value;
+    if (field === "firstName" || field === "lastName") {
+      sanitized = value.replace(/[^a-zA-Z\s]/g, "");
+    } else if (field === "phone") {
+      sanitized = value.replace(/\D/g, "").slice(0, 10);
+    }
+    setFormData((prev) => ({ ...prev, [field]: sanitized }));
     if (touched[field]) {
-      const err = validateField(field, value);
+      const err = validateField(field, sanitized);
       setErrors((prev) => ({ ...prev, [field]: err }));
     }
   };
@@ -182,8 +211,9 @@ export default function ContactClient() {
           )}
 
           {status === "error" && (
-            <div className="mt-6 rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-300">
-              {errorMessage}
+            <div className="mt-6 rounded-xl border border-red-300 bg-red-50 p-4 text-xs font-semibold text-red-900 shadow-sm flex items-start gap-2">
+              <span className="text-red-600 font-bold">⚠️</span>
+              <span className="flex-1">{errorMessage}</span>
             </div>
           )}
 
@@ -207,7 +237,10 @@ export default function ContactClient() {
                   placeholder="Arjun"
                 />
                 {touched.firstName && errors.firstName && (
-                  <p className="mt-1 text-[11px] text-red-400 font-medium">{errors.firstName}</p>
+                  <p className="mt-1 text-xs text-red-700 font-semibold flex items-center gap-1">
+                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-red-600" />
+                    {errors.firstName}
+                  </p>
                 )}
               </div>
 
@@ -229,7 +262,10 @@ export default function ContactClient() {
                   placeholder="Sharma"
                 />
                 {touched.lastName && errors.lastName && (
-                  <p className="mt-1 text-[11px] text-red-400 font-medium">{errors.lastName}</p>
+                  <p className="mt-1 text-xs text-red-700 font-semibold flex items-center gap-1">
+                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-red-600" />
+                    {errors.lastName}
+                  </p>
                 )}
               </div>
             </div>
@@ -253,7 +289,10 @@ export default function ContactClient() {
                   placeholder="arjun@example.com"
                 />
                 {touched.email && errors.email && (
-                  <p className="mt-1 text-[11px] text-red-400 font-medium">{errors.email}</p>
+                  <p className="mt-1 text-xs text-red-700 font-semibold flex items-center gap-1">
+                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-red-600" />
+                    {errors.email}
+                  </p>
                 )}
               </div>
 
@@ -278,7 +317,10 @@ export default function ContactClient() {
                   />
                 </div>
                 {touched.phone && errors.phone && (
-                  <p className="mt-1 text-[11px] text-red-400 font-medium">{errors.phone}</p>
+                  <p className="mt-1 text-xs text-red-700 font-semibold flex items-center gap-1">
+                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-red-600" />
+                    {errors.phone}
+                  </p>
                 )}
               </div>
             </div>
@@ -301,7 +343,10 @@ export default function ContactClient() {
                 placeholder="How can we assist you today?"
               />
               {touched.message && errors.message && (
-                <p className="mt-1 text-[11px] text-red-400 font-medium">{errors.message}</p>
+                <p className="mt-1 text-xs text-red-700 font-semibold flex items-center gap-1">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-red-600" />
+                  {errors.message}
+                </p>
               )}
             </div>
 

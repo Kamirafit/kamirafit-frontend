@@ -98,11 +98,20 @@ export default function OrdersTable({ rows, onView, emptyLabel }: Props) {
           <StatusBadge kind="order" status={o.orderStatus} />
           {o.returnReason && (
             <span
-              className="inline-flex items-center gap-1 text-[10px] text-orange-950 bg-orange-100 border border-orange-300 rounded px-1.5 py-0.5 max-w-[180px] truncate font-medium"
+              className="inline-flex items-center gap-1 text-[10px] text-orange-950 bg-orange-100 border border-orange-300 rounded px-1.5 py-0.5 max-w-[200px] truncate font-medium shadow-xs"
               title={o.returnReason}
             >
               <span className="shrink-0 font-bold">Return:</span>
               <span className="truncate">{o.returnReason.replace(/^Customer requested return:\s*/i, "")}</span>
+            </span>
+          )}
+          {o.cancelReason && (
+            <span
+              className="inline-flex items-center gap-1 text-[10px] text-red-950 bg-red-100 border border-red-300 rounded px-1.5 py-0.5 max-w-[200px] truncate font-medium shadow-xs"
+              title={o.cancelReason}
+            >
+              <span className="shrink-0 font-bold">Cancel:</span>
+              <span className="truncate">{o.cancelReason.replace(/^Customer cancelled order:\s*/i, "")}</span>
             </span>
           )}
         </div>

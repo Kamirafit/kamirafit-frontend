@@ -14,6 +14,7 @@ const FRIENDLY_API_MESSAGES: Record<string, string> = {
   PRODUCT_NOT_FOUND: "We couldn’t find that product.",
   ADDRESS_NOT_FOUND: "That address is no longer available.",
   ORDER_NOT_FOUND: "We couldn’t find that order.",
+  USER_NOT_FOUND: "Account does not exist.",
   INVALID_CREDENTIALS: "The email or password is incorrect.",
   CONFLICT: "User with this email or phone number already exists.",
 };
