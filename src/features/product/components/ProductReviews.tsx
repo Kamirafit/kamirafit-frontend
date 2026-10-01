@@ -305,12 +305,12 @@ export default function ProductReviews({
             Rating & Reviews
           </h2>
           <div className="mt-3 flex flex-wrap items-center gap-2 text-[13px] text-paper-muted">
-            <StarRating rating={currentAverageRating} size={16} />
+            <StarRating rating={currentAverageRating} size={16} showValue={false} />
             <span className="font-semibold text-paper">
               {currentAverageRating.toFixed(1)}
             </span>
             <span>
-              ({total} Review{total === 1 ? "" : "s"})
+              ({total === 0 ? "No reviews yet" : `${total} Review${total === 1 ? "" : "s"}`})
             </span>
           </div>
         </div>

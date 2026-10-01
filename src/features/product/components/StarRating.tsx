@@ -4,9 +4,10 @@ type Props = {
   rating: number;
   max?: number;
   size?: number;
+  showValue?: boolean;
 };
 
-export default function StarRating({ rating, max = 5, size = 14 }: Props) {
+export default function StarRating({ rating, max = 5, size = 14, showValue = true }: Props) {
   const rounded = Math.round(rating);
   return (
     <div
@@ -22,9 +23,11 @@ export default function StarRating({ rating, max = 5, size = 14 }: Props) {
           className={i < rounded ? "text-gold" : "text-line-strong"}
         />
       ))}
-      <span className="ml-1 text-[11px] font-medium text-paper-muted">
-        {rating.toFixed(1)}
-      </span>
+      {showValue && (
+        <span className="ml-1 text-[11px] font-medium text-paper-muted">
+          {rating.toFixed(1)}
+        </span>
+      )}
     </div>
   );
 }
