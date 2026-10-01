@@ -32,34 +32,34 @@ const METRIC_CONFIG: Record<
   }
 > = {
   revenue: {
-    label: "Gross Revenue",
+    label: "Sales",
     unit: "",
     prefix: "₹",
-    color: "#D4AF37", // Luxury Gold
-    gradientFrom: "rgba(212, 175, 55, 0.40)",
-    gradientTo: "rgba(212, 175, 55, 0.02)",
+    color: "#8B1E2D", // Kamira Wine
+    gradientFrom: "rgba(139, 30, 45, 0.35)",
+    gradientTo: "rgba(139, 30, 45, 0.02)",
     format: (v) => `₹${Math.round(v).toLocaleString("en-IN")}`,
   },
   units: {
-    label: "Units Sold",
-    unit: "units",
+    label: "Items Sold",
+    unit: "items",
     prefix: "",
-    color: "#10B981", // Emerald
-    gradientFrom: "rgba(16, 185, 129, 0.35)",
-    gradientTo: "rgba(16, 185, 129, 0.02)",
-    format: (v) => `${Math.round(v).toLocaleString("en-IN")} units`,
+    color: "#059669", // Rich Emerald
+    gradientFrom: "rgba(5, 150, 105, 0.35)",
+    gradientTo: "rgba(5, 150, 105, 0.02)",
+    format: (v) => `${Math.round(v).toLocaleString("en-IN")} items`,
   },
   orders: {
-    label: "Orders Volume",
+    label: "Orders",
     unit: "orders",
     prefix: "",
-    color: "#8B1E2D", // Kamira Wine
-    gradientFrom: "rgba(139, 30, 45, 0.40)",
-    gradientTo: "rgba(139, 30, 45, 0.02)",
+    color: "#D97706", // Amber Bronze
+    gradientFrom: "rgba(217, 119, 6, 0.35)",
+    gradientTo: "rgba(217, 119, 6, 0.02)",
     format: (v) => `${v} orders`,
   },
   aov: {
-    label: "Average Order Value",
+    label: "Average Order",
     unit: "",
     prefix: "₹",
     color: "#3B82F6", // Sapphire Blue
@@ -70,6 +70,7 @@ const METRIC_CONFIG: Record<
 };
 
 const TIMEFRAME_LABELS: Record<TimeframeOption, string> = {
+  today: "Today",
   "7d": "Last 7 Days",
   "30d": "Last 30 Days",
   "90d": "Last 90 Days",
@@ -205,25 +206,25 @@ export default function AnalyticsTrendGraph({
   const activeHover = hoveredIndex !== null && coords[hoveredIndex] ? coords[hoveredIndex] : null;
 
   return (
-    <div className="rounded-2xl border border-line/70 bg-ink/70 backdrop-blur-md p-5 shadow-sm transition-all">
+    <div className="rounded-2xl border border-line bg-white/80 p-5 shadow-sm transition-all">
       {/* Top Header & Metric Selector Tabs */}
       <div className="flex flex-col gap-4 border-b border-line/60 pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gold/15 text-gold text-sm font-bold">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gold/10 text-gold text-sm font-bold border border-gold/20">
               📈
             </span>
             <h3 className="font-display text-base font-bold tracking-tight text-paper sm:text-lg">
-              Sales Velocity &amp; Revenue Trends
+              Sales &amp; Activity Over Time
             </h3>
           </div>
           <p className="mt-0.5 text-xs text-paper-muted">
-            Continuous timeline tracking performance fluctuations and order cadence across {TIMEFRAME_LABELS[timeframe] || "this period"}.
+            See how much you sold and how orders came in during {TIMEFRAME_LABELS[timeframe] || "this period"}.
           </p>
         </div>
 
         {/* Metric Selector Pills */}
-        <div className="inline-flex rounded-xl border border-line bg-ink-2 p-1 gap-1 self-start sm:self-auto">
+        <div className="inline-flex rounded-xl border border-line bg-ink-2 p-1 gap-1 self-start sm:self-auto shadow-inner">
           {(["revenue", "units", "orders", "aov"] as MetricKey[]).map((key) => {
             const isSelected = activeMetric === key;
             return (
@@ -236,11 +237,11 @@ export default function AnalyticsTrendGraph({
                 }}
                 className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
                   isSelected
-                    ? "bg-gold text-ink shadow-sm font-bold"
+                    ? "bg-gold text-white shadow-sm font-bold"
                     : "text-paper-muted hover:text-paper"
                 }`}
               >
-                {METRIC_CONFIG[key].label.split(" ")[0]}
+                {METRIC_CONFIG[key].label}
               </button>
             );
           })}
@@ -248,9 +249,9 @@ export default function AnalyticsTrendGraph({
       </div>
 
       {/* KPI Highlight Strip */}
-      <div className="mt-4 grid grid-cols-2 gap-4 border-b border-line/40 pb-4 sm:grid-cols-4">
+      <div className="mt-4 grid grid-cols-2 gap-4 border-b border-line/60 pb-4 sm:grid-cols-4">
         <div>
-          <span className="text-[11px] font-medium uppercase tracking-wider text-paper-muted">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-paper-muted">
             Period Total
           </span>
           <div className="mt-1 font-display text-xl font-bold tracking-tight text-paper sm:text-2xl">
@@ -259,20 +260,20 @@ export default function AnalyticsTrendGraph({
         </div>
 
         <div>
-          <span className="text-[11px] font-medium uppercase tracking-wider text-paper-muted">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-paper-muted">
             vs Previous Period
           </span>
           <div className="mt-1 flex items-center gap-1.5">
             {growthPct === null || growthPct === 0 ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-neutral-500/15 px-2.5 py-0.5 text-xs font-semibold text-paper-muted">
+              <span className="inline-flex items-center gap-1 rounded-full bg-ink-3 px-2.5 py-0.5 text-xs font-medium text-paper-muted border border-line">
                 <span>—</span> Stable (0%)
               </span>
             ) : growthPct > 0 ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-semibold text-emerald-400">
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 text-xs font-bold text-emerald-800">
                 <span>▲</span> +{growthPct}%
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 rounded-full bg-rose-500/15 px-2.5 py-0.5 text-xs font-semibold text-rose-400">
+              <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 border border-rose-300 px-2.5 py-0.5 text-xs font-bold text-rose-800">
                 <span>▼</span> {growthPct}%
               </span>
             )}

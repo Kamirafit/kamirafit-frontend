@@ -1,4 +1,14 @@
-export type TimeframeOption = "7d" | "30d" | "90d" | "all";
+export type TimeframeOption = "today" | "7d" | "30d" | "90d" | "all";
+
+export interface InventoryMovement {
+  id: string;
+  type: "SALE" | "RETURN" | "RESERVATION";
+  productName: string;
+  variantInfo: string;
+  quantityChange: number;
+  description: string;
+  timestamp: string;
+}
 
 export interface ProductPerformance {
   id: string;
@@ -12,9 +22,11 @@ export interface ProductPerformance {
   revenue: number;
   ordersCount: number;
   velocity: number; // units sold per day
+  salesPerDay?: number; // friendly alias for velocity
   currentStock: number;
   inventoryValue: number;
   daysOfInventory: number | null; // estimated days until stockout
+  estimatedDaysLeft?: number | null; // friendly alias for daysOfInventory
   averageRating: number;
   reviewCount: number;
   returnCount: number;
@@ -60,6 +72,14 @@ export interface AnalyticsSummary {
   deadStockValue: number;
   averageStoreRating: number;
   criticalRestockCount: number;
+  // Modern inventory metrics:
+  physicalStockUnits?: number;
+  reservedStockUnits?: number;
+  availableStockUnits?: number;
+  onlineStockUnits?: number;
+  outOfStockCount?: number;
+  runningLowCount?: number;
+  healthyStockPercent?: number;
 }
 
 export interface AnalyticsTimelinePoint {
@@ -91,4 +111,5 @@ export interface BusinessAnalytics {
   rankedProducts: ProductPerformance[];
   rankedCategories: CategoryPerformance[];
   deadStockReport: ProductPerformance[];
+  recentMovements?: InventoryMovement[];
 }

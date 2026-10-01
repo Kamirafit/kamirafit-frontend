@@ -46,6 +46,10 @@ export interface AiAnalyticsInsights {
 export interface AiAnalyticsQueryResponse {
   answer: string;
   groundedFacts: string[];
+  whatIFound?: string;
+  importantNumbers?: string[];
+  whatThisMeans?: string;
+  thingsToLookAt?: string[];
 }
 
 export const aiService = {
