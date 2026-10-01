@@ -30,8 +30,8 @@ export interface AiAnalyticsInsights {
     productName: string;
     tiedUpCapital: number;
     currentStock: number;
-    action: "BUNDLE" | "FLASH_SALE" | "CLEARANCE";
-    recommendedDiscountPercent: number;
+    action: "INVESTIGATE" | "IMPROVE_VISIBILITY" | "BUNDLE" | "PROMOTION" | "CLEARANCE" | "FLASH_SALE" | string;
+    recommendedDiscountPercent?: number;
     strategy: string;
   }>;
   categoryOpportunities: Array<{

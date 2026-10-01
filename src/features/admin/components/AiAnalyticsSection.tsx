@@ -343,8 +343,12 @@ export default function AiAnalyticsSection({ timeframe }: Props) {
                       >
                         <div className="flex items-center justify-between font-semibold text-paper">
                           <span className="truncate max-w-[150px]">{alert.productName}</span>
-                          <span className="text-amber-900 font-bold text-[11px]">
-                            {alert.daysOfInventory !== null ? `≈ ${alert.daysOfInventory} days left` : "Low stock"}
+                          <span className="text-amber-900 font-bold text-[11px] whitespace-nowrap">
+                            {alert.daysOfInventory !== null
+                              ? alert.daysOfInventory <= 7
+                                ? `⚠️ Runs out in ~${alert.daysOfInventory} days`
+                                : `Runs out in ~${alert.daysOfInventory} days`
+                              : "Low stock"}
                           </span>
                         </div>
                         <p className="text-[11px] text-paper-muted">

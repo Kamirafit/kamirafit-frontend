@@ -1,5 +1,17 @@
 export type TimeframeOption = "today" | "7d" | "30d" | "90d" | "all";
 
+export type InventoryClassification =
+  | "NEW"
+  | "GATHERING_DATA"
+  | "STAR_PERFORMER"
+  | "HIGH_VELOCITY"
+  | "STABLE"
+  | "SLOW_MOVING"
+  | "DEAD_STOCK"
+  | "LONG_TERM_DEAD_STOCK"
+  | "OUT_OF_STOCK"
+  | "LACKING"; // Preserved for backwards compatibility
+
 export interface InventoryMovement {
   id: string;
   type: "SALE" | "RETURN" | "RESERVATION";
@@ -8,6 +20,47 @@ export interface InventoryMovement {
   quantityChange: number;
   description: string;
   timestamp: string;
+}
+
+export interface VariantPerformance {
+  id: string;
+  sku: string;
+  size: string;
+  color: string;
+  stock: number;
+  price: number;
+  availableSellingDays: number;
+  allTimeUnitsSold: number;
+  timeframeUnitsSold: number;
+  allTimeVelocity: number;
+  timeframeVelocity: number;
+  classification: InventoryClassification;
+  actionRecommendation: string;
+}
+
+export interface DeadStockVariantItem {
+  variantId: string;
+  productId: string;
+  productName: string;
+  productImage: string;
+  category: string;
+  sku: string;
+  size: string;
+  color: string;
+  price: number;
+  stock: number;
+  inventoryValue: number;
+  availableSellingDays: number;
+  allTimeSales: number;
+  classification: "DEAD_STOCK" | "LONG_TERM_DEAD_STOCK";
+  actionRecommendation: string;
+}
+
+export interface InventoryAgeDistribution {
+  range0To30Days: { units: number; value: number; count: number };
+  range31To60Days: { units: number; value: number; count: number };
+  range61To90Days: { units: number; value: number; count: number };
+  range90PlusDays: { units: number; value: number; count: number };
 }
 
 export interface ProductPerformance {
@@ -31,14 +84,13 @@ export interface ProductPerformance {
   reviewCount: number;
   returnCount: number;
   performanceScore: number; // 0 to 100
-  classification:
-    | "STAR_PERFORMER"
-    | "HIGH_VELOCITY"
-    | "STABLE"
-    | "LACKING"
-    | "DEAD_STOCK"
-    | "OUT_OF_STOCK";
+  classification: InventoryClassification;
   actionRecommendation: string;
+  // Enhanced inventory & selling opportunity metrics
+  availableSellingDays?: number;
+  allTimeUnitsSold?: number;
+  deadVariantsCount?: number;
+  variants?: VariantPerformance[];
 }
 
 export interface CategoryPerformance {
@@ -70,6 +122,10 @@ export interface AnalyticsSummary {
   totalInventoryValue: number;
   deadStockCount: number;
   deadStockValue: number;
+  longTermDeadStockCount?: number;
+  longTermDeadStockValue?: number;
+  slowMovingCount?: number;
+  slowMovingValue?: number;
   averageStoreRating: number;
   criticalRestockCount: number;
   // Modern inventory metrics:
@@ -80,6 +136,9 @@ export interface AnalyticsSummary {
   outOfStockCount?: number;
   runningLowCount?: number;
   healthyStockPercent?: number;
+  healthyStockCount?: number;
+  totalProductsCount?: number;
+  inventoryAgeDistribution?: InventoryAgeDistribution;
 }
 
 export interface AnalyticsTimelinePoint {
@@ -111,5 +170,6 @@ export interface BusinessAnalytics {
   rankedProducts: ProductPerformance[];
   rankedCategories: CategoryPerformance[];
   deadStockReport: ProductPerformance[];
+  deadStockVariants?: DeadStockVariantItem[];
   recentMovements?: InventoryMovement[];
 }

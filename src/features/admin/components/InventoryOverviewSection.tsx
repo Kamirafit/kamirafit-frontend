@@ -9,6 +9,7 @@ interface Props {
   onFilterOutOfStock?: () => void;
   onFilterRunningLow?: () => void;
   onFilterDeadStock?: () => void;
+  onOpenCalculationRules?: () => void;
 }
 
 export default function InventoryOverviewSection({
@@ -17,6 +18,7 @@ export default function InventoryOverviewSection({
   onFilterOutOfStock,
   onFilterRunningLow,
   onFilterDeadStock,
+  onOpenCalculationRules,
 }: Props) {
   const totalStock = summary.totalStockUnits || 0;
   const stockVal = summary.totalInventoryValue || 0;
@@ -24,6 +26,11 @@ export default function InventoryOverviewSection({
   const outOfStock = summary.outOfStockCount ?? 0;
   const runningLow = summary.runningLowCount ?? summary.criticalRestockCount ?? 0;
   const healthyPct = summary.healthyStockPercent ?? 85;
+  const healthyCount = summary.healthyStockCount ?? Math.max(0, (summary.totalProductsCount ?? 0) - outOfStock - runningLow);
+  const totalProducts = summary.totalProductsCount || (healthyCount + outOfStock + runningLow) || 1;
+
+  const runningLowPct = Math.round((runningLow / Math.max(totalProducts, 1)) * 100);
+  const outOfStockPct = Math.max(0, 100 - healthyPct - runningLowPct);
 
   // Conceptual model: Physical Stock = Available + Reserved, Online <= Available
   const physicalStock = summary.physicalStockUnits ?? totalStock;
@@ -33,12 +40,12 @@ export default function InventoryOverviewSection({
 
   const healthHeadline =
     outOfStock === 0 && runningLow === 0
-      ? "All of your stock is in great shape."
-      : outOfStock > 0 && runningLow > 0
-      ? "Several items require immediate restocking."
-      : outOfStock > 0
-      ? "A few products have run out of stock."
-      : "Some products are approaching low stock.";
+      ? "All of your garments are in great shape."
+      : healthyPct >= 80
+      ? "Most of your garments have healthy stock, with a few items to reorder."
+      : healthyPct >= 60
+      ? "A few products are running low or out of stock."
+      : "Several popular garments require immediate restocking.";
 
   const handleRunningLowClick = () => {
     (onFilterRunningLow || onFilterLowStock)?.();
@@ -167,7 +174,7 @@ export default function InventoryOverviewSection({
               <div className="flex items-center justify-between">
                 <span
                   className="text-[11px] font-semibold text-rose-900 cursor-help"
-                  title="Value of products that had zero customer purchases during this period."
+                  title="Value of unsold products that have had at least 60 days of selling opportunity."
                 >
                   Hasn&apos;t Moved
                 </span>
@@ -220,7 +227,7 @@ export default function InventoryOverviewSection({
                 &ldquo;{healthHeadline}&rdquo;
               </div>
               <p className="mt-0.5 text-xs text-paper-muted leading-relaxed">
-                Stock balance compares stock units on hand with how quickly customers are purchasing them.
+                Compares how much stock you have on hand against customer demand to prevent stockouts and unsold garments.
               </p>
             </div>
 
@@ -229,16 +236,16 @@ export default function InventoryOverviewSection({
               <div
                 className="h-full bg-emerald-600 transition-all"
                 style={{ width: `${healthyPct}%` }}
-                title={`Healthy stock: ${healthyPct}%`}
+                title={`Healthy stock: ${healthyCount} products (${healthyPct}%)`}
               />
               <div
                 className="h-full bg-amber-500 transition-all"
-                style={{ width: `${Math.min(100 - healthyPct, runningLow > 0 ? 15 : 0)}%` }}
+                style={{ width: `${runningLowPct}%` }}
                 title={`Running low: ${runningLow} products`}
               />
               <div
                 className="h-full bg-rose-600 transition-all"
-                style={{ width: `${outOfStock > 0 ? 8 : 0}%` }}
+                style={{ width: `${outOfStockPct}%` }}
                 title={`Out of stock: ${outOfStock} products`}
               />
             </div>
@@ -250,7 +257,9 @@ export default function InventoryOverviewSection({
                   <span className="text-emerald-800 font-bold">✓</span>
                   <span>Healthy stock</span>
                 </span>
-                <span className="font-bold text-emerald-900">{healthyPct}% of products</span>
+                <span className="font-bold text-emerald-900">
+                  {healthyCount > 0 ? `${healthyCount} products (${healthyPct}%)` : `${healthyPct}% of products`}
+                </span>
               </div>
 
               <button
@@ -298,9 +307,21 @@ export default function InventoryOverviewSection({
           </div>
         </div>
 
-        <p className="mt-4 text-[11px] text-paper-muted border-t border-line/60 pt-3">
-          💡 A healthy score means products sell before running out, with minimal money trapped in stagnant items.
-        </p>
+        <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between border-t border-line/60 pt-3 gap-2">
+          <p className="text-[11px] text-paper-muted">
+            💡 Healthy inventory means you have enough clothes in stock to satisfy customer orders without running out, while avoiding excess clothes that sit unsold for months.
+          </p>
+          {onOpenCalculationRules && (
+            <button
+              type="button"
+              onClick={onOpenCalculationRules}
+              className="text-[11px] font-semibold text-gold hover:underline whitespace-nowrap inline-flex items-center gap-1 self-start sm:self-auto cursor-pointer"
+            >
+              <span>How is this calculated?</span>
+              <span>ℹ️</span>
+            </button>
+          )}
+        </div>
       </AdminCard>
     </div>
   );

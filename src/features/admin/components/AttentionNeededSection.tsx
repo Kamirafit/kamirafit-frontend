@@ -148,7 +148,7 @@ export default function AttentionNeededSection({
                 ₹{Math.round(deadStockValue).toLocaleString("en-IN")} tied up
               </div>
               <p className="mt-1 text-xs text-paper-muted leading-relaxed">
-                {deadStockCount} {deadStockCount === 1 ? "product has" : "products have"} had 0 sales in this period. Review prices or photos.
+                {deadStockCount} {deadStockCount === 1 ? "product has" : "products have"} dormant stock with 60+ days of selling opportunity.
               </p>
             </div>
           </button>
@@ -161,7 +161,7 @@ export default function AttentionNeededSection({
               <span>Fast Product Turnover</span>
             </div>
             <p className="mt-2 text-xs text-paper-muted">
-              Every stocked product had sales activity.
+              No dormant inventory meeting dead-stock criteria (60+ days).
             </p>
           </div>
         )}

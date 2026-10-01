@@ -10,7 +10,8 @@ import AnalyticsKpiCards from "../components/AnalyticsKpiCards";
 import InventoryOverviewSection from "../components/InventoryOverviewSection";
 import AttentionNeededSection from "../components/AttentionNeededSection";
 import RecentMovementsSection from "../components/RecentMovementsSection";
-import ProductAnalyticsDetailModal, { formatSellingSpeed } from "../components/ProductAnalyticsDetailModal";
+import ProductAnalyticsDetailModal, { formatSellingSpeed, formatStockRunway } from "../components/ProductAnalyticsDetailModal";
+import CalculationRulesModal from "../components/CalculationRulesModal";
 import { useBusinessAnalytics } from "@/services/admin";
 import type {
   ProductPerformance,
@@ -31,14 +32,26 @@ const CLASSIFICATION_CONFIG: Record<
   ProductPerformance["classification"],
   { label: string; bg: string; text: string; border: string }
 > = {
+  NEW: {
+    label: "✨ New Release",
+    bg: "bg-blue-50",
+    text: "text-blue-900",
+    border: "border-blue-200",
+  },
+  GATHERING_DATA: {
+    label: "⏳ Gathering Data",
+    bg: "bg-indigo-50",
+    text: "text-indigo-900",
+    border: "border-indigo-200",
+  },
   STAR_PERFORMER: {
-    label: "Top Seller",
+    label: "⭐ Top Seller",
     bg: "bg-amber-100",
     text: "text-amber-900",
     border: "border-amber-300",
   },
   HIGH_VELOCITY: {
-    label: "Selling Fast",
+    label: "⚡ Selling Fast",
     bg: "bg-emerald-100",
     text: "text-emerald-900",
     border: "border-emerald-300",
@@ -49,6 +62,12 @@ const CLASSIFICATION_CONFIG: Record<
     text: "text-blue-900",
     border: "border-blue-300",
   },
+  SLOW_MOVING: {
+    label: "🐢 Slow Moving",
+    bg: "bg-amber-50",
+    text: "text-amber-900",
+    border: "border-amber-300",
+  },
   LACKING: {
     label: "Slow",
     bg: "bg-orange-100",
@@ -56,10 +75,16 @@ const CLASSIFICATION_CONFIG: Record<
     border: "border-orange-300",
   },
   DEAD_STOCK: {
-    label: "Not Moving",
+    label: "❄️ Dead Stock",
     bg: "bg-rose-100",
     text: "text-rose-900",
     border: "border-rose-300",
+  },
+  LONG_TERM_DEAD_STOCK: {
+    label: "⚠️ Long-Term Dead",
+    bg: "bg-rose-200",
+    text: "text-rose-950",
+    border: "border-rose-400",
   },
   OUT_OF_STOCK: {
     label: "Out of Stock",
@@ -77,6 +102,7 @@ export default function AnalyticsPage() {
   const [sortBy, setSortBy] = useState<"rank" | "revenue" | "units" | "velocity" | "rating" | "stock">("rank");
   const [selectedProduct, setSelectedProduct] = useState<ProductPerformance | null>(null);
   const [restockSubFilter, setRestockSubFilter] = useState<"all" | "outofstock" | "runninglow">("all");
+  const [showCalculationRulesModal, setShowCalculationRulesModal] = useState(false);
 
   const { data: analytics, isLoading, isError, refetch } = useBusinessAnalytics(timeframe);
 
@@ -162,7 +188,7 @@ export default function AnalyticsPage() {
       "How Fast Selling (Units/Day)",
       "Stock Left",
       "Stock Value (INR)",
-      "Days Left Estimate",
+      "Stock Runs Out In (Days)",
       "Customer Rating",
       "Reviews",
       "Friendly Suggestion",
@@ -205,6 +231,16 @@ export default function AnalyticsPage() {
         />
 
         <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowCalculationRulesModal(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-white/90 px-3.5 py-1.5 text-xs font-semibold text-paper hover:bg-gold/10 hover:border-gold/60 transition-all shadow-sm cursor-pointer"
+            title="Click to view how stock runway, dead stock, and health metrics are calculated"
+          >
+            <span>ℹ️</span>
+            <span>How Metrics Are Calculated</span>
+          </button>
+
           {(["today", "7d", "30d", "90d", "all"] as TimeframeOption[]).map((tf) => (
             <button
               key={tf}
@@ -309,6 +345,7 @@ export default function AnalyticsPage() {
               setActiveTab("deadstock");
               document.getElementById("drilldown-tabs")?.scrollIntoView({ behavior: "smooth" });
             }}
+            onOpenCalculationRules={() => setShowCalculationRulesModal(true)}
           />
 
           {/* 6. Tabbed Drill-Down Navigation */}
@@ -421,11 +458,11 @@ export default function AnalyticsPage() {
                           <th className="px-4 py-3 text-center w-14">Rank</th>
                           <th className="px-4 py-3">Product</th>
                           <th className="px-4 py-3">Category</th>
-                          <th className="px-4 py-3 text-right">Items Sold</th>
-                          <th className="px-4 py-3 text-right">Total Sales</th>
-                          <th className="px-4 py-3 text-right">Selling Speed</th>
-                          <th className="px-4 py-3 text-right">Stock Left</th>
-                          <th className="px-4 py-3 text-center">Customer Rating</th>
+                          <th className="px-4 py-3 text-right whitespace-nowrap">Items Sold</th>
+                          <th className="px-4 py-3 text-right whitespace-nowrap">Total Sales</th>
+                          <th className="px-4 py-3 text-right whitespace-nowrap min-w-[110px]">Selling Speed</th>
+                          <th className="px-4 py-3 text-right whitespace-nowrap">Stock Left</th>
+                          <th className="px-4 py-3 text-center whitespace-nowrap">Customer Rating</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-line/60">
@@ -476,33 +513,33 @@ export default function AnalyticsPage() {
                                 </div>
                               </td>
 
-                              <td className="px-4 py-3 text-paper-muted font-medium">{p.category}</td>
+                              <td className="px-4 py-3 text-paper-muted font-medium whitespace-nowrap">{p.category}</td>
 
-                              <td className="px-4 py-3 text-right">
+                              <td className="px-4 py-3 text-right whitespace-nowrap">
                                 <span className="font-bold text-paper">{p.unitsSold} sold</span>
                                 <div className="text-[11px] text-paper-muted">
                                   ({p.ordersCount} {p.ordersCount === 1 ? "order" : "orders"})
                                 </div>
                               </td>
 
-                              <td className="px-4 py-3 text-right font-bold text-gold text-sm">
+                              <td className="px-4 py-3 text-right font-bold text-gold text-sm whitespace-nowrap">
                                 ₹{Math.round(p.revenue).toLocaleString("en-IN")}
                               </td>
 
-                              <td className="px-4 py-3 text-right">
-                                <span className="font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/80 inline-block text-[11px]">
+                              <td className="px-4 py-3 text-right whitespace-nowrap min-w-[110px]">
+                                <span className="font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/80 inline-block text-[11px] whitespace-nowrap">
                                   {speed.speed}
                                 </span>
-                                <div className="text-[10px] text-paper-muted mt-0.5">{speed.sub}</div>
+                                <div className="text-[10px] text-paper-muted mt-0.5 whitespace-nowrap">{speed.sub}</div>
                               </td>
 
-                              <td className="px-4 py-3 text-right">
-                                <span className={`font-semibold ${p.currentStock <= 5 ? "text-amber-800 font-bold" : "text-paper"}`}>
+                              <td className="px-4 py-3 text-right whitespace-nowrap">
+                                <span className={`font-semibold whitespace-nowrap ${p.currentStock <= 5 ? "text-amber-800 font-bold" : "text-paper"}`}>
                                   {p.currentStock} units
                                 </span>
                               </td>
 
-                              <td className="px-4 py-3 text-center">
+                              <td className="px-4 py-3 text-center whitespace-nowrap">
                                 <span className="font-semibold text-amber-700">
                                   {p.averageRating > 0 ? `★ ${p.averageRating.toFixed(1)}` : "—"}
                                 </span>
@@ -531,7 +568,7 @@ export default function AnalyticsPage() {
                     <button
                       type="button"
                       onClick={() => setRestockSubFilter("all")}
-                      className={`px-3 py-1 text-xs rounded-lg border font-semibold transition-all ${
+                      className={`px-3 py-1 text-xs rounded-lg border font-semibold transition-all whitespace-nowrap ${
                         restockSubFilter === "all"
                           ? "bg-gold text-white border-gold shadow-sm"
                           : "bg-white/80 text-paper-muted hover:text-paper border-line"
@@ -542,7 +579,7 @@ export default function AnalyticsPage() {
                     <button
                       type="button"
                       onClick={() => setRestockSubFilter("outofstock")}
-                      className={`px-3 py-1 text-xs rounded-lg border font-bold transition-all ${
+                      className={`px-3 py-1 text-xs rounded-lg border font-bold transition-all whitespace-nowrap ${
                         restockSubFilter === "outofstock"
                           ? "bg-rose-700 text-white border-rose-700 shadow-sm"
                           : "bg-rose-50 text-rose-800 hover:bg-rose-100 border-rose-200"
@@ -553,7 +590,7 @@ export default function AnalyticsPage() {
                     <button
                       type="button"
                       onClick={() => setRestockSubFilter("runninglow")}
-                      className={`px-3 py-1 text-xs rounded-lg border font-bold transition-all ${
+                      className={`px-3 py-1 text-xs rounded-lg border font-bold transition-all whitespace-nowrap ${
                         restockSubFilter === "runninglow"
                           ? "bg-amber-700 text-white border-amber-700 shadow-sm"
                           : "bg-amber-50 text-amber-900 hover:bg-amber-100 border-amber-200"
@@ -563,9 +600,19 @@ export default function AnalyticsPage() {
                     </button>
                   </div>
 
-                  <span className="text-xs text-paper-muted">
-                    Showing {displayedRestockProducts.length} of {allRestockProducts.length} items
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowCalculationRulesModal(true)}
+                      className="text-xs text-gold font-semibold hover:underline inline-flex items-center gap-1 cursor-pointer whitespace-nowrap"
+                    >
+                      <span>How are restock needs calculated?</span>
+                      <span>ℹ️</span>
+                    </button>
+                    <span className="text-xs text-paper-muted whitespace-nowrap">
+                      Showing {displayedRestockProducts.length} of {allRestockProducts.length} items
+                    </span>
+                  </div>
                 </div>
 
                 {displayedRestockProducts.length === 0 ? (
@@ -596,18 +643,28 @@ export default function AnalyticsPage() {
                         <tr>
                           <th className="px-4 py-3">Product</th>
                           <th className="px-4 py-3">Category</th>
-                          <th className="px-4 py-3 text-right">Stock Status</th>
-                          <th className="px-4 py-3 text-right">Selling Speed</th>
-                          <th className="px-4 py-3 text-right" title="Estimated days until stockout">
-                            Estimated Days Left
+                          <th className="px-4 py-3 text-right whitespace-nowrap min-w-[130px]">Stock Status</th>
+                          <th className="px-4 py-3 text-right whitespace-nowrap min-w-[110px]">Selling Speed</th>
+                          <th className="px-4 py-3 text-right whitespace-nowrap min-w-[140px]" title="Estimated time until stock runs out based on recent sales speed">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setShowCalculationRulesModal(true);
+                              }}
+                              className="inline-flex items-center gap-1 hover:text-gold transition-colors ml-auto cursor-pointer"
+                            >
+                              <span>Stock Runs Out In</span>
+                              <span className="text-xs">ℹ️</span>
+                            </button>
                           </th>
                           <th className="px-4 py-3">Suggested Action</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-line/60">
                         {displayedRestockProducts.map((p) => {
-                          const daysLeft = p.daysOfInventory;
                           const speed = formatSellingSpeed(p.unitsSold, p.velocity, daysCount);
+                          const runway = formatStockRunway(p.currentStock, p.daysOfInventory, p.unitsSold);
                           const isOutOfStock = p.currentStock === 0;
                           return (
                             <tr
@@ -637,11 +694,11 @@ export default function AnalyticsPage() {
                                 </div>
                               </td>
 
-                              <td className="px-4 py-3 text-paper-muted font-medium">{p.category}</td>
+                              <td className="px-4 py-3 text-paper-muted font-medium whitespace-nowrap">{p.category}</td>
 
-                              <td className="px-4 py-3 text-right">
+                              <td className="px-4 py-3 text-right whitespace-nowrap min-w-[130px]">
                                 <span
-                                  className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold border ${
+                                  className={`inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-bold border whitespace-nowrap ${
                                     isOutOfStock
                                       ? "bg-rose-100 text-rose-800 border-rose-300"
                                       : p.currentStock <= 5
@@ -653,25 +710,16 @@ export default function AnalyticsPage() {
                                 </span>
                               </td>
 
-                              <td className="px-4 py-3 text-right">
-                                <span className="font-medium text-paper text-xs">{speed.speed}</span>
-                                <div className="text-[10px] text-paper-muted">{speed.sub}</div>
+                              <td className="px-4 py-3 text-right whitespace-nowrap min-w-[110px]">
+                                <span className="font-medium text-paper text-xs whitespace-nowrap">{speed.speed}</span>
+                                <div className="text-[10px] text-paper-muted whitespace-nowrap">{speed.sub}</div>
                               </td>
 
-                              <td className="px-4 py-3 text-right font-medium">
-                                {isOutOfStock ? (
-                                  <span className="text-rose-800 font-bold bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
-                                    0 days (Depleted)
-                                  </span>
-                                ) : daysLeft !== null && daysLeft <= 14 ? (
-                                  <span className="text-amber-900 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                                    ≈ {daysLeft} days
-                                  </span>
-                                ) : daysLeft !== null ? (
-                                  <span className="text-paper">≈ {daysLeft} days</span>
-                                ) : (
-                                  <span className="text-paper-muted">Based on recent sales</span>
-                                )}
+                              <td className="px-4 py-3 text-right whitespace-nowrap min-w-[140px] font-medium">
+                                <span className={`inline-block px-2.5 py-0.5 rounded text-xs border whitespace-nowrap ${runway.badgeClass}`}>
+                                  {runway.text}
+                                </span>
+                                <div className="text-[10px] text-paper-muted whitespace-nowrap mt-0.5">{runway.sub}</div>
                               </td>
 
                               <td className="px-4 py-3">
@@ -691,29 +739,110 @@ export default function AnalyticsPage() {
               </div>
             )}
 
-            {/* TAB: PRODUCTS THAT AREN'T MOVING */}
+            {/* TAB: PRODUCTS THAT AREN'T MOVING (DEAD STOCK) */}
             {activeTab === "deadstock" && (
               <div className="space-y-4">
-                <div className="rounded-xl border border-line bg-white/80 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shadow-sm">
-                  <div>
-                    <h3 className="text-xs font-bold text-paper uppercase tracking-wider">
-                      Products with No Sales in This Period
-                    </h3>
-                    <p className="text-[11px] text-paper-muted mt-0.5">
-                      Units sitting in your stock that haven&apos;t generated sales during the selected dates. Click any item to inspect.
+                {/* Explanatory Banner */}
+                <div className="rounded-xl border border-line bg-white/90 p-4 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-rose-100 text-rose-800 text-xs font-bold">
+                        ❄️
+                      </span>
+                      <h3 className="text-xs font-bold text-paper uppercase tracking-wider">
+                        Dead Stock &amp; Dormant Inventory
+                      </h3>
+                      <span className="rounded-full bg-ink-2 px-2 py-0.5 text-[10px] font-semibold text-paper-muted border border-line">
+                        Eligibility: ≥ 60 Selling Days
+                      </span>
+                    </div>
+                    <p className="text-[11.5px] text-paper-muted leading-relaxed max-w-2xl">
+                      Dead stock includes products that have had at least <strong>60 days of selling opportunity</strong>,
+                      still have inventory, and have had no meaningful sales. Selected date filters apply to sales metrics,
+                      not dead-stock eligibility.
                     </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowCalculationRulesModal(true)}
+                      className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-gold hover:underline cursor-pointer"
+                    >
+                      <span>View clear calculation rules &amp; examples</span>
+                      <span>ℹ️</span>
+                    </button>
                   </div>
-                  <div className="text-right">
-                    <span className="text-[11px] text-paper-muted">Total Stock Value Tied Up</span>
-                    <div className="text-xl font-bold text-gold">
+                  <div className="text-left sm:text-right shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-line/60">
+                    <span className="text-[11px] text-paper-muted">Total Capital Trapped</span>
+                    <div className="text-xl font-bold text-rose-800">
                       ₹{Math.round(summary.deadStockValue || 0).toLocaleString("en-IN")}
                     </div>
+                    <span className="text-[10px] text-paper-muted">
+                      across {summary.deadStockCount || deadStock.length} items with dormant inventory
+                    </span>
                   </div>
                 </div>
 
+                {/* Inventory Age Distribution Breakdown (if available) */}
+                {summary.inventoryAgeDistribution && (
+                  <div className="rounded-xl border border-line bg-white/80 p-3.5 shadow-sm space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold text-paper uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                        <span>📊</span> Inventory Age Breakdown (Selling Opportunity)
+                      </span>
+                      <span className="text-[11px] text-paper-muted">
+                        Measured from catalog launch / availability
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+                      <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-2.5 space-y-0.5">
+                        <span className="text-[10.5px] font-bold text-blue-900 block">0–30 Days (New Release)</span>
+                        <div className="text-sm font-bold text-paper">
+                          {summary.inventoryAgeDistribution.range0To30Days.units} units
+                        </div>
+                        <div className="text-[10.5px] text-paper-muted">
+                          ₹{Math.round(summary.inventoryAgeDistribution.range0To30Days.value).toLocaleString("en-IN")}
+                        </div>
+                      </div>
+
+                      <div className="rounded-lg border border-indigo-200 bg-indigo-50/50 p-2.5 space-y-0.5">
+                        <span className="text-[10.5px] font-bold text-indigo-900 block">31–60 Days (Active)</span>
+                        <div className="text-sm font-bold text-paper">
+                          {summary.inventoryAgeDistribution.range31To60Days.units} units
+                        </div>
+                        <div className="text-[10.5px] text-paper-muted">
+                          ₹{Math.round(summary.inventoryAgeDistribution.range31To60Days.value).toLocaleString("en-IN")}
+                        </div>
+                      </div>
+
+                      <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-2.5 space-y-0.5">
+                        <span className="text-[10.5px] font-bold text-amber-900 block">61–90 Days (Dead Stock)</span>
+                        <div className="text-sm font-bold text-paper">
+                          {summary.inventoryAgeDistribution.range61To90Days.units} units
+                        </div>
+                        <div className="text-[10.5px] text-paper-muted">
+                          ₹{Math.round(summary.inventoryAgeDistribution.range61To90Days.value).toLocaleString("en-IN")}
+                        </div>
+                      </div>
+
+                      <div className="rounded-lg border border-rose-300 bg-rose-50/50 p-2.5 space-y-0.5">
+                        <span className="text-[10.5px] font-bold text-rose-950 block">90+ Days (Long-Term)</span>
+                        <div className="text-sm font-bold text-paper">
+                          {summary.inventoryAgeDistribution.range90PlusDays.units} units
+                        </div>
+                        <div className="text-[10.5px] text-paper-muted">
+                          ₹{Math.round(summary.inventoryAgeDistribution.range90PlusDays.value).toLocaleString("en-IN")}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {deadStock.length === 0 ? (
-                  <div className="rounded-xl border border-line bg-white/70 p-8 text-center text-xs text-paper-muted">
-                    🎉 Excellent! Every product in your store had sales activity during this period.
+                  <div className="rounded-xl border border-line bg-white/70 p-8 text-center text-xs text-paper-muted space-y-1 shadow-sm">
+                    <span className="text-2xl">🎉</span>
+                    <div className="font-bold text-sm text-paper">No Dead Stock Detected</div>
+                    <p className="max-w-md mx-auto">
+                      All products with inventory have either been available for less than 60 days (new releases/data gathering) or have recorded customer purchases.
+                    </p>
                   </div>
                 ) : (
                   <div className="overflow-x-auto rounded-xl border border-line bg-white/80 shadow-sm">
@@ -722,60 +851,94 @@ export default function AnalyticsPage() {
                         <tr>
                           <th className="px-4 py-3">Product</th>
                           <th className="px-4 py-3">Category</th>
+                          <th className="px-4 py-3 text-center">Status &amp; Age</th>
                           <th className="px-4 py-3 text-right">Price</th>
                           <th className="px-4 py-3 text-right">Stock Sitting</th>
                           <th className="px-4 py-3 text-right">Value Tied Up</th>
-                          <th className="px-4 py-3">Friendly Suggestion</th>
+                          <th className="px-4 py-3">Merchandising Guidance</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-line/60">
-                        {deadStock.map((p) => (
-                          <tr
-                            key={p.id}
-                            onClick={() => setSelectedProduct(p)}
-                            className="hover:bg-ink-2/70 transition-colors cursor-pointer group"
-                          >
-                            <td className="px-4 py-3">
-                              <div className="flex items-center gap-3">
-                                <div className="relative h-11 w-11 flex-shrink-0 overflow-hidden rounded-lg border border-line bg-ink-2">
-                                  <Image
-                                    src={p.image || "/images/placeholder.jpg"}
-                                    alt={p.name}
-                                    fill
-                                    sizes="44px"
-                                    className="object-cover"
-                                  />
+                        {deadStock.map((p) => {
+                          const isLongTerm = p.classification === "LONG_TERM_DEAD_STOCK";
+                          const hasDeadVariants = (p.deadVariantsCount ?? 0) > 0;
+                          return (
+                            <tr
+                              key={p.id}
+                              onClick={() => setSelectedProduct(p)}
+                              className="hover:bg-ink-2/70 transition-colors cursor-pointer group"
+                              title="Click to view detailed variant performance & suggestions"
+                            >
+                              <td className="px-4 py-3">
+                                <div className="flex items-center gap-3">
+                                  <div className="relative h-11 w-11 flex-shrink-0 overflow-hidden rounded-lg border border-line bg-ink-2">
+                                    <Image
+                                      src={p.image || "/images/placeholder.jpg"}
+                                      alt={p.name}
+                                      fill
+                                      sizes="44px"
+                                      className="object-cover"
+                                    />
+                                  </div>
+                                  <div className="min-w-0">
+                                    <span className="font-semibold text-paper group-hover:text-gold group-hover:underline line-clamp-1">
+                                      {p.name}
+                                    </span>
+                                    <span className="text-[11px] text-paper-muted">
+                                      {p.allTimeUnitsSold !== undefined ? `${p.allTimeUnitsSold} all-time sales` : "0 sold"}
+                                    </span>
+                                  </div>
                                 </div>
-                                <div className="min-w-0">
-                                  <span className="font-semibold text-paper group-hover:text-gold group-hover:underline line-clamp-1">
-                                    {p.name}
+                              </td>
+
+                              <td className="px-4 py-3 text-paper-muted font-medium">{p.category}</td>
+
+                              <td className="px-4 py-3 text-center">
+                                <div className="inline-flex flex-col items-center gap-0.5">
+                                  <span
+                                    className={`rounded-full px-2 py-0.5 text-[10px] font-bold border ${
+                                      isLongTerm
+                                        ? "bg-rose-100 text-rose-950 border-rose-400"
+                                        : hasDeadVariants && p.classification !== "DEAD_STOCK"
+                                        ? "bg-amber-100 text-amber-950 border-amber-300"
+                                        : "bg-rose-50 text-rose-800 border-rose-300"
+                                    }`}
+                                  >
+                                    {isLongTerm
+                                      ? "⚠️ 90d+ Dead"
+                                      : hasDeadVariants && p.classification !== "DEAD_STOCK"
+                                      ? `⚠️ ${p.deadVariantsCount} size dormant`
+                                      : "❄️ Dead Stock"}
                                   </span>
-                                  <span className="text-[11px] text-paper-muted">0 sold in period</span>
+                                  {typeof p.availableSellingDays === "number" && (
+                                    <span className="text-[10px] text-paper-muted font-mono">
+                                      {p.availableSellingDays}d available
+                                    </span>
+                                  )}
                                 </div>
-                              </div>
-                            </td>
+                              </td>
 
-                            <td className="px-4 py-3 text-paper-muted font-medium">{p.category}</td>
+                              <td className="px-4 py-3 text-right font-medium">
+                                ₹{Number(p.price || 0).toLocaleString("en-IN")}
+                              </td>
 
-                            <td className="px-4 py-3 text-right font-medium">
-                              ₹{Number(p.price || 0).toLocaleString("en-IN")}
-                            </td>
+                              <td className="px-4 py-3 text-right font-bold text-paper">
+                                {p.currentStock || 0} units
+                              </td>
 
-                            <td className="px-4 py-3 text-right font-bold text-paper">
-                              {p.currentStock || 0} units
-                            </td>
+                              <td className="px-4 py-3 text-right font-bold text-rose-800">
+                                ₹{Math.round(p.inventoryValue || 0).toLocaleString("en-IN")}
+                              </td>
 
-                            <td className="px-4 py-3 text-right font-bold text-rose-800">
-                              ₹{Math.round(p.inventoryValue || 0).toLocaleString("en-IN")}
-                            </td>
-
-                            <td className="px-4 py-3">
-                              <span className="text-[11px] text-paper-muted group-hover:text-paper transition-colors">
-                                Consider reviewing the price, promotion, or product photos.
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
+                              <td className="px-4 py-3 max-w-xs">
+                                <span className="text-[11px] text-paper leading-snug line-clamp-2">
+                                  {p.actionRecommendation ||
+                                    "Review photos, description keywords, styling, and pricing before considering discounts or clearance sales."}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
@@ -947,18 +1110,31 @@ export default function AnalyticsPage() {
                         <th className="px-4 py-3 text-center w-14">#</th>
                         <th className="px-4 py-3">Product</th>
                         <th className="px-4 py-3">Status</th>
-                        <th className="px-4 py-3 text-right">Items Sold</th>
-                        <th className="px-4 py-3 text-right">Sales</th>
-                        <th className="px-4 py-3 text-right">Selling Speed</th>
-                        <th className="px-4 py-3 text-right">Stock Left</th>
-                        <th className="px-4 py-3 text-right">Days Left</th>
-                        <th className="px-4 py-3 text-center">Reviews</th>
+                        <th className="px-4 py-3 text-right whitespace-nowrap">Items Sold</th>
+                        <th className="px-4 py-3 text-right whitespace-nowrap">Sales</th>
+                        <th className="px-4 py-3 text-right whitespace-nowrap min-w-[110px]">Selling Speed</th>
+                        <th className="px-4 py-3 text-right whitespace-nowrap">Stock Left</th>
+                        <th className="px-4 py-3 text-right whitespace-nowrap min-w-[140px]" title="Estimated days until stock runs out based on recent sales speed">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShowCalculationRulesModal(true);
+                            }}
+                            className="inline-flex items-center gap-1 hover:text-gold transition-colors ml-auto cursor-pointer"
+                          >
+                            <span>Stock Runs Out In</span>
+                            <span className="text-xs">ℹ️</span>
+                          </button>
+                        </th>
+                        <th className="px-4 py-3 text-center whitespace-nowrap">Reviews</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-line/60">
                       {filteredProducts.map((p, idx) => {
                         const badge = CLASSIFICATION_CONFIG[p.classification];
                         const speed = formatSellingSpeed(p.unitsSold, p.velocity, daysCount);
+                        const runway = formatStockRunway(p.currentStock, p.daysOfInventory, p.unitsSold);
                         return (
                           <tr
                             key={p.id}
@@ -989,46 +1165,47 @@ export default function AnalyticsPage() {
                               </div>
                             </td>
 
-                            <td className="px-4 py-3">
+                            <td className="px-4 py-3 whitespace-nowrap">
                               <span
-                                className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold ${badge.bg} ${badge.text} ${badge.border}`}
+                                className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold whitespace-nowrap ${badge.bg} ${badge.text} ${badge.border}`}
                               >
                                 {badge.label}
                               </span>
                             </td>
 
-                            <td className="px-4 py-3 text-right font-medium text-paper">
+                            <td className="px-4 py-3 text-right font-medium text-paper whitespace-nowrap">
                               {p.unitsSold} units
                             </td>
 
-                            <td className="px-4 py-3 text-right font-bold text-gold">
+                            <td className="px-4 py-3 text-right font-bold text-gold whitespace-nowrap">
                               ₹{Math.round(p.revenue).toLocaleString("en-IN")}
                             </td>
 
-                            <td className="px-4 py-3 text-right">
-                              <span className="font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/80 inline-block text-[11px]">
+                            <td className="px-4 py-3 text-right whitespace-nowrap min-w-[110px]">
+                              <span className="font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/80 inline-block text-[11px] whitespace-nowrap">
                                 {speed.speed}
                               </span>
-                              <div className="text-[10px] text-paper-muted mt-0.5">{speed.sub}</div>
+                              <div className="text-[10px] text-paper-muted mt-0.5 whitespace-nowrap">{speed.sub}</div>
                             </td>
 
-                            <td className="px-4 py-3 text-right font-medium text-paper">
-                              {p.currentStock} left
-                            </td>
-
-                            <td className="px-4 py-3 text-right text-paper-muted font-medium">
+                            <td className="px-4 py-3 text-right font-medium text-paper whitespace-nowrap">
                               {p.currentStock === 0 ? (
                                 <span className="text-rose-800 font-bold bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
-                                  Out of stock
+                                  0 left
                                 </span>
-                              ) : p.daysOfInventory !== null ? (
-                                `≈ ${p.daysOfInventory} days`
                               ) : (
-                                "—"
+                                `${p.currentStock} left`
                               )}
                             </td>
 
-                            <td className="px-4 py-3 text-center">
+                            <td className="px-4 py-3 text-right whitespace-nowrap min-w-[140px] font-medium">
+                              <span className={`inline-block px-2.5 py-0.5 rounded text-xs border whitespace-nowrap ${runway.badgeClass}`}>
+                                {runway.text}
+                              </span>
+                              <div className="text-[10px] text-paper-muted whitespace-nowrap mt-0.5">{runway.sub}</div>
+                            </td>
+
+                            <td className="px-4 py-3 text-center whitespace-nowrap">
                               <span className="text-amber-700 font-semibold">
                                 {p.averageRating > 0 ? `★ ${p.averageRating.toFixed(1)}` : "—"}
                               </span>
@@ -1051,6 +1228,12 @@ export default function AnalyticsPage() {
             product={selectedProduct}
             onClose={() => setSelectedProduct(null)}
             daysCount={daysCount}
+          />
+
+          {/* 9. Calculation Rules & Verification Explainer Modal */}
+          <CalculationRulesModal
+            open={showCalculationRulesModal}
+            onClose={() => setShowCalculationRulesModal(false)}
           />
         </>
       )}
