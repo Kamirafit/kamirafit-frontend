@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useAiAnalyticsInsights, useAiAnalyticsQuery } from "@/services/ai";
+import { useAiAnalyticsQuery } from "@/services/ai";
 import type { TimeframeOption } from "@/types/entities/analytics";
 import type { AiAnalyticsQueryResponse } from "@/services/ai";
 
@@ -19,7 +19,6 @@ const SUGGESTED_QUESTIONS = [
 ];
 
 export default function AiAnalyticsSection({ timeframe }: Props) {
-  const { data: insights, isLoading, isError, refetch, isFetching } = useAiAnalyticsInsights(timeframe);
   const queryMutation = useAiAnalyticsQuery();
 
   const [question, setQuestion] = useState("");
@@ -55,16 +54,10 @@ export default function AiAnalyticsSection({ timeframe }: Props) {
     }
   };
 
-  const getHealthDescription = (score: number) => {
-    if (score >= 80) return "Most of your store and stock are performing very well.";
-    if (score >= 60) return "Your store is steady, with a few items that need your attention.";
-    return "A few areas need immediate attention to avoid lost sales.";
-  };
-
   return (
-    <section className="rounded-2xl border border-line bg-white/80 p-5 sm:p-6 shadow-sm space-y-6">
+    <section className="rounded-2xl border border-line bg-white/80 p-5 sm:p-6 shadow-sm space-y-5">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-line/60 pb-5">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-line/60 pb-4">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gold/10 text-gold text-lg font-bold border border-gold/30">
             ✨
@@ -83,28 +76,9 @@ export default function AiAnalyticsSection({ timeframe }: Props) {
             </p>
           </div>
         </div>
-
-        <button
-          type="button"
-          disabled={isFetching}
-          onClick={() => refetch()}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-white px-3.5 py-1.5 text-xs font-semibold text-paper hover:border-gold hover:text-gold transition-colors disabled:opacity-50 shadow-sm"
-        >
-          {isFetching ? (
-            <>
-              <span className="h-3 w-3 border-2 border-gold border-t-transparent rounded-full animate-spin" />
-              <span>Analyzing...</span>
-            </>
-          ) : (
-            <>
-              <span>↻</span>
-              <span>Refresh AI Summary</span>
-            </>
-          )}
-        </button>
       </div>
 
-      {/* Interactive Query Assistant Bar */}
+      {/* Interactive Query Assistant Box */}
       <div className="rounded-xl border border-gold/25 bg-gold/[0.04] p-4 sm:p-5 space-y-4">
         <div>
           <label htmlFor="ai-analyst-input" className="text-xs font-bold text-paper flex items-center gap-1.5">
@@ -273,165 +247,6 @@ export default function AiAnalyticsSection({ timeframe }: Props) {
           </div>
         )}
       </div>
-
-      {/* Pre-computed Store Summary & Health */}
-      {isLoading ? (
-        <div className="py-6 flex items-center gap-3 text-xs text-gold">
-          <span className="h-4 w-4 border-2 border-gold border-t-transparent rounded-full animate-spin" />
-          <span>Reviewing store metrics and recent orders...</span>
-        </div>
-      ) : isError || !insights ? (
-        <div className="rounded-xl border border-line bg-ink-3 p-4 text-xs text-paper-muted">
-          Click &ldquo;Refresh AI Summary&rdquo; above to generate a fresh overview for this period.
-        </div>
-      ) : (
-        <div className="space-y-5">
-          {/* Executive Overview */}
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_260px]">
-            <div className="rounded-xl border border-line bg-white/90 p-4 space-y-2 shadow-sm">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-paper-muted flex items-center gap-1.5">
-                <span>📋</span> Store Summary
-              </span>
-              <p className="text-xs leading-relaxed text-paper whitespace-pre-line font-medium">
-                {insights.executiveSummary}
-              </p>
-            </div>
-
-            {/* Health Score */}
-            <div className="rounded-xl border border-line bg-white/90 p-4 flex flex-col justify-between shadow-sm">
-              <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-paper-muted">
-                  Overall Store Health
-                </span>
-                <div className="mt-2 flex items-baseline gap-2">
-                  <span className="font-display text-3xl font-bold text-gold">
-                    {insights.healthScore}
-                  </span>
-                  <span className="text-xs text-paper-muted">/ 100</span>
-                </div>
-              </div>
-              <p className="text-[11px] text-paper-muted mt-3">
-                {getHealthDescription(insights.healthScore)}
-              </p>
-            </div>
-          </div>
-
-          {/* 3 Columns: Restock Advice, Slow-Moving Stock, Recommended Actions */}
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-            {/* Restock Advice */}
-            <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-4 flex flex-col justify-between space-y-3 shadow-sm">
-              <div>
-                <div className="flex items-center justify-between border-b border-amber-200/80 pb-2">
-                  <span className="text-xs font-bold text-amber-950 flex items-center gap-1.5">
-                    <span>⚠️</span> What to Restock
-                  </span>
-                  <span className="text-[10px] text-amber-800 font-semibold">
-                    {insights.restockAlerts.length} items
-                  </span>
-                </div>
-
-                {insights.restockAlerts.length === 0 ? (
-                  <p className="text-xs text-paper-muted pt-3">
-                    No urgent restock needed. Stock levels look healthy for this period.
-                  </p>
-                ) : (
-                  <div className="space-y-2 pt-2">
-                    {insights.restockAlerts.slice(0, 3).map((alert, idx) => (
-                      <div
-                        key={idx}
-                        className="rounded-lg border border-amber-200/80 bg-white/90 p-2.5 space-y-1 text-xs"
-                      >
-                        <div className="flex items-center justify-between font-semibold text-paper">
-                          <span className="truncate max-w-[150px]">{alert.productName}</span>
-                          <span className="text-amber-900 font-bold text-[11px] whitespace-nowrap">
-                            {alert.daysOfInventory !== null
-                              ? alert.daysOfInventory <= 7
-                                ? `⚠️ Runs out in ~${alert.daysOfInventory} days`
-                                : `Runs out in ~${alert.daysOfInventory} days`
-                              : "Low stock"}
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-paper-muted">
-                          {alert.reasoning}
-                        </p>
-                        <div className="text-[10.5px] text-emerald-800 font-bold">
-                          Recommended order: +{alert.recommendedRestockUnits} units
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Slow-Moving Stock */}
-            <div className="rounded-xl border border-line bg-white/90 p-4 flex flex-col justify-between space-y-3 shadow-sm">
-              <div>
-                <div className="flex items-center justify-between border-b border-line/60 pb-2">
-                  <span className="text-xs font-bold text-paper flex items-center gap-1.5">
-                    <span>❄️</span> Slow-Moving Products
-                  </span>
-                  <span className="text-[10px] text-paper-muted font-medium">Capital review</span>
-                </div>
-
-                {insights.deadStockActionPlan.length === 0 ? (
-                  <p className="text-xs text-paper-muted pt-3">
-                    All products are moving at a reasonable pace.
-                  </p>
-                ) : (
-                  <div className="space-y-2 pt-2">
-                    {insights.deadStockActionPlan.slice(0, 3).map((plan, idx) => (
-                      <div
-                        key={idx}
-                        className="rounded-lg border border-line bg-ink-2/80 p-2.5 space-y-1 text-xs"
-                      >
-                        <div className="flex items-center justify-between font-medium text-paper">
-                          <span className="truncate max-w-[140px]">{plan.productName}</span>
-                          <span className="text-paper-muted font-mono text-[11px]">
-                            ₹{plan.tiedUpCapital.toLocaleString("en-IN")} tied up
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-paper-muted">
-                          {plan.strategy}
-                        </p>
-                        <div className="text-[10.5px] text-gold">
-                          Suggestion: {plan.action}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Recommended Actions */}
-            <div className="rounded-xl border border-line bg-ink-3/50 p-4 flex flex-col justify-between space-y-3">
-              <div>
-                <div className="flex items-center justify-between border-b border-line/40 pb-2">
-                  <span className="text-xs font-semibold text-gold flex items-center gap-1.5">
-                    <span>🎯</span> Things to Look At
-                  </span>
-                  <span className="text-[10px] text-paper-muted">Top priorities</span>
-                </div>
-
-                <div className="space-y-2 pt-2">
-                  {insights.actionItems.map((item, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-start gap-2 rounded-lg border border-line bg-ink-2/80 p-2.5 text-xs"
-                    >
-                      <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-gold/20 text-[10px] font-bold text-gold">
-                        {idx + 1}
-                      </span>
-                      <p className="text-paper/90 leading-relaxed text-[11px]">{item}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </section>
   );
 }
