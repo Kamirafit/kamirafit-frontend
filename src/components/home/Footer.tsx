@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { useCategories } from "@/services/category";
-import { CATEGORIES as DEFAULT_CATEGORIES } from "@/data/categories";
 import { FacebookIcon, InstagramIcon } from "./icons";
 import { useContactModal } from "@/components/contact/ContactModalProvider";
 
@@ -33,16 +32,13 @@ export default function Footer() {
   const { openContactModal } = useContactModal();
 
   const categories = useMemo(() => {
-    const list =
-      rawCategories && rawCategories.length > 0
-        ? rawCategories
-        : DEFAULT_CATEGORIES;
+    const list = Array.isArray(rawCategories) ? rawCategories : [];
 
     return list
       .filter((cat) => Boolean(cat && cat.name))
-      .map((cat) => ({
-        title: cat.name,
-        items: (cat.subcategories || [])
+      .map((cat) => {
+        const catSlug = cat.slug || cat.name.toLowerCase().replace(/[\s_]+/g, "-");
+        const subItems = (cat.subcategories || [])
           .map((sub) => {
             const label = typeof sub === "string" ? sub : sub.name || sub.title || "";
             const slug =
@@ -54,8 +50,19 @@ export default function Footer() {
               href: `/shop?category=${encodeURIComponent(slug)}`,
             };
           })
-          .filter((item) => Boolean(item.label)),
-      }));
+          .filter((item) => Boolean(item.label));
+
+        const items =
+          subItems.length > 0
+            ? subItems
+            : [{ label: `All ${cat.name}`, href: `/shop?category=${encodeURIComponent(catSlug)}` }];
+
+        return {
+          title: cat.name,
+          items,
+        };
+      })
+      .filter((cat) => cat.items.length > 0);
   }, [rawCategories]);
 
   return (

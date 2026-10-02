@@ -109,10 +109,23 @@ function TagIcon() {
   );
 }
 
+function WarehouseIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M3 21h18" />
+      <path d="M19 21v-4" />
+      <path d="M19 17a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v4" />
+      <path d="M3 7l9-4 9 4v14" />
+      <path d="M9 21v-3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3" />
+    </svg>
+  );
+}
+
 const ITEMS: Item[] = [
   { label: "Dashboard", href: "/dedicated-admin", icon: <DashboardIcon /> },
   { label: "Analytics", href: "/dedicated-admin/analytics", icon: <AnalyticsIcon /> },
   { label: "Products", href: "/dedicated-admin/products", icon: <BoxIcon /> },
+  { label: "Inventory", href: "/dedicated-admin/inventory", icon: <WarehouseIcon /> },
   { label: "Orders", href: "/dedicated-admin/orders", icon: <OrdersIcon /> },
   { label: "Coupons", href: "/dedicated-admin/coupons", icon: <TagIcon /> },
   { label: "Testimonials", href: "/dedicated-admin/testimonials", icon: <QuoteIcon /> },

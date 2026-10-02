@@ -41,14 +41,14 @@ export default function FiltersSidebar({
 
   const categoryOptions = useMemo(() => {
     return Object.entries(counts.categories)
-      .filter(([cat, count]) => count > 0 || filters.categories.includes(cat))
+      .filter(([, count]) => count > 0)
       .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
       .map(([cat, count]) => ({
         value: cat,
         label: cat,
         count,
       }));
-  }, [counts.categories, filters.categories]);
+  }, [counts.categories]);
 
   const colorOptions = useMemo(() => {
     const list: string[] = [];

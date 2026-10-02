@@ -30,10 +30,10 @@ function Chevron({ open }: { open: boolean }) {
 }
 
 function useDynamicCategoryColumns(): MegaMenuColumn[] {
-  const { data: serverCategories } = useCategories();
+  const { data: serverCategories, isLoading } = useCategories();
 
   return useMemo(() => {
-    if (serverCategories && Array.isArray(serverCategories) && serverCategories.length > 0) {
+    if (serverCategories && Array.isArray(serverCategories)) {
       const dynamicCols: MegaMenuColumn[] = serverCategories
         .filter((cat) => Boolean(cat && cat.name))
         .map((cat) => {
@@ -62,16 +62,18 @@ function useDynamicCategoryColumns(): MegaMenuColumn[] {
             title: cat.name,
             items,
           };
-        });
+        })
+        .filter((col) => col.items.length > 0);
 
-      if (dynamicCols.length > 0) {
-        return dynamicCols;
-      }
+      return dynamicCols;
     }
 
-    // Always fallback to static CATEGORY_COLUMNS so the menu never breaks or disappears
-    return CATEGORY_COLUMNS;
-  }, [serverCategories]);
+    if (isLoading) {
+      return [];
+    }
+
+    return [];
+  }, [serverCategories, isLoading]);
 }
 
 /**
@@ -105,6 +107,10 @@ export function DesktopCategoriesMenu() {
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
+
+  if (columns.length === 0) {
+    return null;
+  }
 
   return (
     <div
@@ -214,6 +220,10 @@ export function MobileCategoriesMenu({
 }) {
   const [open, setOpen] = useState(false);
   const columns = useDynamicCategoryColumns();
+
+  if (columns.length === 0) {
+    return null;
+  }
 
   return (
     <div className="flex flex-col">
