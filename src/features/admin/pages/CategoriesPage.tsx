@@ -18,6 +18,7 @@ import ConfirmDialog from "../components/ConfirmDialog";
 import DataTable, { type Column } from "../components/DataTable";
 import { EmptyState, ErrorState, OfflineState } from "@/components/states";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { useAdminToast } from "../context/AdminToastContext";
 
 function PlusIcon() {
   return (
@@ -35,6 +36,7 @@ export default function CategoriesPage() {
   const createMutation = useCreateAdminCategory();
   const updateMutation = useUpdateAdminCategory();
   const deleteMutation = useDeleteAdminCategory();
+  const { showSuccess } = useAdminToast();
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<AdminCategory | null>(null);
@@ -181,6 +183,7 @@ export default function CategoriesPage() {
               { id: editing.id, patch: values },
               {
                 onSuccess: () => {
+                  showSuccess(`Category "${values.name}" updated successfully.`, "Category Saved");
                   setFormOpen(false);
                   setEditing(null);
                 },
@@ -189,6 +192,7 @@ export default function CategoriesPage() {
           } else {
             createMutation.mutate(values, {
               onSuccess: () => {
+                showSuccess(`Category "${values.name}" created successfully.`, "Category Created");
                 setFormOpen(false);
                 setEditing(null);
               },
@@ -209,6 +213,7 @@ export default function CategoriesPage() {
           if (deletingId) {
             deleteMutation.mutate(deletingId, {
               onSuccess: () => {
+                showSuccess("Category deleted successfully.", "Category Deleted");
                 setDeletingId(null);
               },
             });

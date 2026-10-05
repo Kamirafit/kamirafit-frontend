@@ -1,14 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLogoutAdmin } from "@/features/auth/hooks";
 
-type Item = {
+type SubItem = {
   label: string;
   href: string;
   icon: React.ReactNode;
+};
+
+type NavGroup = {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  items: SubItem[];
 };
 
 function DashboardIcon() {
@@ -121,17 +128,63 @@ function WarehouseIcon() {
   );
 }
 
-const ITEMS: Item[] = [
-  { label: "Dashboard", href: "/dedicated-admin", icon: <DashboardIcon /> },
-  { label: "Analytics", href: "/dedicated-admin/analytics", icon: <AnalyticsIcon /> },
-  { label: "Products", href: "/dedicated-admin/products", icon: <BoxIcon /> },
-  { label: "Inventory", href: "/dedicated-admin/inventory", icon: <WarehouseIcon /> },
-  { label: "Orders", href: "/dedicated-admin/orders", icon: <OrdersIcon /> },
-  { label: "Coupons", href: "/dedicated-admin/coupons", icon: <TagIcon /> },
-  { label: "Testimonials", href: "/dedicated-admin/testimonials", icon: <QuoteIcon /> },
-  { label: "Queries", href: "/dedicated-admin/queries", icon: <ChatIcon /> },
-  { label: "Users", href: "/dedicated-admin/users", icon: <UsersIcon /> },
-  { label: "Categories", href: "/dedicated-admin/categories", icon: <FolderIcon /> },
+function ChevronDownIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  );
+}
+
+// ----------------------------------------------------
+// Navigation Groups requested by user:
+// 1. Dashboard
+// 2. Catalog & Inventory -> Analytics, Inventory, Products, Categories
+// 3. Orders & Sales      -> Orders, Coupons
+// 4. Customers & Support -> Users, Queries, Testimonials
+// ----------------------------------------------------
+const NAV_GROUPS: NavGroup[] = [
+  {
+    id: "catalog",
+    label: "Catalog & Inventory",
+    icon: <BoxIcon />,
+    items: [
+      { label: "Analytics", href: "/dedicated-admin/analytics", icon: <AnalyticsIcon /> },
+      { label: "Inventory", href: "/dedicated-admin/inventory", icon: <WarehouseIcon /> },
+      { label: "Products", href: "/dedicated-admin/products", icon: <BoxIcon /> },
+      { label: "Categories", href: "/dedicated-admin/categories", icon: <FolderIcon /> },
+    ],
+  },
+  {
+    id: "sales",
+    label: "Orders & Sales",
+    icon: <OrdersIcon />,
+    items: [
+      { label: "Orders", href: "/dedicated-admin/orders", icon: <OrdersIcon /> },
+      { label: "Coupons", href: "/dedicated-admin/coupons", icon: <TagIcon /> },
+    ],
+  },
+  {
+    id: "customers",
+    label: "Customers & Support",
+    icon: <UsersIcon />,
+    items: [
+      { label: "Users", href: "/dedicated-admin/users", icon: <UsersIcon /> },
+      { label: "Queries", href: "/dedicated-admin/queries", icon: <ChatIcon /> },
+      { label: "Testimonials", href: "/dedicated-admin/testimonials", icon: <QuoteIcon /> },
+    ],
+  },
 ];
 
 export default function AdminSidebar() {
@@ -139,6 +192,46 @@ export default function AdminSidebar() {
   const logoutAdmin = useLogoutAdmin();
   const [loggingOut, setLoggingOut] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Group open state: track toggled state for groups
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+
+  // Auto-open group whenever user lands on or navigates to a route inside that group
+  useEffect(() => {
+    if (!pathname) return;
+    NAV_GROUPS.forEach((group) => {
+      const isInside = group.items.some(
+        (item) => pathname === item.href || pathname.startsWith(item.href + "/")
+      );
+      if (isInside) {
+        setOpenGroups((prev) => ({ ...prev, [group.id]: true }));
+      }
+    });
+  }, [pathname]);
+
+  const isGroupOpen = (group: NavGroup) => {
+    if (openGroups[group.id] !== undefined) {
+      return openGroups[group.id];
+    }
+    // Default open if active page belongs to this group
+    return group.items.some(
+      (item) => pathname === item.href || (pathname?.startsWith(item.href + "/") ?? false)
+    );
+  };
+
+  const toggleGroup = (groupId: string) => {
+    setOpenGroups((prev) => {
+      const current = prev[groupId] !== undefined
+        ? prev[groupId]
+        : (NAV_GROUPS.find((g) => g.id === groupId)?.items.some(
+            (item) => pathname === item.href || (pathname?.startsWith(item.href + "/") ?? false)
+          ) ?? false);
+      return {
+        ...prev,
+        [groupId]: !current,
+      };
+    });
+  };
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -150,6 +243,8 @@ export default function AdminSidebar() {
       window.location.href = "/";
     }
   };
+
+  const isDashboardActive = pathname === "/dedicated-admin";
 
   return (
     <>
@@ -169,7 +264,7 @@ export default function AdminSidebar() {
               type="button"
               onClick={handleLogout}
               disabled={loggingOut}
-              className="inline-flex items-center gap-1.5 rounded-full border border-red-500/20 bg-red-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-red-400 hover:bg-red-500/20 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-full border border-red-500/20 bg-red-500/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-[#B3261E] hover:bg-red-500/20 transition-colors"
             >
               <LogoutIcon />
               {loggingOut ? "..." : "Logout"}
@@ -188,44 +283,94 @@ export default function AdminSidebar() {
         </div>
 
         <div
-          className={`grid overflow-hidden transition-all duration-300 ease-in-out ${
-            mobileMenuOpen ? "mt-3 grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0 pointer-events-none"
+          className={`overflow-hidden transition-all duration-300 ease-in-out ${
+            mobileMenuOpen ? "mt-3 block" : "hidden"
           }`}
         >
-          <div className="min-h-0">
-            <nav className="flex flex-col gap-1 border-t border-line pt-3 pb-1">
-              {ITEMS.map((item) => {
-                const active =
-                  item.href === "/dedicated-admin"
-                    ? pathname === item.href
-                    : pathname?.startsWith(item.href);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-[13px] font-semibold uppercase tracking-[0.12em] transition-colors ${
-                      active
-                        ? "bg-gold/15 text-gold"
-                        : "text-paper-muted hover:bg-ink-2 hover:text-paper"
+          <nav className="flex flex-col gap-1 border-t border-line pt-3 pb-2">
+            {/* 1. Dashboard (Direct Link) */}
+            <Link
+              href="/dedicated-admin"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`flex items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-[13px] font-semibold transition-colors ${
+                isDashboardActive
+                  ? "bg-gold text-ink shadow-sm"
+                  : "text-paper hover:bg-ink-2"
+              }`}
+            >
+              <span className={`shrink-0 ${isDashboardActive ? "text-ink" : "text-paper-muted"}`}>
+                <DashboardIcon />
+              </span>
+              <span className="whitespace-nowrap">Dashboard</span>
+            </Link>
+
+            {/* 2, 3, 4. Accordion Navigation Groups */}
+            {NAV_GROUPS.map((group) => {
+              const isOpen = isGroupOpen(group);
+              const isGroupActive = group.items.some(
+                (item) => pathname === item.href || (pathname?.startsWith(item.href + "/") ?? false)
+              );
+
+              return (
+                <div key={group.id} className="flex flex-col">
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(group.id)}
+                    className={`flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-[13px] font-semibold transition-colors ${
+                      isGroupActive
+                        ? "bg-gold/10 text-gold"
+                        : "text-paper hover:bg-ink-2"
                     }`}
                   >
-                    <span className={active ? "text-gold" : "text-paper-muted"}>
-                      {item.icon}
-                    </span>
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </nav>
-          </div>
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span className={`shrink-0 ${isGroupActive ? "text-gold" : "text-paper-muted"}`}>
+                        {group.icon}
+                      </span>
+                      <span className="whitespace-nowrap truncate">{group.label}</span>
+                    </div>
+                    <ChevronDownIcon
+                      className={`shrink-0 transition-transform duration-200 ${
+                        isOpen ? "rotate-180 text-gold" : "text-paper-muted/60"
+                      }`}
+                    />
+                  </button>
+
+                  {isOpen && (
+                    <div className="ml-5 flex flex-col gap-1 border-l-2 border-line/80 py-1.5 pl-3.5">
+                      {group.items.map((subItem) => {
+                        const isSubActive =
+                          pathname === subItem.href || (pathname?.startsWith(subItem.href + "/") ?? false);
+                        return (
+                          <Link
+                            key={subItem.href}
+                            href={subItem.href}
+                            onClick={() => setMobileMenuOpen(false)}
+                            className={`flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[12.5px] font-medium transition-colors ${
+                              isSubActive
+                                ? "bg-gold text-ink font-semibold shadow-sm"
+                                : "text-paper-muted hover:bg-ink-2 hover:text-paper"
+                            }`}
+                          >
+                            <span className={`shrink-0 ${isSubActive ? "text-ink" : "text-paper-muted"}`}>
+                              {subItem.icon}
+                            </span>
+                            <span className="whitespace-nowrap">{subItem.label}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </nav>
         </div>
       </div>
 
       {/* Desktop Sidebar (lg:block) */}
-      <aside className="hidden w-64 shrink-0 border-r border-line bg-ink lg:block">
+      <aside className="hidden w-72 shrink-0 border-r border-line bg-ink lg:block">
         <div className="sticky top-0 flex h-screen flex-col justify-between px-5 py-6">
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-5">
             <Link
               href="/dedicated-admin"
               className="flex items-center gap-3 px-1"
@@ -243,49 +388,100 @@ export default function AdminSidebar() {
               </span>
             </Link>
 
-            <nav className="flex flex-col gap-1">
-              <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.24em] text-paper-muted">
+            <nav className="flex flex-col gap-1 overflow-y-auto pr-1">
+              <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-paper-muted">
                 Workspace
               </p>
-              {ITEMS.map((item) => {
-                const active =
-                  item.href === "/dedicated-admin"
-                    ? pathname === item.href
-                    : pathname?.startsWith(item.href);
+
+              {/* 1. Dashboard (Direct Link) */}
+              <Link
+                href="/dedicated-admin"
+                className={`flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-semibold transition-colors ${
+                  isDashboardActive
+                    ? "bg-gold text-ink shadow-sm"
+                    : "text-paper hover:bg-ink-2"
+                }`}
+              >
+                <span className={`shrink-0 ${isDashboardActive ? "text-ink" : "text-paper-muted"}`}>
+                  <DashboardIcon />
+                </span>
+                <span className="whitespace-nowrap">Dashboard</span>
+              </Link>
+
+              {/* 2, 3, 4. Expandable Navigation Groups */}
+              {NAV_GROUPS.map((group) => {
+                const isOpen = isGroupOpen(group);
+                const isGroupActive = group.items.some(
+                  (item) => pathname === item.href || (pathname?.startsWith(item.href + "/") ?? false)
+                );
+
                 return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`flex items-center gap-3 rounded-full px-3 py-2 text-[12.5px] font-semibold uppercase tracking-[0.12em] transition-colors ${
-                      active
-                        ? "bg-gold/10 text-gold"
-                        : "text-paper-muted hover:bg-ink-2 hover:text-paper"
-                    }`}
-                  >
-                    <span
-                      className={active ? "text-gold" : "text-paper-muted"}
+                  <div key={group.id} className="flex flex-col">
+                    <button
+                      type="button"
+                      onClick={() => toggleGroup(group.id)}
+                      className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-[13px] font-semibold transition-colors ${
+                        isGroupActive
+                          ? "bg-gold/10 text-gold"
+                          : "text-paper hover:bg-ink-2"
+                      }`}
                     >
-                      {item.icon}
-                    </span>
-                    {item.label}
-                  </Link>
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span className={`shrink-0 ${isGroupActive ? "text-gold" : "text-paper-muted"}`}>
+                          {group.icon}
+                        </span>
+                        <span className="whitespace-nowrap truncate">{group.label}</span>
+                      </div>
+                      <ChevronDownIcon
+                        className={`shrink-0 transition-transform duration-200 ${
+                          isOpen ? "rotate-180 text-gold" : "text-paper-muted/60"
+                        }`}
+                      />
+                    </button>
+
+                    {/* Sub-menu Items */}
+                    {isOpen && (
+                      <div className="ml-5 flex flex-col gap-1 border-l-2 border-line/80 py-1.5 pl-3.5 transition-all">
+                        {group.items.map((subItem) => {
+                          const isSubActive =
+                            pathname === subItem.href || (pathname?.startsWith(subItem.href + "/") ?? false);
+                          return (
+                            <Link
+                              key={subItem.href}
+                              href={subItem.href}
+                              className={`flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[12.5px] font-medium transition-colors ${
+                                isSubActive
+                                  ? "bg-gold text-ink font-semibold shadow-sm"
+                                  : "text-paper-muted hover:bg-ink-2 hover:text-paper"
+                              }`}
+                            >
+                              <span className={`shrink-0 ${isSubActive ? "text-ink" : "text-paper-muted"}`}>
+                                {subItem.icon}
+                              </span>
+                              <span className="whitespace-nowrap">{subItem.label}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </nav>
           </div>
 
-          <div className="mt-auto pt-4">
+          <div className="mt-auto pt-4 pb-1">
             {/* Admin Logout Option - Bottom Left */}
             <button
               type="button"
               onClick={handleLogout}
               disabled={loggingOut}
-              className="flex w-full items-center gap-3 rounded-full border border-red-500/30 bg-red-500/10 px-4 py-2.5 text-[12.5px] font-semibold uppercase tracking-[0.12em] text-red-400 transition-colors hover:border-red-500/60 hover:bg-red-500/20 hover:text-red-300 disabled:opacity-50 shadow-sm"
+              className="flex w-full items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/10 px-3.5 py-2.5 text-[12.5px] font-semibold text-[#B3261E] transition-colors hover:border-red-500/40 hover:bg-red-500/20 disabled:opacity-50 shadow-sm"
             >
-              <span className="text-red-400">
+              <span className="text-[#B3261E]">
                 <LogoutIcon />
               </span>
-              <span>{loggingOut ? "Logging out..." : "Logout"}</span>
+              <span className="whitespace-nowrap">{loggingOut ? "Logging out..." : "Logout"}</span>
             </button>
           </div>
         </div>

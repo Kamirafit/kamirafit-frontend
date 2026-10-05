@@ -30,6 +30,7 @@ import SearchField from "../components/SearchField";
 import StatusPill from "../components/StatusPill";
 import { EmptyState, ErrorState, OfflineState } from "@/components/states";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { useAdminToast } from "../context/AdminToastContext";
 
 type ProductStatusFilter = "all" | "active" | "inactive";
 
@@ -58,6 +59,7 @@ export default function ProductsPage() {
   const updateMutation = useUpdateAdminProduct();
   const toggleStatusMutation = useToggleAdminProductStatus();
   const deleteMutation = useDeleteAdminProduct();
+  const { showSuccess } = useAdminToast();
 
   const isLoading = productsLoading || categoriesLoading || productsQuery.isFetching || categoriesQuery.isFetching;
 
@@ -134,6 +136,7 @@ export default function ProductsPage() {
         },
         {
           onSuccess: () => {
+            showSuccess(`Product "${payload.name}" updated successfully.`, "Product Saved");
             setFormOpen(false);
             setEditing(null);
             setDuplicating(null);
@@ -143,6 +146,7 @@ export default function ProductsPage() {
     } else {
       createMutation.mutate(payload, {
         onSuccess: () => {
+          showSuccess(`Product "${payload.name}" created successfully.`, "Product Created");
           setFormOpen(false);
           setEditing(null);
           setDuplicating(null);
@@ -289,7 +293,15 @@ export default function ProductsPage() {
               {
                 label: active ? "Deactivate" : "Activate",
                 tone: active ? "warning" : "success",
-                onClick: () => toggleStatusMutation.mutate(p.id),
+                onClick: () =>
+                  toggleStatusMutation.mutate(p.id, {
+                    onSuccess: () => {
+                      showSuccess(
+                        `Product "${p.name}" is now ${active ? "hidden" : "live"} on the storefront.`,
+                        "Visibility Updated"
+                      );
+                    },
+                  }),
                 icon: active ? (
                   <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
@@ -412,6 +424,7 @@ export default function ProductsPage() {
           if (deletingId) {
             deleteMutation.mutate(deletingId, {
               onSuccess: () => {
+                showSuccess("Product deleted successfully.", "Product Deleted");
                 setDeletingId(null);
               },
             });

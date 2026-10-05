@@ -11,6 +11,7 @@ import SearchField from "../components/SearchField";
 import UserFormModal from "../components/UserFormModal";
 import { EmptyState, ErrorState, OfflineState } from "@/components/states";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { useAdminToast } from "../context/AdminToastContext";
 
 function initials(name: string) {
   return name
@@ -26,6 +27,7 @@ export default function UsersPage() {
   const isLoading = usersQuery.isLoading || usersQuery.isFetching;
   const isOnline = useOnlineStatus();
   const updateMutation = useUpdateAdminUser();
+  const { showSuccess } = useAdminToast();
 
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState<AdminUser | null>(null);
@@ -136,6 +138,7 @@ export default function UsersPage() {
               { id: editing.id, patch: values },
               {
                 onSuccess: () => {
+                  showSuccess(`Customer "${values.name}" updated successfully.`, "Customer Saved");
                   setEditing(null);
                 },
               }

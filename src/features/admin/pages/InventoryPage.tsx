@@ -18,6 +18,8 @@ import AdminTableSkeleton from "@/components/skeleton/AdminTableSkeleton";
 import SearchField from "../components/SearchField";
 import { EmptyState, OfflineState } from "@/components/states";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { useAdminToast } from "../context/AdminToastContext";
+import TableActions from "../components/TableActions";
 
 type StatusFilter = "all" | "IN_STOCK" | "LOW_STOCK" | "OUT_OF_STOCK" | "storefront" | "inventory_only";
 
@@ -70,7 +72,7 @@ export default function InventoryPage() {
       storefront:
         filterStatus === "storefront" ? "true" : filterStatus === "inventory_only" ? "false" : undefined,
       page,
-      limit: 50,
+      limit: 10,
     };
   }, [searchQuery, filterStatus, page]);
 
@@ -89,25 +91,8 @@ export default function InventoryPage() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [selectedItemHistoryId, setSelectedItemHistoryId] = useState<string | null>(null);
 
-  // Toast notification state
-  const [notification, setNotification] = useState<{
-    id: number;
-    type: "success" | "error" | "info";
-    title?: string;
-    message: string;
-  } | null>(null);
-
-  const showNotification = (
-    type: "success" | "error" | "info",
-    message: string,
-    title?: string
-  ) => {
-    const id = Date.now();
-    setNotification({ id, type, title, message });
-    setTimeout(() => {
-      setNotification((curr) => (curr?.id === id ? null : curr));
-    }, 5000);
-  };
+  // Global admin toast
+  const { showSuccess, showError } = useAdminToast();
 
   // Add stock form state
   const [addForm, setAddForm] = useState({
@@ -166,6 +151,10 @@ export default function InventoryPage() {
   const items = Array.isArray(itemsQuery.data)
     ? itemsQuery.data
     : itemsQuery.data?.items || [];
+  const totalItemsCount = Array.isArray(itemsQuery.data)
+    ? items.length
+    : itemsQuery.data?.total ?? items.length;
+  const totalPages = Math.max(1, Math.ceil(totalItemsCount / 10));
 
   const handleOpenAdjust = (item: InventoryItem) => {
     setAdjustItem(item);
@@ -207,7 +196,7 @@ export default function InventoryPage() {
         lowStockThreshold: Number(addForm.lowStockThreshold),
       });
       setAddStockOpen(false);
-      showNotification("success", `Created inventory item "${addForm.name}".`);
+      showSuccess(`Created inventory item "${addForm.name}".`, "Item Created");
       setAddForm({
         name: "",
         sku: "",
@@ -223,7 +212,7 @@ export default function InventoryPage() {
         notes: "",
       });
     } catch (err: unknown) {
-      showNotification("error", (err as Error).message || "Failed to create inventory item");
+      showError((err as Error).message || "Failed to create inventory item", "Creation Failed");
     }
   };
 
@@ -239,13 +228,13 @@ export default function InventoryPage() {
           onlineStock: adjustForm.onlineStock !== undefined ? Number(adjustForm.onlineStock) : undefined,
         },
       });
-      showNotification(
-        "success",
-        `Stock adjusted for "${adjustItem.name}" (${adjustForm.quantityChange > 0 ? "+" : ""}${adjustForm.quantityChange} units).`
+      showSuccess(
+        `Stock adjusted for "${adjustItem.name}" (${adjustForm.quantityChange > 0 ? "+" : ""}${adjustForm.quantityChange} units).`,
+        "Stock Adjusted"
       );
       setAdjustItem(null);
     } catch (err: unknown) {
-      showNotification("error", (err as Error).message || "Failed to adjust stock");
+      showError((err as Error).message || "Failed to adjust stock", "Adjustment Failed");
     }
   };
 
@@ -262,23 +251,22 @@ export default function InventoryPage() {
           onlineStock: Number(editForm.onlineStock),
         },
       });
-      showNotification("success", `Inventory record for "${editItem.name}" updated.`);
+      showSuccess(`Inventory record for "${editItem.name}" updated.`, "Item Updated");
       setEditItem(null);
     } catch (err: unknown) {
-      showNotification("error", (err as Error).message || "Failed to update item");
+      showError((err as Error).message || "Failed to update item", "Update Failed");
     }
   };
 
   const handleSyncCatalog = async () => {
     try {
       const res = await syncCatalogMutation.mutateAsync();
-      showNotification(
-        "success",
+      showSuccess(
         `Catalog sync complete! Linked ${res.syncedCount} new variant(s) to digital inventory.`,
         "Catalog Synchronized"
       );
     } catch (err: unknown) {
-      showNotification("error", (err as Error).message || "Catalog sync failed", "Sync Failed");
+      showError((err as Error).message || "Catalog sync failed", "Sync Failed");
     }
   };
 
@@ -295,64 +283,6 @@ export default function InventoryPage() {
 
   return (
     <div className="space-y-6">
-      {/* Modern Floating Toast Notification */}
-      {notification && (
-        <div
-          role="status"
-          aria-live="polite"
-          className={`fixed top-6 right-6 z-[100] flex max-w-md items-start gap-3 rounded-2xl border p-4 shadow-2xl backdrop-blur-md transition-all animate-in fade-in slide-in-from-top-4 duration-200 ${
-            notification.type === "success"
-              ? "border-emerald-600/30 bg-ink/95 text-paper"
-              : notification.type === "error"
-              ? "border-[#B3261E]/30 bg-ink/95 text-paper"
-              : "border-blue-600/30 bg-ink/95 text-paper"
-          }`}
-        >
-          <div
-            className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
-              notification.type === "success"
-                ? "bg-emerald-600/10 text-emerald-700"
-                : notification.type === "error"
-                ? "bg-[#B3261E]/10 text-[#B3261E]"
-                : "bg-blue-600/10 text-blue-700"
-            }`}
-          >
-            {notification.type === "success" ? (
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-            ) : notification.type === "error" ? (
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-            ) : (
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            )}
-          </div>
-          <div className="flex-1 pr-2">
-            {notification.title && (
-              <h4 className="text-xs font-bold uppercase tracking-wider text-paper mb-0.5">
-                {notification.title}
-              </h4>
-            )}
-            <p className="text-xs font-medium leading-relaxed text-paper">
-              {notification.message}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setNotification(null)}
-            className="text-paper-muted hover:text-paper rounded-lg p-1 transition-colors"
-            aria-label="Dismiss notification"
-          >
-            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-      )}
 
       {/* Top Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -430,7 +360,10 @@ export default function InventoryPage() {
         <div className="flex flex-wrap items-center gap-1.5">
           <button
             type="button"
-            onClick={() => setFilterStatus("all")}
+            onClick={() => {
+              setFilterStatus("all");
+              setPage(1);
+            }}
             className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wider transition-colors whitespace-nowrap ${
               filterStatus === "all" ? "bg-gold text-ink" : "bg-ink-3 text-paper-muted hover:text-paper"
             }`}
@@ -439,7 +372,10 @@ export default function InventoryPage() {
           </button>
           <button
             type="button"
-            onClick={() => setFilterStatus("IN_STOCK")}
+            onClick={() => {
+              setFilterStatus("IN_STOCK");
+              setPage(1);
+            }}
             className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wider transition-colors whitespace-nowrap ${
               filterStatus === "IN_STOCK" ? "bg-emerald-500/15 text-emerald-700 border border-emerald-600/30" : "bg-ink-3 text-paper-muted hover:text-paper"
             }`}
@@ -448,7 +384,10 @@ export default function InventoryPage() {
           </button>
           <button
             type="button"
-            onClick={() => setFilterStatus("LOW_STOCK")}
+            onClick={() => {
+              setFilterStatus("LOW_STOCK");
+              setPage(1);
+            }}
             className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wider transition-colors whitespace-nowrap ${
               filterStatus === "LOW_STOCK" ? "bg-amber-500/15 text-amber-800 border border-amber-600/30" : "bg-ink-3 text-paper-muted hover:text-paper"
             }`}
@@ -457,7 +396,10 @@ export default function InventoryPage() {
           </button>
           <button
             type="button"
-            onClick={() => setFilterStatus("OUT_OF_STOCK")}
+            onClick={() => {
+              setFilterStatus("OUT_OF_STOCK");
+              setPage(1);
+            }}
             className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wider transition-colors whitespace-nowrap ${
               filterStatus === "OUT_OF_STOCK" ? "bg-red-500/15 text-[#B3261E] border border-red-600/30" : "bg-ink-3 text-paper-muted hover:text-paper"
             }`}
@@ -466,7 +408,10 @@ export default function InventoryPage() {
           </button>
           <button
             type="button"
-            onClick={() => setFilterStatus("storefront")}
+            onClick={() => {
+              setFilterStatus("storefront");
+              setPage(1);
+            }}
             className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wider transition-colors whitespace-nowrap ${
               filterStatus === "storefront" ? "bg-blue-500/15 text-blue-700 border border-blue-600/30" : "bg-ink-3 text-paper-muted hover:text-paper"
             }`}
@@ -475,7 +420,10 @@ export default function InventoryPage() {
           </button>
           <button
             type="button"
-            onClick={() => setFilterStatus("inventory_only")}
+            onClick={() => {
+              setFilterStatus("inventory_only");
+              setPage(1);
+            }}
             className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wider transition-colors whitespace-nowrap ${
               filterStatus === "inventory_only" ? "bg-purple-500/15 text-purple-700 border border-purple-600/30" : "bg-ink-3 text-paper-muted hover:text-paper"
             }`}
@@ -507,19 +455,17 @@ export default function InventoryPage() {
       ) : (
         <div className="overflow-hidden rounded-xl border border-line bg-ink-2/40 shadow-sm">
           <div className="overflow-x-auto scrollbar-thin">
-            <table className="min-w-[1140px] w-full text-left text-sm divide-y divide-line">
+            <table className="min-w-[1000px] w-full text-left text-sm divide-y divide-line">
               <thead className="border-b border-line bg-ink-3/60 text-[11px] uppercase tracking-wider text-paper-muted">
                 <tr>
                   <th className="px-4 py-3.5 whitespace-nowrap min-w-[280px]">Item & SKU</th>
                   <th className="px-4 py-3.5 whitespace-nowrap min-w-[140px]">Category</th>
-                  <th className="px-4 py-3.5 text-right whitespace-nowrap min-w-[100px]">Physical Stock</th>
                   <th className="px-4 py-3.5 text-right whitespace-nowrap min-w-[100px]">Available</th>
-                  <th className="px-4 py-3.5 text-right whitespace-nowrap min-w-[85px]">Online</th>
+                  <th className="px-4 py-3.5 text-center whitespace-nowrap min-w-[90px]">Online</th>
                   <th className="px-4 py-3.5 text-right whitespace-nowrap min-w-[95px]">Unit Cost</th>
                   <th className="px-4 py-3.5 text-right whitespace-nowrap min-w-[105px]">Stock Value</th>
                   <th className="px-4 py-3.5 text-center whitespace-nowrap min-w-[125px]">Status</th>
-                  <th className="px-4 py-3.5 text-center whitespace-nowrap min-w-[115px]">Channel</th>
-                  <th className="px-4 py-3.5 text-right whitespace-nowrap min-w-[150px]">Actions</th>
+                  <th className="px-4 py-3.5 text-right whitespace-nowrap min-w-[70px]">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line/60">
@@ -550,17 +496,24 @@ export default function InventoryPage() {
                         {item.subcategory ? ` / ${item.subcategory}` : ""}
                       </span>
                     </td>
-                    <td className="px-4 py-3.5 text-right whitespace-nowrap font-semibold text-paper">
-                      {(item.physicalStock ?? 0).toLocaleString()}
-                    </td>
-                    <td className="px-4 py-3.5 text-right whitespace-nowrap font-medium text-paper-muted">
+                    <td className="px-4 py-3.5 text-right whitespace-nowrap font-medium text-paper">
                       {(item.availableStock ?? 0).toLocaleString()}
                       {(item.reservedStock ?? 0) > 0 && (
                         <span className="ml-1 text-[11px] font-semibold text-amber-800">({item.reservedStock} res)</span>
                       )}
                     </td>
-                    <td className="px-4 py-3.5 text-right whitespace-nowrap font-medium text-paper-muted">
-                      {item.isStorefrontListed ? (item.onlineStock ?? 0).toLocaleString() : <span className="text-paper-muted/40">—</span>}
+                    <td className="px-4 py-3.5 text-center whitespace-nowrap">
+                      {item.isStorefrontListed ? (
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-600/30 bg-emerald-600/10 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
+                          True
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-paper-muted/30 bg-ink-3 px-2.5 py-0.5 text-[11px] font-semibold text-paper-muted">
+                          <span className="h-1.5 w-1.5 rounded-full bg-paper-muted/60" />
+                          False
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3.5 text-right whitespace-nowrap text-paper-muted">
                       {formatCurrency(item.unitCost)}
@@ -586,50 +539,123 @@ export default function InventoryPage() {
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3.5 text-center whitespace-nowrap">
-                      {item.isStorefrontListed ? (
-                        <span className="inline-flex items-center rounded-full border border-blue-600/25 bg-blue-600/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-blue-700 whitespace-nowrap">
-                          Storefront
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center rounded-full border border-purple-600/25 bg-purple-600/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-purple-700 whitespace-nowrap">
-                          Inventory Only
-                        </span>
-                      )}
-                    </td>
                     <td className="px-4 py-3.5 text-right whitespace-nowrap">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => handleOpenAdjust(item)}
-                          className="rounded-lg border border-line bg-ink-3 px-2.5 py-1 text-[11px] font-semibold text-gold hover:bg-gold hover:text-ink transition-colors"
-                        >
-                          Adjust
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleOpenEdit(item)}
-                          className="rounded-lg border border-line bg-ink-3 px-2.5 py-1 text-[11px] font-medium text-paper hover:bg-ink-4 transition-colors"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedItemHistoryId(item.id);
-                            setHistoryOpen(true);
-                          }}
-                          title="Movement History"
-                          className="rounded-lg border border-line bg-ink-3 p-1.5 text-paper-muted hover:text-gold hover:bg-ink-4 transition-colors"
-                        >
-                          <HistoryIcon />
-                        </button>
+                      <div className="flex items-center justify-end">
+                        <TableActions
+                          actions={[
+                            {
+                              label: "Adjust stock",
+                              onClick: () => handleOpenAdjust(item),
+                              icon: (
+                                <svg className="h-3.5 w-3.5 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m6-6H6" />
+                                </svg>
+                              ),
+                            },
+                            {
+                              label: "Edit details",
+                              onClick: () => handleOpenEdit(item),
+                              icon: (
+                                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
+                              ),
+                            },
+                            {
+                              label: "Stock history",
+                              onClick: () => {
+                                setSelectedItemHistoryId(item.id);
+                                setHistoryOpen(true);
+                              },
+                              icon: (
+                                <svg className="h-3.5 w-3.5 text-paper-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                                  <circle cx="12" cy="12" r="10" />
+                                  <polyline points="12 6 12 12 16 14" />
+                                </svg>
+                              ),
+                            },
+                          ]}
+                        />
                       </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Pagination Controls - 10 items per page */}
+          <div className="flex flex-col gap-3 border-t border-line bg-ink-2/30 px-4 py-3 sm:flex-row sm:items-center sm:justify-between text-xs text-paper-muted">
+            <div>
+              Showing{" "}
+              <span className="font-semibold text-paper">
+                {totalItemsCount === 0 ? 0 : (page - 1) * 10 + 1}
+              </span>{" "}
+              to{" "}
+              <span className="font-semibold text-paper">
+                {Math.min(page * 10, totalItemsCount)}
+              </span>{" "}
+              of{" "}
+              <span className="font-semibold text-paper">
+                {totalItemsCount}
+              </span>{" "}
+              items
+            </div>
+
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  className="flex items-center gap-1 rounded-lg border border-line bg-ink-3 px-3 py-1.5 text-xs font-semibold text-paper transition-colors hover:bg-gold hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-ink-3 disabled:hover:text-paper"
+                >
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
+                  Previous
+                </button>
+
+                <div className="flex items-center gap-1 px-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter((p) => {
+                      return p === 1 || p === totalPages || Math.abs(p - page) <= 1;
+                    })
+                    .map((p, idx, arr) => {
+                      const prevPage = arr[idx - 1];
+                      const showEllipsis = prevPage && p - prevPage > 1;
+                      return (
+                        <div key={p} className="flex items-center">
+                          {showEllipsis && <span className="px-1 text-paper-muted">…</span>}
+                          <button
+                            type="button"
+                            onClick={() => setPage(p)}
+                            className={`h-7 min-w-[28px] rounded-lg px-2 text-xs font-semibold transition-colors ${
+                              page === p
+                                ? "bg-gold text-ink"
+                                : "bg-ink-3 text-paper hover:bg-gold/20"
+                            }`}
+                          >
+                            {p}
+                          </button>
+                        </div>
+                      );
+                    })}
+                </div>
+
+                <button
+                  type="button"
+                  disabled={page >= totalPages}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  className="flex items-center gap-1 rounded-lg border border-line bg-ink-3 px-3 py-1.5 text-xs font-semibold text-paper transition-colors hover:bg-gold hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-ink-3 disabled:hover:text-paper"
+                >
+                  Next
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

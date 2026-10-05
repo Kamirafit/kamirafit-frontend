@@ -30,6 +30,7 @@ import {
 import { COLOR_OPTIONS, SIZE_OPTIONS } from "@/features/product/types";
 import { orderService } from "@/services/order";
 import StatusBadge from "./StatusBadge";
+import { adminToast } from "@/features/admin/context/AdminToastContext";
 
 const formatPrice = (n: number) =>
   new Intl.NumberFormat("en-IN", {
@@ -317,13 +318,19 @@ export default function OrderDetailsModal({ open, onClose, order }: Props) {
           orderStatus: draft.orderStatus,
         },
       },
-      { onSuccess: onClose },
+      {
+        onSuccess: () => {
+          adminToast.success(`Order #${order.id.slice(-8)} updated successfully.`, "Order Saved");
+          onClose();
+        },
+      },
     );
   };
 
   const handleDelete = () => {
     deleteMutation.mutate(order.id, {
       onSuccess: () => {
+        adminToast.success(`Order #${order.id.slice(-8)} deleted successfully.`, "Order Deleted");
         setConfirmDelete(false);
         onClose();
       },
@@ -545,6 +552,7 @@ export default function OrderDetailsModal({ open, onClose, order }: Props) {
                   onClick={() => {
                     syncMutation.mutate(order.id, {
                       onSuccess: (updated) => {
+                        adminToast.success("Shiprocket tracking synchronized successfully.", "Tracking Synced");
                         if (updated) {
                           setDraft(buildDraft(updated));
                         }

@@ -16,11 +16,13 @@ import SearchField from "../components/SearchField";
 import QueryDetailsModal from "../components/QueryDetailsModal";
 import QueryFormModal from "../components/QueryFormModal";
 import { EmptyState } from "@/components/states";
+import { useAdminToast } from "../context/AdminToastContext";
 
 export default function QueriesPage() {
   const queriesQuery = useAdminQueries();
   const createQueryMutation = useCreateAdminQuery();
   const updateQueryMutation = useUpdateAdminQuery();
+  const { showSuccess } = useAdminToast();
 
   const { data: queries = [] } = queriesQuery;
   const isLoading = queriesQuery.isLoading || queriesQuery.isFetching;
@@ -170,8 +172,10 @@ export default function QueriesPage() {
         id: editingQuery.id,
         data: values,
       });
+      showSuccess("Customer query updated successfully.", "Query Updated");
     } else {
       await createQueryMutation.mutateAsync(values);
+      showSuccess("New inquiry created successfully.", "Query Logged");
     }
   };
 

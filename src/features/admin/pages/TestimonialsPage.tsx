@@ -16,6 +16,7 @@ import ConfirmDialog from "../components/ConfirmDialog";
 import TestimonialFormModal from "../components/TestimonialFormModal";
 import AdminTableSkeleton from "@/components/skeleton/AdminTableSkeleton";
 import { EmptyState } from "@/components/states";
+import { useAdminToast } from "../context/AdminToastContext";
 
 function PlusIcon() {
   return (
@@ -54,6 +55,7 @@ export default function TestimonialsPage() {
   const updateMutation = useUpdateTestimonial();
   const deleteMutation = useDeleteTestimonial();
   const reorderMutation = useReorderTestimonials();
+  const { showSuccess } = useAdminToast();
 
   // Local list state for instant, lag-free drag-and-drop
   const [items, setItems] = useState<Testimonial[]>([]);
@@ -147,8 +149,10 @@ export default function TestimonialsPage() {
           id: editing.id,
           data: values,
         });
+        showSuccess(`Testimonial from "${values.name}" updated successfully.`, "Testimonial Saved");
       } else {
         await createMutation.mutateAsync(values);
+        showSuccess(`Testimonial from "${values.name}" created successfully.`, "Testimonial Created");
       }
       setFormOpen(false);
       setEditing(null);
@@ -161,6 +165,7 @@ export default function TestimonialsPage() {
     if (!deletingId) return;
     try {
       await deleteMutation.mutateAsync(deletingId);
+      showSuccess("Testimonial deleted successfully.", "Testimonial Deleted");
       setDeletingId(null);
     } catch {
       // Error handled by mutation state

@@ -22,6 +22,7 @@ import StatusPill from "../components/StatusPill";
 import CouponFormModal from "../components/CouponFormModal";
 import { EmptyState, ErrorState, OfflineState } from "@/components/states";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { useAdminToast } from "../context/AdminToastContext";
 
 function PlusIcon() {
   return (
@@ -68,6 +69,7 @@ export default function CouponsPage() {
   const updateMutation = useUpdateAdminCoupon();
   const toggleMutation = useToggleAdminCoupon();
   const deleteMutation = useDeleteAdminCoupon();
+  const { showSuccess } = useAdminToast();
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingCoupon, setEditingCoupon] = useState<AdminCoupon | null>(null);
@@ -248,7 +250,16 @@ export default function CouponsPage() {
       render: (c) => (
         <button
           type="button"
-          onClick={() => toggleMutation.mutate(c.id)}
+          onClick={() =>
+            toggleMutation.mutate(c.id, {
+              onSuccess: (updated) => {
+                showSuccess(
+                  `Coupon "${c.code}" is now ${updated?.isActive ?? !c.isActive ? "active" : "inactive"}.`,
+                  "Status Changed"
+                );
+              },
+            })
+          }
           disabled={toggleMutation.isPending}
           title="Click to toggle coupon active status"
           className="cursor-pointer transition-opacity hover:opacity-80"
@@ -299,6 +310,7 @@ export default function CouponsPage() {
         { id: editingCoupon.id, data: updateData },
         {
           onSuccess: () => {
+            showSuccess(`Coupon "${payload.code}" updated successfully.`, "Coupon Saved");
             setFormOpen(false);
             setEditingCoupon(null);
           },
@@ -307,6 +319,7 @@ export default function CouponsPage() {
     } else {
       createMutation.mutate(payload, {
         onSuccess: () => {
+          showSuccess(`Coupon "${payload.code}" created successfully.`, "Coupon Created");
           setFormOpen(false);
           setEditingCoupon(null);
         },
@@ -318,6 +331,7 @@ export default function CouponsPage() {
     if (deletingId) {
       deleteMutation.mutate(deletingId, {
         onSuccess: () => {
+          showSuccess("Coupon deleted successfully.", "Coupon Deleted");
           setDeletingId(null);
         },
       });
