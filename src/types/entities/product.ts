@@ -66,7 +66,8 @@ export interface RawProductInput {
   basePrice?: number;
   baseMrp?: number;
   image?: string;
-  images?: string[];
+  images?: Array<string | { id?: string; url?: string; alt?: string; sortOrder?: number; isPrimary?: boolean }>;
+  productImages?: Array<{ id: string; url: string; alt?: string | null; sortOrder: number; isPrimary: boolean }>;
   imageColorMap?: Array<{ src?: string; color?: string }> | Record<string, string[] | string>;
   size?: string[];
   sizes?: string[];
@@ -88,6 +89,15 @@ export interface RawProductInput {
   };
   data?: RawProductInput;
   [key: string]: unknown;
+}
+
+function extractUrl(item: unknown): string {
+  if (!item) return "";
+  if (typeof item === "string") return item;
+  if (typeof item === "object" && item !== null && "url" in item && typeof (item as { url: unknown }).url === "string") {
+    return (item as { url: string }).url;
+  }
+  return "";
 }
 
 export function adaptProduct(raw: RawProductInput | unknown): Product {
@@ -122,7 +132,9 @@ export function adaptProduct(raw: RawProductInput | unknown): Product {
         reserved,
         available,
       },
-      images: Array.isArray(v.images) ? v.images : (p.images || []),
+      images: Array.isArray(v.images)
+        ? v.images.map(extractUrl).filter(Boolean)
+        : (Array.isArray(p.images) ? p.images.map(extractUrl).filter(Boolean) : []),
       isAvailable: typeof v.isAvailable === "boolean" ? v.isAvailable : true,
     };
   });
@@ -139,10 +151,17 @@ export function adaptProduct(raw: RawProductInput | unknown): Product {
     ...variants.map((v) => v.color),
   ]));
 
+  const rawImagesList = Array.isArray(p.images)
+    ? p.images.map(extractUrl).filter(Boolean)
+    : [];
+  const rawVariantImages = variants.flatMap((v) =>
+    Array.isArray(v.images) ? v.images.map(extractUrl).filter(Boolean) : []
+  );
+
   const images = Array.from(new Set([
-    ...(Array.isArray(p.images) ? p.images : []),
-    ...(p.image ? [p.image] : []),
-    ...variants.flatMap((v) => v.images || []),
+    ...rawImagesList,
+    ...(p.image ? [extractUrl(p.image)] : []),
+    ...rawVariantImages,
   ]));
 
   const rawReviews = Array.isArray(p.reviews) ? p.reviews : (p.metadata?.reviews ?? []);

@@ -26,6 +26,7 @@ type UploadPreview = {
   id: string;
   name: string;
   url: string;
+  file: File;
 };
 
 function createId(prefix: string) {
@@ -199,6 +200,8 @@ export default function ProductReviews({
     return buckets;
   }, [localReviews]);
 
+  const [moderationMessage, setModerationMessage] = useState<string>("");
+
   const handleImageUpload = (event: ChangeEvent<HTMLInputElement>) => {
     if (!isAuthenticated) {
       const current = pathname || `/product/${productId}`;
@@ -208,17 +211,39 @@ export default function ProductReviews({
     const files = Array.from(event.target.files ?? []);
     if (files.length === 0) return;
 
-    const previews = files
-      .filter((file) => file.type.startsWith("image/"))
-      .map((file) => {
-        const url = URL.createObjectURL(file);
-        createdObjectUrls.current.add(url);
-        return {
-          id: createId("review-image"),
-          name: file.name,
-          url,
-        };
-      });
+    if (uploadedImages.length + files.length > 3) {
+      setSubmitError("You can upload a maximum of 3 images per review.");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
+    const maxSizeBytes = 2 * 1024 * 1024; // 2 MB
+
+    for (const file of files) {
+      if (!allowedTypes.includes(file.type.toLowerCase())) {
+        setSubmitError(`Invalid file type: ${file.name}. Only JPEG, PNG, and WebP are allowed.`);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        return;
+      }
+      if (file.size > maxSizeBytes) {
+        setSubmitError(`File too large: ${file.name}. Maximum allowed size is 2 MB per image.`);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        return;
+      }
+    }
+
+    setSubmitError("");
+    const previews: UploadPreview[] = files.map((file) => {
+      const url = URL.createObjectURL(file);
+      createdObjectUrls.current.add(url);
+      return {
+        id: createId("review-image"),
+        name: file.name,
+        url,
+        file,
+      };
+    });
 
     setUploadedImages((current) => [...current, ...previews]);
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -251,32 +276,52 @@ export default function ProductReviews({
 
     setSubmitting(true);
     setSubmitError("");
-
+    setModerationMessage("");
 
     try {
-      await createReviewMutation.mutateAsync({
-        productId,
-        rating,
-        comment: trimmedTitle ? `${trimmedTitle}\n\n${trimmedComment}` : trimmedComment,
-        images: uploadedImages.map((image) => image.url),
-      });
+      const hasImages = uploadedImages.length > 0;
+      if (hasImages) {
+        const formData = new FormData();
+        formData.append("productId", productId);
+        formData.append("rating", String(rating));
+        formData.append("comment", trimmedComment);
+        if (trimmedTitle) formData.append("title", trimmedTitle);
 
-      const customerName = user?.firstName
-        ? `${user.firstName} ${user.lastName || ""}`.trim()
-        : "Verified Customer";
+        uploadedImages.forEach((item) => {
+          formData.append("images", item.file);
+        });
 
-      const nextReview: Review = {
-        id: createId("review"),
-        productId,
-        customerName,
-        rating,
-        title: trimmedTitle || undefined,
-        comment: trimmedComment,
-        images: uploadedImages.map((image) => image.url),
-        createdAt: new Date().toISOString(),
-      };
+        await createReviewMutation.mutateAsync(formData);
+        setModerationMessage(
+          "Thank you! Your review with photos has been submitted and will appear once approved by our team."
+        );
+      } else {
+        await createReviewMutation.mutateAsync({
+          productId,
+          rating,
+          comment: trimmedTitle ? `${trimmedTitle}\n\n${trimmedComment}` : trimmedComment,
+          images: [],
+        });
 
-      setLocalReviews((current) => [nextReview, ...current]);
+        const customerName = user?.firstName
+          ? `${user.firstName} ${user.lastName || ""}`.trim()
+          : "Verified Customer";
+
+        const nextReview: Review = {
+          id: createId("review"),
+          productId,
+          customerName,
+          rating,
+          title: trimmedTitle || undefined,
+          comment: trimmedComment,
+          images: [],
+          createdAt: new Date().toISOString(),
+        };
+
+        setLocalReviews((current) => [nextReview, ...current]);
+        setModerationMessage("Thank you! Your review has been submitted.");
+      }
+
       setRating(5);
       setTitle("");
       setComment("");
@@ -512,6 +557,18 @@ export default function ProductReviews({
                 </div>
               ) : null}
             </div>
+
+            {submitError ? (
+              <p className="text-xs text-red-400 bg-red-950/30 border border-red-800/40 rounded-xl p-3">
+                {submitError}
+              </p>
+            ) : null}
+
+            {moderationMessage ? (
+              <p className="text-xs text-emerald-400 bg-emerald-950/30 border border-emerald-800/40 rounded-xl p-3">
+                {moderationMessage}
+              </p>
+            ) : null}
 
             <button
               type="submit"

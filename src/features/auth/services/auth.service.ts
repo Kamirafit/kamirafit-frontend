@@ -80,9 +80,7 @@ export const authService = {
     try {
       await unwrapApiResponse(
         apiClient
-          .post("/v1/admin/logout", {})
-          .catch(() => apiClient.post("/v1/auth/logout-admin", {}))
-          .catch(() => apiClient.post("/auth/logout", {}))
+          .post("/v1/admin/logout-admin", {})
       );
     } catch {
       // Ignore network errors so client session is always cleared

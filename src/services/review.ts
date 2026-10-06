@@ -14,8 +14,16 @@ export const reviewService = {
     unwrapApiResponse<Review[]>(apiClient.get("/orders/reviews", { params: { productId } })),
   checkEligibility: (productId: string) =>
     unwrapApiResponse<ReviewEligibility>(apiClient.get("/orders/reviews/eligibility", { params: { productId } })),
-  createReview: (review: CreateReviewRequestDto) =>
-    unwrapApiResponse<Review>(apiClient.post("/orders/reviews", review)),
+  createReview: (review: CreateReviewRequestDto | FormData) => {
+    if (typeof FormData !== "undefined" && review instanceof FormData) {
+      return unwrapApiResponse<Review>(
+        apiClient.post("/orders/reviews", review, {
+          headers: { "Content-Type": "multipart/form-data" },
+        })
+      );
+    }
+    return unwrapApiResponse<Review>(apiClient.post("/orders/reviews", review));
+  },
 };
 
 export function useReviews(productId: string) {
@@ -38,12 +46,14 @@ export function useReviewEligibility(productId: string, enabled = true) {
 
 export function useCreateReview() {
   const q = useQueryClient();
-  return useMutation({
+  return useMutation<Review, Error, CreateReviewRequestDto | FormData>({
     mutationFn: reviewService.createReview,
     onSuccess: (d) => {
-      q.invalidateQueries({ queryKey: ["reviews", d.productId] });
-      q.invalidateQueries({ queryKey: ["product", d.productId] });
-      q.invalidateQueries({ queryKey: ["reviewEligibility", d.productId] });
+      if (d?.productId) {
+        q.invalidateQueries({ queryKey: ["reviews", d.productId] });
+        q.invalidateQueries({ queryKey: ["product", d.productId] });
+        q.invalidateQueries({ queryKey: ["reviewEligibility", d.productId] });
+      }
     },
   });
 }
