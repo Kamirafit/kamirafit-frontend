@@ -7,9 +7,11 @@ import Button from "@/components/ui/Button";
 
 type Props = {
   address?: Address; // If provided, we're editing. If not, adding.
+  defaultValues?: Partial<Address>;
   onClose: () => void;
   onSave: (address: Address) => Promise<void> | void;
   isSubmitting?: boolean;
+  zIndex?: string;
 };
 
 interface FormErrors {
@@ -21,9 +23,16 @@ interface FormErrors {
   state?: string;
 }
 
-export default function AddressFormModal({ address, onClose, onSave, isSubmitting = false }: Props) {
+export default function AddressFormModal({
+  address,
+  defaultValues,
+  onClose,
+  onSave,
+  isSubmitting = false,
+  zIndex = "z-[150]",
+}: Props) {
   const [formData, setFormData] = useState<Partial<Address>>(
-    address || { type: "Home", isDefault: false }
+    address || { type: "Home", isDefault: false, ...defaultValues }
   );
   const [isDetecting, setIsDetecting] = useState(false);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -32,11 +41,22 @@ export default function AddressFormModal({ address, onClose, onSave, isSubmittin
 
   // Sync state whenever address prop changes
   useEffect(() => {
-    setFormData(address || { type: "Home", isDefault: false });
+    setFormData(address || { type: "Home", isDefault: false, ...defaultValues });
     setTouched({});
     setErrors({});
     setSubmitError(null);
-  }, [address]);
+  }, [address, defaultValues]);
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape" && !isSubmitting) {
+        e.stopPropagation();
+        onClose();
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose, isSubmitting]);
 
   const validateFields = (data: Partial<Address>): FormErrors => {
     const errs: FormErrors = {};
@@ -189,7 +209,7 @@ export default function AddressFormModal({ address, onClose, onSave, isSubmittin
   };
 
   return (
-    <div role="dialog" aria-modal="true" className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div role="dialog" aria-modal="true" className={`fixed inset-0 ${zIndex || "z-[150]"} flex items-center justify-center p-4`}>
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={isSubmitting ? undefined : onClose} />
       <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto modal-scrollbar-hidden rounded-2xl border border-line bg-ink shadow-2xl backdrop-blur-xl">
         <div className="sticky top-0 z-10 border-b border-line bg-ink/95 px-6 py-4 backdrop-blur-md flex justify-between items-center">

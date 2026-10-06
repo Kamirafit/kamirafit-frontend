@@ -56,16 +56,16 @@ export function calculateDeliveryCharge(
 ): DeliveryCalculationResult {
   const isDomestic = isIndiaDestination(country);
 
-  // 1. Outside India (Worldwide / International)
+  // 1. Outside India (Worldwide / International - Flat 2499, delivery outside India can NEVER be free)
   if (!isDomestic) {
     return {
       zone: "INTERNATIONAL",
-      rate: 1499,
+      rate: 2499,
       currency: "INR",
       isDomestic: false,
       courierName: "DHL Express / Aramex Worldwide",
       estimatedDays: 6,
-      zoneLabel: "International Express",
+      zoneLabel: "Worldwide International Express",
     };
   }
 

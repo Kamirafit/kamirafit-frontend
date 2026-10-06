@@ -1,6 +1,6 @@
 import type { CartItem } from "@/features/product/store/cartSlice";
 import type { Product } from "@/features/product/types";
-import { calculateDeliveryCharge } from "@/lib/delivery";
+import { calculateDeliveryCharge, isIndiaDestination } from "@/lib/delivery";
 
 export const FREE_SHIPPING_THRESHOLD = 999;
 export const DELIVERY_FEE = 199;
@@ -13,7 +13,8 @@ export type ResolvedCartItem = {
 
 /**
  * Calculates delivery fee based on customer region & destination pincode.
- * Falls back to saved localStorage pincode or West Bengal standard rate.
+ * Delivery outside India can NEVER be free: flat 2499 delivery fee strictly enforced.
+ * Domestic Indian orders over Rs. 999 receive complimentary free shipping.
  */
 export function calculateShippingFee(
   subtotal: number,
@@ -21,6 +22,20 @@ export function calculateShippingFee(
   country?: string
 ): number {
   if (subtotal <= 0) return 0;
+
+  // Delivery outside India can NEVER be free! Flat 2499 fee.
+  if (country && !isIndiaDestination(country)) {
+    return 2499;
+  }
+
+  if (!country && typeof window !== "undefined") {
+    const savedCountry = localStorage.getItem("kamirafit_country");
+    if (savedCountry && !isIndiaDestination(savedCountry)) {
+      return 2499;
+    }
+  }
+
+  // Free shipping threshold only applies domestically within India
   if (subtotal > FREE_SHIPPING_THRESHOLD) return 0;
 
   if (pincode || country) {

@@ -5,6 +5,7 @@ import {
   type AdminCategory,
   type AdminOrder as Order,
   type AdminUser,
+  type Address,
   type ContactQuery,
   type AdminQueryInput,
   type Product,
@@ -175,25 +176,63 @@ export function adaptCategory(raw: unknown): AdminCategory {
   };
 }
 
+export function adaptAdminAddress(raw: unknown): Address {
+  const item = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  const street = String(item.addressLine1 || item.street || "");
+  const pin = String(item.pincode || item.postalCode || "");
+  const validTypes = ["Home", "Work", "Other"] as const;
+  const rawType = String(item.type || "Home");
+  const type = validTypes.includes(rawType as (typeof validTypes)[number])
+    ? (rawType as (typeof validTypes)[number])
+    : "Home";
+
+  return {
+    id: String(item.id || `addr-${Math.random()}`),
+    type,
+    fullName: String(item.fullName || "Customer"),
+    phoneNumber: String(item.phoneNumber || item.phone || ""),
+    addressLine1: street,
+    addressLine2: item.addressLine2 ? String(item.addressLine2) : undefined,
+    landmark: item.landmark ? String(item.landmark) : undefined,
+    city: String(item.city || ""),
+    state: String(item.state || ""),
+    pincode: pin,
+    country: String(item.country || "India"),
+    isDefault: Boolean(item.isDefault),
+  };
+}
+
 export function adaptUser(raw: unknown): AdminUser {
   const u = ((raw && typeof raw === "object" && "data" in raw ? (raw as { data: unknown }).data : raw) || {}) as Record<string, unknown>;
-  const addresses = Array.isArray(u.addresses) ? (u.addresses as Array<{ street?: string; city?: string }>) : [];
+  const rawAddresses = Array.isArray(u.addresses) ? u.addresses : [];
+  const addresses: Address[] = rawAddresses.map(adaptAdminAddress);
   const fullName =
     u.firstName || u.lastName
       ? `${String(u.firstName || "")} ${String(u.lastName || "")}`.trim()
       : String(u.name || "Customer");
+
+  const defaultOrFirst = addresses.find((a) => a.isDefault) || addresses[0];
+  const formattedAddress = defaultOrFirst
+    ? [
+        defaultOrFirst.addressLine1,
+        defaultOrFirst.addressLine2,
+        defaultOrFirst.city,
+        defaultOrFirst.state,
+        defaultOrFirst.pincode,
+      ].filter(Boolean).join(", ")
+    : "";
 
   return {
     id: String(u.id || u._id || ""),
     name: fullName,
     email: String(u.email || ""),
     phone: String(u.phoneNumber || u.phone || ""),
-    address:
-      String(u.address || "") ||
-      (addresses[0]?.street
-        ? `${addresses[0].street}, ${addresses[0].city || ""}`
-        : ""),
+    address: String(u.address || "") || formattedAddress,
+    addresses,
     isActive: typeof u.isActive === "boolean" ? u.isActive : true,
+    firstName: u.firstName ? String(u.firstName) : undefined,
+    lastName: u.lastName ? String(u.lastName) : undefined,
+    phoneNumber: u.phoneNumber ? String(u.phoneNumber) : undefined,
   };
 }
 
@@ -437,6 +476,17 @@ export const adminService = {
     };
     return adminRequest<AdminUser>("put", "/users/" + id, payload).then(adaptUser);
   },
+  getUserAddresses: (userId: string) =>
+    adminRequest<unknown[] | { data?: unknown[] }>("get", `/users/${userId}/addresses`).then((r) => {
+      const items = Array.isArray(r) ? r : (r && typeof r === "object" && "data" in r && Array.isArray((r as { data: unknown[] }).data) ? (r as { data: unknown[] }).data : []);
+      return items.map(adaptAdminAddress);
+    }),
+  createUserAddress: (userId: string, data: Partial<Address>) =>
+    adminRequest<unknown>("post", `/users/${userId}/addresses`, data).then(adaptAdminAddress),
+  updateUserAddress: (userId: string, addressId: string, data: Partial<Address>) =>
+    adminRequest<unknown>("put", `/users/${userId}/addresses/${addressId}`, data).then(adaptAdminAddress),
+  deleteUserAddress: (userId: string, addressId: string) =>
+    adminRequest<{ id: string }>("delete", `/users/${userId}/addresses/${addressId}`),
   getOrders: (params?: { status?: string; page?: number; limit?: number }) =>
     adminRequest<unknown[] | { data?: unknown[] }>("get", "/orders", undefined, { params }).then((r) => {
       const items = Array.isArray(r) ? r : (r && typeof r === "object" && "data" in r && Array.isArray((r as { data: unknown[] }).data) ? (r as { data: unknown[] }).data : []);
@@ -605,6 +655,53 @@ export function useUpdateAdminUser() {
     mutationFn: ({ id, patch }: { id: string; patch: AdminUserUpdateInput }) =>
       adminService.updateUser(id, patch),
     onSuccess: () => q.invalidateQueries({ queryKey: ["admin", "users"] }),
+  });
+}
+export function useAdminUserAddresses(userId?: string) {
+  return useQuery<Address[]>({
+    queryKey: ["admin", "users", userId, "addresses"],
+    queryFn: () => adminService.getUserAddresses(userId!),
+    enabled: Boolean(userId),
+  });
+}
+export function useAdminCreateUserAddress() {
+  const q = useQueryClient();
+  return useMutation({
+    mutationFn: ({ userId, data }: { userId: string; data: Partial<Address> }) =>
+      adminService.createUserAddress(userId, data),
+    onSuccess: (_, { userId }) => {
+      q.invalidateQueries({ queryKey: ["admin", "users"] });
+      q.invalidateQueries({ queryKey: ["admin", "users", userId, "addresses"] });
+    },
+  });
+}
+export function useAdminUpdateUserAddress() {
+  const q = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      userId,
+      addressId,
+      data,
+    }: {
+      userId: string;
+      addressId: string;
+      data: Partial<Address>;
+    }) => adminService.updateUserAddress(userId, addressId, data),
+    onSuccess: (_, { userId }) => {
+      q.invalidateQueries({ queryKey: ["admin", "users"] });
+      q.invalidateQueries({ queryKey: ["admin", "users", userId, "addresses"] });
+    },
+  });
+}
+export function useAdminDeleteUserAddress() {
+  const q = useQueryClient();
+  return useMutation({
+    mutationFn: ({ userId, addressId }: { userId: string; addressId: string }) =>
+      adminService.deleteUserAddress(userId, addressId),
+    onSuccess: (_, { userId }) => {
+      q.invalidateQueries({ queryKey: ["admin", "users"] });
+      q.invalidateQueries({ queryKey: ["admin", "users", userId, "addresses"] });
+    },
   });
 }
 export function useAdminOrders(params?: { status?: string; page?: number; limit?: number }) {

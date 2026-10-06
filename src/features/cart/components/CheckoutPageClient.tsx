@@ -118,10 +118,13 @@ export default function CheckoutPageClient() {
     const country = selectedAddress.country || "India";
     const charge = calculateDeliveryCharge(pin, country);
     const dateRange = calculateDeliveryDateRange(charge.estimatedDays);
-    const isFree = subtotal > 999;
+    // Delivery outside India can NEVER be free: flat 2499 fee strictly enforced
+    const isFree = charge.isDomestic && subtotal > 999;
+    const effectiveRate = !charge.isDomestic ? 2499 : (isFree ? 0 : charge.rate);
     return {
       ...charge,
-      effectiveRate: isFree ? 0 : charge.rate,
+      rate: !charge.isDomestic ? 2499 : charge.rate,
+      effectiveRate,
       isFree,
       ...dateRange,
     };
@@ -712,10 +715,10 @@ export default function CheckoutPageClient() {
                   ) : (
                     <div>
                       <span className="font-display text-sm font-bold text-gold">
-                        ₹{deliveryEstimation.rate}
+                        ₹{deliveryEstimation.effectiveRate}
                       </span>
                       <p className="text-[10px] text-paper-muted">
-                        Regional shipping fee
+                        {deliveryEstimation.isDomestic ? "Regional shipping fee" : "Flat International delivery fee"}
                       </p>
                     </div>
                   )}

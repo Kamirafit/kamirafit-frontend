@@ -70,6 +70,29 @@ export default function UsersPage() {
       render: (u) => <span className="text-paper-muted">{u.phone}</span>,
     },
     {
+      key: "address",
+      label: "Address",
+      render: (u) => {
+        const count = u.addresses?.length || 0;
+        return (
+          <div className="flex flex-col max-w-xs">
+            {u.address ? (
+              <span className="truncate text-paper text-xs" title={u.address}>
+                {u.address}
+              </span>
+            ) : (
+              <span className="text-paper-muted text-xs italic">No address on file</span>
+            )}
+            {count > 0 && (
+              <span className="text-[11px] text-gold/90 font-medium">
+                {count} {count === 1 ? "address" : "addresses"}
+              </span>
+            )}
+          </div>
+        );
+      },
+    },
+    {
       key: "actions",
       label: "Actions",
       align: "right",
@@ -77,7 +100,7 @@ export default function UsersPage() {
         <TableActions
           actions={[
             {
-              label: "Edit",
+              label: "Manage",
               onClick: () => setEditing(u),
             },
           ]}

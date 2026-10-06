@@ -8,6 +8,7 @@ type Props = {
   onClose: () => void;
   children: ReactNode;
   maxWidth?: "sm" | "md" | "lg" | "xl";
+  zIndex?: string;
 };
 
 const WIDTH: Record<NonNullable<Props["maxWidth"]>, string> = {
@@ -23,6 +24,7 @@ export default function Modal({
   onClose,
   children,
   maxWidth = "md",
+  zIndex = "z-[110]",
 }: Props) {
   useEffect(() => {
     if (!open) return;
@@ -45,7 +47,7 @@ export default function Modal({
       role="dialog"
       aria-modal="true"
       aria-label={title}
-      className="fixed inset-0 z-[110] flex items-start justify-center p-3 sm:p-4 pt-[4vh] sm:pt-[8vh]"
+      className={`fixed inset-0 ${zIndex} flex items-start justify-center p-3 sm:p-4 pt-[4vh] sm:pt-[8vh]`}
     >
       <button
         type="button"

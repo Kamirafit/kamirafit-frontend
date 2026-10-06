@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { EntityIdSchema, ISODateStringSchema } from "./common.schema";
 import { PaymentStatusSchema } from "./payment.schema";
+import { AddressSchema } from "./address.schema";
 
 export const ADMIN_ORDER_STATUSES = [
   "New",
@@ -31,6 +32,7 @@ export const AdminUserSchema = z.object({
   email: z.string().email(),
   phone: z.string(),
   address: z.string(),
+  addresses: z.array(AddressSchema).optional(),
   isActive: z.boolean().optional(),
   firstName: z.string().optional(),
   lastName: z.string().optional(),

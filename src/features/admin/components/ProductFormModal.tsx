@@ -125,6 +125,32 @@ export const HSN_PRESETS = [
   { code: "61046200", label: "Joggers & Track Pants", type: "Knitted Casual", desc: "Casual joggers, track pants, activewear sweatpants" },
 ];
 
+/**
+ * Resolves the statutory standard HSN code based on garment category and subcategory.
+ */
+export function getRecommendedHsn(category?: string, subcategory?: string): string {
+  const normCat = (category || "").toLowerCase();
+  const normSub = (subcategory || "").toLowerCase();
+
+  if (normCat.includes("kurti") || normSub.includes("kurti")) return "62044220";
+  if (normCat.includes("dress") || normSub.includes("dress")) return "62044990";
+  if (normCat.includes("co-ord") || normCat.includes("top") || normCat.includes("shirt") || normCat.includes("western")) return "62064000";
+  if (normCat.includes("pant") || normCat.includes("trouser") || normCat.includes("bottom")) return "62046200";
+  if (normCat.includes("jogger") || normSub.includes("jogger") || normCat.includes("track")) return "61046200";
+  if (normCat.includes("legging") || normCat.includes("churidar")) return "61152100";
+  return "61091000"; // Knitted / Stretchable / T-Shirts / Tops (Chapter 61)
+}
+
+/**
+ * Statutory Indian GST Rate under Notification No. 09/2025-Central Tax (Rate)
+ * Effective 22 September 2025:
+ * - Net value <= Rs. 2,500/piece -> 5% GST
+ * - Net value > Rs. 2,500/piece -> 18% GST
+ */
+export function getStatutoryGstRate(price: number): number {
+  return price > 2500 ? 18 : 5;
+}
+
 const EMPTY: FormValues = {
   name: "",
   price: 0,
@@ -225,6 +251,8 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
   const [adjustmentNote, setAdjustmentNote] = useState("");
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [showHsnGuide, setShowHsnGuide] = useState(false);
+  const [isGstManuallyOverridden, setIsGstManuallyOverridden] = useState(false);
+  const [isHsnManuallyOverridden, setIsHsnManuallyOverridden] = useState(false);
   const [draggedImage, setDraggedImage] = useState<string | null>(null);
   const [isProcessingImages, setIsProcessingImages] = useState(false);
   const [imageUrlInput, setImageUrlInput] = useState("");
@@ -448,8 +476,8 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
         mrp: variant.mrp || initial.mrp || initial.baseMrp || initial.price,
         offerPrice: variant.offerPrice || variant.price || initial.price,
         price: variant.price || initial.price,
-        hsnCode: variant.hsnCode || "61091000",
-        gstPercentage: variant.gstPercentage || 5,
+        hsnCode: variant.hsnCode || getRecommendedHsn(initial.category, initial.subcategory),
+        gstPercentage: variant.gstPercentage || getStatutoryGstRate(variant.price || initial.price || 0),
         weight: variant.weight || 0.2,
       }));
       setValues({
@@ -470,7 +498,10 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
         status: initial.status,
         slug: duplicate ? slugify(initial.name + " Copy") : initial.slug,
         isFeatured: Boolean(initial.isFeatured),
+        gstRate: initial.variants?.[0]?.gstPercentage || getStatutoryGstRate(initial.price || 0),
       });
+      setIsGstManuallyOverridden(Boolean(initial.variants?.[0]?.gstPercentage));
+      setIsHsnManuallyOverridden(Boolean(initial.variants?.[0]?.hsnCode));
       setProductState(productStateFromStatus(initial.status));
       setImages(initialImages);
       setVariants(duplicate ? [] : seededVariants);
@@ -482,7 +513,10 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
         description: DEFAULT_PRODUCT_DESCRIPTION,
         category: "" as Category,
         subcategory: "",
+        gstRate: 5,
       });
+      setIsGstManuallyOverridden(false);
+      setIsHsnManuallyOverridden(false);
       setProductState("draft");
       setImages([]);
       setVariants([]);
@@ -497,13 +531,29 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
 
   const set = <K extends keyof FormValues>(key: K, value: FormValues[K]) => setValues((previous) => ({ ...previous, [key]: value }));
 
-  const setNumber = (key: "costPrice" | "mrp" | "price" | "weight" | "length" | "width" | "height", raw: string) => set(key, numeric(raw));
+  const setNumber = (key: "costPrice" | "mrp" | "price" | "weight" | "length" | "width" | "height", raw: string) => {
+    const num = numeric(raw);
+    setValues((previous) => {
+      const next = { ...previous, [key]: num };
+      if (key === "price" && !isGstManuallyOverridden) {
+        next.gstRate = getStatutoryGstRate(num);
+      }
+      return next;
+    });
+    if (key === "price" && !isGstManuallyOverridden) {
+      const autoRate = getStatutoryGstRate(num);
+      setVariants((prev) => prev.map((v) => ({ ...v, gstPercentage: autoRate })));
+    }
+  };
 
   const profit = Math.max(0, values.price - values.costPrice);
   void profit;
 
   // Real Indian GST Reverse Calculation (B2C Selling Price is Tax Inclusive)
-  const effectiveGstRate = values.gstRate !== undefined && values.gstRate !== null ? values.gstRate : 5;
+  const effectiveGstRate =
+    values.gstRate !== undefined && values.gstRate !== null
+      ? values.gstRate
+      : getStatutoryGstRate(values.price || 0);
   const mrp = values.mrp || 0;
   const rawPrice = values.price || 0;
   // If price is 0 but mrp > 0, price behaves as mrp
@@ -531,6 +581,8 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
     }
     const previous = new Map(variants.map((variant) => [variant.color + "-" + variant.size, variant]));
     const used = new Set(variants.map((variant) => variant.sku));
+    const defaultHsn = variants[0]?.hsnCode || getRecommendedHsn(values.category, values.subcategory);
+    const statutoryGst = effectiveGstRate;
     const next = values.color.flatMap((color) => values.size.map((size) => {
       const existing = previous.get(color + "-" + size);
       return existing || {
@@ -543,8 +595,8 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
         mrp: values.mrp || values.price,
         offerPrice: values.price,
         price: values.price,
-        hsnCode: "61091000",
-        gstPercentage: values.gstRate || 5,
+        hsnCode: defaultHsn,
+        gstPercentage: statutoryGst,
         weight: values.weight || 0.2,
       };
     }));
@@ -782,8 +834,8 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
         mrp: v.mrp || effectiveMrp,
         offerPrice: v.offerPrice || effectivePrice,
         price: effectivePrice,
-        hsnCode: v.hsnCode || "61091000",
-        gstPercentage: v.gstPercentage || values.gstRate || 5,
+        hsnCode: v.hsnCode || variants[0]?.hsnCode || getRecommendedHsn(values.category, values.subcategory),
+        gstPercentage: v.gstPercentage || effectiveGstRate,
         weight: v.weight || values.weight || 0.2,
       })),
     });
@@ -802,12 +854,17 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
                 onChange={(event) => {
                   const selectedCatName = event.target.value;
                   const catObj = categoriesList.find((c: AdminCategory) => c.name === selectedCatName || c.id === selectedCatName);
+                  const nextCat = (catObj?.name || selectedCatName) as Category;
                   setValues((prev) => ({
                     ...prev,
-                    category: (catObj?.name || selectedCatName) as Category,
+                    category: nextCat,
                     categoryId: catObj?.id,
                     subcategory: ""
                   }));
+                  if (!isHsnManuallyOverridden) {
+                    const autoHsn = getRecommendedHsn(nextCat);
+                    setVariants((prev) => prev.map((v) => ({ ...v, hsnCode: autoHsn })));
+                  }
                 }}
                 className={selectClass}
               >
@@ -823,7 +880,14 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
               <select
                 disabled={!values.category || availableSubcategories.length === 0}
                 value={values.subcategory}
-                onChange={(event) => set("subcategory", event.target.value)}
+                onChange={(event) => {
+                  const nextSub = event.target.value;
+                  set("subcategory", nextSub);
+                  if (!isHsnManuallyOverridden) {
+                    const autoHsn = getRecommendedHsn(values.category, nextSub);
+                    setVariants((prev) => prev.map((v) => ({ ...v, hsnCode: autoHsn })));
+                  }
+                }}
                 className={!values.category ? selectClass + " cursor-not-allowed bg-ink-3 text-paper-muted opacity-60" : selectClass}
               >
                 <option value="" disabled hidden>Select Subcategory</option>
@@ -884,15 +948,45 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
 
           {/* GST Slabs & HSN Code selection */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <FormField label="GST Tax Slab (%)" hint="Statutory rate for apparel in West Bengal & India">
+            <FormField
+              label={
+                <div className="flex items-center justify-between w-full">
+                  <span>GST Tax Slab (%)</span>
+                  {!isGstManuallyOverridden ? (
+                    <span className="text-[10px] font-medium text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                      ⚡ Statutory Auto: {sellingPrice > 2500 ? "> ₹2,500 (18%)" : "≤ ₹2,500 (5%)"}
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsGstManuallyOverridden(false);
+                        const statutoryRate = getStatutoryGstRate(sellingPrice);
+                        set("gstRate", statutoryRate);
+                        setVariants((prev) => prev.map((v) => ({ ...v, gstPercentage: statutoryRate })));
+                      }}
+                      className="text-[10px] font-semibold text-gold hover:underline cursor-pointer"
+                    >
+                      🔄 Reset to Statutory Rule
+                    </button>
+                  )}
+                </div>
+              }
+              hint="Statutory Indian GST Amendment (Notification 09/2025: 5% ≤ ₹2,500, 18% > ₹2,500)"
+            >
               <select
-                value={values.gstRate ?? 5}
-                onChange={(e) => set("gstRate", Number(e.target.value))}
+                value={effectiveGstRate}
+                onChange={(e) => {
+                  const selectedRate = Number(e.target.value);
+                  setIsGstManuallyOverridden(true);
+                  set("gstRate", selectedRate);
+                  setVariants((prev) => prev.map((v) => ({ ...v, gstPercentage: selectedRate })));
+                }}
                 className={selectClass}
               >
-                <option value={5}>5% — Standard Apparel / Clothing (Price ≤ ₹2,500)</option>
-                <option value={18}>18% — Luxury Apparel / Clothing (Price &gt; ₹2,500)</option>
-                <option value={12}>12% — Traditional Rate / Accessories</option>
+                <option value={5}>5% — Standard Apparel (Selling Price ≤ ₹2,500)</option>
+                <option value={18}>18% — Higher Apparel Slab (Selling Price &gt; ₹2,500)</option>
+                <option value={12}>12% — Legacy / Specific Non-Apparel Rate</option>
                 <option value={0}>0% — Exempt / Raw Handloom Fabric</option>
               </select>
             </FormField>
@@ -900,7 +994,14 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
             <FormField
               label={
                 <div className="flex items-center justify-between w-full">
-                  <span>Default HSN Code</span>
+                  <div className="flex items-center gap-1.5">
+                    <span>Default HSN Code</span>
+                    {!isHsnManuallyOverridden && values.category ? (
+                      <span className="text-[10px] font-medium text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                        ⚡ Auto for {values.category}
+                      </span>
+                    ) : null}
+                  </div>
                   <button
                     type="button"
                     onClick={() => setShowHsnGuide((prev) => !prev)}
@@ -916,9 +1017,10 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
                 <div className="flex gap-2">
                   <input
                     type="text"
-                    value={variants[0]?.hsnCode || "61091000"}
+                    value={variants[0]?.hsnCode || getRecommendedHsn(values.category, values.subcategory)}
                     onChange={(e) => {
                       const val = e.target.value.trim();
+                      setIsHsnManuallyOverridden(true);
                       setVariants((prev) => prev.map((v) => ({ ...v, hsnCode: val })));
                     }}
                     className={inputClass}
@@ -929,10 +1031,11 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
                     onChange={(e) => {
                       if (e.target.value) {
                         const val = e.target.value;
+                        setIsHsnManuallyOverridden(true);
                         setVariants((prev) => prev.map((v) => ({ ...v, hsnCode: val })));
                       }
                     }}
-                    className="rounded-xl border border-line bg-ink px-3 py-2 text-xs text-paper focus:border-gold focus:outline-none shrink-0"
+                    className="rounded-xl border border-line bg-ink px-3 py-2 text-xs text-paper focus:border-gold focus:outline-none shrink-0 cursor-pointer"
                     title="Quickly fill standard HSN code"
                   >
                     <option value="">⚡ Quick Presets...</option>
@@ -962,12 +1065,27 @@ export default function ProductFormModal({ open, onClose, onSubmit, initial, cat
                 </span>
               </div>
 
+              {/* Statutory GST Rule Banner */}
+              <div className="rounded-xl bg-gold/10 p-3 text-[11px] text-paper space-y-1 border border-gold/30">
+                <p className="font-semibold text-gold">⚖️ Statutory Indian GST Amendment (Effective 22 Sept 2025):</p>
+                <p className="text-paper-muted">
+                  Under Notification No. 09/2025-Central Tax (Rate), Readymade Garments & Apparel under <strong>HSN Chapter 61</strong> (Knitted) and <strong>Chapter 62</strong> (Woven) are taxed as follows:
+                </p>
+                <p className="text-emerald-400 font-medium">
+                  • <strong>5% GST</strong>: When sale price (net transaction value per piece) is <strong>≤ ₹2,500</strong>.
+                </p>
+                <p className="text-amber-400 font-medium">
+                  • <strong>18% GST</strong>: When sale price (net transaction value per piece) is <strong>&gt; ₹2,500</strong>.
+                </p>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                 {HSN_PRESETS.map((preset) => (
                   <button
                     key={preset.code}
                     type="button"
                     onClick={() => {
+                      setIsHsnManuallyOverridden(true);
                       setVariants((prev) => prev.map((v) => ({ ...v, hsnCode: preset.code })));
                     }}
                     className="flex flex-col text-left p-2.5 rounded-xl border border-line bg-ink/70 hover:border-gold/60 hover:bg-gold/10 transition-all cursor-pointer group"

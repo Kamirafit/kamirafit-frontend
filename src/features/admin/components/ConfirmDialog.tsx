@@ -13,6 +13,7 @@ type Props = {
   onClose: () => void;
   danger?: boolean;
   loading?: boolean;
+  zIndex?: string;
 };
 
 export default function ConfirmDialog({
@@ -25,9 +26,10 @@ export default function ConfirmDialog({
   onClose,
   danger = false,
   loading = false,
+  zIndex = "z-[160]",
 }: Props) {
   return (
-    <Modal open={open} onClose={loading ? () => {} : onClose} title={title} maxWidth="sm">
+    <Modal open={open} onClose={loading ? () => {} : onClose} title={title} maxWidth="sm" zIndex={zIndex}>
       <p className="text-[13.5px] leading-relaxed text-paper-muted">
         {description}
       </p>
