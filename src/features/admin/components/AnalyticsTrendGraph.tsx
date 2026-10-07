@@ -116,17 +116,19 @@ export default function AnalyticsTrendGraph({
     });
   }, [points, activeMetric]);
 
-  const maxVal = Math.max(...series, 0);
+  const rawMax = Math.max(...series, 0);
+  // Add 22% headroom above the peak point so peaks never touch the ceiling
+  const maxVal = rawMax > 0 ? rawMax * 1.22 : 10;
   const minVal = 0;
   const range = maxVal - minVal || 1;
 
-  // Chart dimensions in SVG coordinate space
-  const svgWidth = 840;
+  // Chart dimensions in SVG coordinate space (Optimized for full card width with zero dead gap)
+  const svgWidth = 1000;
   const svgHeight = 220;
-  const padLeft = 60;
-  const padRight = 24;
-  const padTop = 20;
-  const padBottom = 32;
+  const padLeft = 46;
+  const padRight = 14;
+  const padTop = 26;
+  const padBottom = 30;
 
   const chartWidth = svgWidth - padLeft - padRight;
   const chartHeight = svgHeight - padTop - padBottom;
@@ -166,12 +168,14 @@ export default function AnalyticsTrendGraph({
     return { linePath: d, areaPath: area };
   }, [coords, padTop, chartHeight]);
 
-  // Y-axis grid lines (4 ticks)
+  // Y-axis grid lines (4 ticks based on rawMax)
   const yTicks = useMemo(() => {
+    const topTickVal = rawMax > 0 ? rawMax : 10;
     const ticks = [0, 0.33, 0.66, 1];
     return ticks.map((pct) => {
-      const val = minVal + pct * range;
-      const y = padTop + (1 - pct) * chartHeight;
+      const val = pct * topTickVal;
+      const normalized = val / range;
+      const y = padTop + (1 - normalized) * chartHeight;
       let label = "";
       if (activeMetric === "revenue" || activeMetric === "aov") {
         label = val >= 100000 ? `₹${(val / 100000).toFixed(1)}L` : val >= 1000 ? `₹${(val / 1000).toFixed(0)}k` : `₹${Math.round(val)}`;
@@ -180,7 +184,26 @@ export default function AnalyticsTrendGraph({
       }
       return { y, val, label };
     });
-  }, [minVal, range, padTop, chartHeight, activeMetric]);
+  }, [rawMax, range, padTop, chartHeight, activeMetric]);
+
+  // Smooth continuous mouse tracker across the entire graph
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    if (!rect.width) return;
+    const relX = e.clientX - rect.left;
+    const svgX = (relX / rect.width) * svgWidth;
+
+    let closestIdx = 0;
+    let minDiff = Infinity;
+    for (let i = 0; i < coords.length; i++) {
+      const diff = Math.abs(coords[i].x - svgX);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestIdx = i;
+      }
+    }
+    setHoveredIndex(closestIdx);
+  };
 
   // Selected totals & growth percentages
   const currentTotal = useMemo(() => {
@@ -311,10 +334,14 @@ export default function AnalyticsTrendGraph({
       </div>
 
       {/* Interactive SVG Chart Canvas */}
-      <div className="relative mt-4 w-full select-none overflow-hidden">
+      <div
+        className="relative mt-4 w-full select-none cursor-crosshair"
+        onPointerMove={handlePointerMove}
+        onPointerLeave={() => setHoveredIndex(null)}
+      >
         <svg
           viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-          className="w-full h-auto max-h-64 overflow-visible"
+          className="w-full h-auto overflow-visible"
         >
           <defs>
             <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
@@ -336,7 +363,7 @@ export default function AnalyticsTrendGraph({
                 strokeDasharray="4 4"
               />
               <text
-                x={padLeft - 10}
+                x={padLeft - 8}
                 y={tick.y + 3}
                 textAnchor="end"
                 className="fill-paper-muted text-[10px] font-medium"
@@ -363,7 +390,7 @@ export default function AnalyticsTrendGraph({
 
           {/* Hover Crosshair Guide */}
           {activeHover && (
-            <g>
+            <g className="transition-all duration-75">
               <line
                 x1={activeHover.x}
                 y1={padTop}
@@ -380,29 +407,10 @@ export default function AnalyticsTrendGraph({
                 r="5"
                 fill={config.color}
                 stroke="#ffffff"
-                strokeWidth="2"
+                strokeWidth="2.5"
               />
             </g>
           )}
-
-          {/* Interactive touch/hover invisible slice targets */}
-          {coords.map((c, idx) => {
-            const stepW = chartWidth / coords.length;
-            const sliceX = c.x - stepW / 2;
-            return (
-              <rect
-                key={idx}
-                x={sliceX}
-                y={padTop}
-                width={stepW}
-                height={chartHeight}
-                fill="transparent"
-                className="cursor-pointer"
-                onMouseEnter={() => setHoveredIndex(idx)}
-                onMouseLeave={() => setHoveredIndex(null)}
-              />
-            );
-          })}
 
           {/* X-axis date labels */}
           {coords.map((c, idx) => {
@@ -420,7 +428,7 @@ export default function AnalyticsTrendGraph({
                 x={c.x}
                 y={svgHeight - 10}
                 textAnchor="middle"
-                className="fill-paper-muted text-[10px] font-medium"
+                className="fill-paper-muted text-[10px] font-medium pointer-events-none"
               >
                 {c.point.label}
               </text>
@@ -428,29 +436,43 @@ export default function AnalyticsTrendGraph({
           })}
         </svg>
 
-        {/* Hover Tooltip Box */}
-        {activeHover && (
-          <div
-            className="pointer-events-none absolute z-20 flex flex-col rounded-xl border border-line bg-ink-2/95 px-3 py-2 text-xs shadow-xl backdrop-blur-md transition-all -translate-x-1/2 -translate-y-full"
-            style={{
-              left: `${(activeHover.x / svgWidth) * 100}%`,
-              top: `${Math.max(12, (activeHover.y / svgHeight) * 100 - 8)}%`,
-            }}
-          >
-            <div className="font-semibold text-paper border-b border-line/40 pb-1">
-              {activeHover.point.label} ({activeHover.point.date})
+        {/* Hover Tooltip Box (Smooth tracking, dynamic anchor to never break at edges or clip at top) */}
+        {activeHover && (() => {
+          const isNearRight = activeHover.x / svgWidth > 0.72;
+          const isNearLeft = activeHover.x / svgWidth < 0.18;
+          const isNearTop = activeHover.y < 85;
+
+          const xTranslate = isNearRight
+            ? "-translate-x-full -ml-3"
+            : isNearLeft
+            ? "translate-x-3"
+            : "-translate-x-1/2";
+          const yTranslate = isNearTop ? "translate-y-4" : "-translate-y-full -mt-3";
+
+          return (
+            <div
+              className={`pointer-events-none absolute z-30 flex flex-col rounded-xl border border-line bg-white/95 px-3.5 py-2.5 text-xs shadow-xl backdrop-blur-md transition-all duration-75 ease-out whitespace-nowrap min-w-[170px] ${xTranslate} ${yTranslate}`}
+              style={{
+                left: `${Math.max(2, Math.min(98, (activeHover.x / svgWidth) * 100))}%`,
+                top: `${(activeHover.y / svgHeight) * 100}%`,
+              }}
+            >
+              <div className="font-semibold text-paper border-b border-line/40 pb-1 flex items-center justify-between gap-3">
+                <span>{activeHover.point.label}</span>
+                <span className="text-[10px] font-normal text-paper-muted">({activeHover.point.date})</span>
+              </div>
+              <div className="mt-1 flex items-center justify-between gap-4">
+                <span className="text-[11px] text-paper-muted">{config.label}:</span>
+                <span className="font-bold text-gold">{config.format(activeHover.val)}</span>
+              </div>
+              <div className="mt-0.5 flex items-center justify-between gap-3 text-[10px] text-paper-muted">
+                <span>Orders: <strong className="text-paper">{activeHover.point.orders}</strong></span>
+                <span>·</span>
+                <span>Units: <strong className="text-paper">{activeHover.point.units}</strong></span>
+              </div>
             </div>
-            <div className="mt-1 flex items-center justify-between gap-3">
-              <span className="text-[11px] text-paper-muted">{config.label}:</span>
-              <span className="font-bold text-gold">{config.format(activeHover.val)}</span>
-            </div>
-            <div className="flex items-center justify-between gap-3 text-[10px] text-paper-muted">
-              <span>Orders: {activeHover.point.orders}</span>
-              <span>·</span>
-              <span>Units: {activeHover.point.units}</span>
-            </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
 
       {/* Graph Footer Note */}

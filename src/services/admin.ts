@@ -15,6 +15,9 @@ import {
   type UpdateCouponDto,
   type CouponQueryParams,
   type CouponListResponse,
+  type AdminReview,
+  type AdminReviewStatus,
+  type AdminReviewListResult,
 } from "@/types/entities";
 import type { AdminStatsDto } from "@/types/api/admin";
 
@@ -233,6 +236,49 @@ export function adaptUser(raw: unknown): AdminUser {
     firstName: u.firstName ? String(u.firstName) : undefined,
     lastName: u.lastName ? String(u.lastName) : undefined,
     phoneNumber: u.phoneNumber ? String(u.phoneNumber) : undefined,
+    ordersCount: typeof u.ordersCount === "number" ? u.ordersCount : (u.ordersCount !== undefined && u.ordersCount !== null ? Number(u.ordersCount) : 0),
+    hasPurchased: typeof u.hasPurchased === "boolean" ? u.hasPurchased : Boolean(u.ordersCount && Number(u.ordersCount) > 0),
+    lastOrderAmount: u.lastOrderAmount !== undefined && u.lastOrderAmount !== null ? Number(u.lastOrderAmount) : null,
+    lastOrderDate: u.lastOrderDate ? String(u.lastOrderDate) : null,
+    lastOrderStatus: u.lastOrderStatus ? String(u.lastOrderStatus) : null,
+  };
+}
+
+export function adaptAdminReview(raw: unknown): AdminReview {
+  const r = ((raw && typeof raw === "object" && "data" in raw ? (raw as { data: unknown }).data : raw) || {}) as Record<string, unknown>;
+  const rawCustomer = (r.customer || r.user || {}) as Record<string, unknown>;
+  const rawProduct = (r.product || {}) as Record<string, unknown>;
+
+  const customerName =
+    String(rawCustomer.name || "") ||
+    (rawCustomer.firstName || rawCustomer.lastName
+      ? `${String(rawCustomer.firstName || "")} ${String(rawCustomer.lastName || "")}`.trim()
+      : "Verified Customer");
+
+  const images = Array.isArray(r.images)
+    ? (r.images as unknown[]).map(String)
+    : [];
+
+  return {
+    id: String(r.id || ""),
+    rating: Number(r.rating || 5),
+    comment: r.comment ? String(r.comment) : "",
+    status: (r.status === "APPROVED" || r.status === "REJECTED" ? r.status : "PENDING") as AdminReviewStatus,
+    createdAt: String(r.createdAt || new Date().toISOString()),
+    updatedAt: r.updatedAt ? String(r.updatedAt) : undefined,
+    images,
+    customer: {
+      id: rawCustomer.id ? String(rawCustomer.id) : undefined,
+      name: customerName,
+      email: rawCustomer.email ? String(rawCustomer.email) : undefined,
+      phone: String(rawCustomer.phone || rawCustomer.mobileNumber || rawCustomer.phoneNumber || ""),
+    },
+    product: {
+      id: rawProduct.id ? String(rawProduct.id) : undefined,
+      name: String(rawProduct.name || rawProduct.title || "Product"),
+      slug: rawProduct.slug ? String(rawProduct.slug) : undefined,
+      image: rawProduct.image ? String(rawProduct.image) : undefined,
+    },
   };
 }
 
@@ -458,7 +504,7 @@ export const adminService = {
     adminRequest<unknown>("patch", "/products/" + id + "/toggle").then(adaptProduct),
   deleteProduct: (id: string) =>
     adminRequest<{ id: string }>("delete", "/products/" + id).then((x) => x.id),
-  getUsers: (params?: { search?: string; page?: number; limit?: number }) =>
+  getUsers: (params?: { search?: string; filter?: string; page?: number; limit?: number }) =>
     adminRequest<unknown[] | { data?: unknown[] }>("get", "/users", undefined, { params }).then((r) => {
       const items = Array.isArray(r) ? r : (r && typeof r === "object" && "data" in r && Array.isArray((r as { data: unknown[] }).data) ? (r as { data: unknown[] }).data : []);
       return items.map(adaptUser);
@@ -533,6 +579,31 @@ export const adminService = {
     );
     return (Array.isArray(res) ? res : []).map(adaptAdminProductReview);
   },
+  getReviews: (params?: { status?: string; search?: string; page?: number; limit?: number }): Promise<AdminReviewListResult> =>
+    adminRequest<AdminReviewListResult | { reviews?: AdminReview[]; data?: AdminReviewListResult }>("get", "/reviews", undefined, { params }).then((r) => {
+      const res = (r && typeof r === "object" && "data" in r && r.data ? r.data : r) as Record<string, unknown>;
+      const rawReviews = Array.isArray(res?.reviews) ? res.reviews : (Array.isArray(res?.data) ? res.data : (Array.isArray(r) ? r : []));
+      const reviews = rawReviews.map(adaptAdminReview);
+      const total = typeof res?.total === "number" ? res.total : reviews.length;
+      const stats = (res?.stats && typeof res.stats === "object" ? res.stats : {
+        total: reviews.length,
+        pending: reviews.filter((x: AdminReview) => x.status === "PENDING").length,
+        approved: reviews.filter((x: AdminReview) => x.status === "APPROVED").length,
+        rejected: reviews.filter((x: AdminReview) => x.status === "REJECTED").length,
+      }) as AdminReviewListResult["stats"];
+
+      return {
+        reviews,
+        total,
+        page: typeof res?.page === "number" ? res.page : 1,
+        limit: typeof res?.limit === "number" ? res.limit : 20,
+        stats,
+      };
+    }),
+  moderateReview: (id: string, status: "APPROVED" | "REJECTED") =>
+    adminRequest<AdminReview>("patch", "/reviews/" + id + "/status", { status }).then(adaptAdminReview),
+  deleteReview: (id: string) =>
+    adminRequest<{ id: string }>("delete", "/reviews/" + id).then((x) => x.id || id),
   getAnalytics: (timeframe: string = "30d") =>
     adminRequest<BusinessAnalytics>("get", "/analytics", undefined, { params: { timeframe } }),
   getCoupons: (params?: CouponQueryParams): Promise<CouponListResponse> =>
@@ -643,7 +714,7 @@ export function useDeleteAdminProduct() {
     onSuccess: () => q.invalidateQueries({ queryKey: ["admin", "products"] }),
   });
 }
-export function useAdminUsers(params?: { search?: string; page?: number; limit?: number }) {
+export function useAdminUsers(params?: { search?: string; filter?: string; page?: number; limit?: number }) {
   return useQuery<AdminUser[]>({
     queryKey: ["admin", "users", params],
     queryFn: () => adminService.getUsers(params),
@@ -886,6 +957,36 @@ export function useDeleteAdminCoupon() {
     mutationFn: (id: string) => adminService.deleteCoupon(id),
     onSuccess: () => {
       q.invalidateQueries({ queryKey: ["admin", "coupons"] });
+    },
+  });
+}
+
+export function useAdminReviews(params?: { status?: string; search?: string; page?: number; limit?: number }) {
+  return useQuery<AdminReviewListResult>({
+    queryKey: ["admin", "reviews", params],
+    queryFn: () => adminService.getReviews(params),
+  });
+}
+
+export function useModerateAdminReview() {
+  const q = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: "APPROVED" | "REJECTED" }) =>
+      adminService.moderateReview(id, status),
+    onSuccess: () => {
+      q.invalidateQueries({ queryKey: ["admin", "reviews"] });
+      q.invalidateQueries({ queryKey: ["admin", "stats"] });
+    },
+  });
+}
+
+export function useDeleteAdminReview() {
+  const q = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => adminService.deleteReview(id),
+    onSuccess: () => {
+      q.invalidateQueries({ queryKey: ["admin", "reviews"] });
+      q.invalidateQueries({ queryKey: ["admin", "stats"] });
     },
   });
 }

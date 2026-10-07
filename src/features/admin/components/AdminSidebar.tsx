@@ -116,6 +116,14 @@ function TagIcon() {
   );
 }
 
+function StarIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </svg>
+  );
+}
+
 function WarehouseIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -152,7 +160,7 @@ function ChevronDownIcon({ className = "" }: { className?: string }) {
 // 1. Dashboard
 // 2. Catalog & Inventory -> Analytics, Inventory, Products, Categories
 // 3. Orders & Sales      -> Orders, Coupons
-// 4. Customers & Support -> Users, Queries, Testimonials
+// 4. Customers & Support -> Users, Reviews, Queries, Testimonials
 // ----------------------------------------------------
 const NAV_GROUPS: NavGroup[] = [
   {
@@ -181,6 +189,7 @@ const NAV_GROUPS: NavGroup[] = [
     icon: <UsersIcon />,
     items: [
       { label: "Users", href: "/dedicated-admin/users", icon: <UsersIcon /> },
+      { label: "Reviews", href: "/dedicated-admin/reviews", icon: <StarIcon /> },
       { label: "Queries", href: "/dedicated-admin/queries", icon: <ChatIcon /> },
       { label: "Testimonials", href: "/dedicated-admin/testimonials", icon: <QuoteIcon /> },
     ],
@@ -287,7 +296,7 @@ export default function AdminSidebar() {
             mobileMenuOpen ? "mt-3 block" : "hidden"
           }`}
         >
-          <nav className="flex flex-col gap-1 border-t border-line pt-3 pb-2">
+          <nav className="flex flex-col gap-1 border-t border-line pt-3 pb-2 max-h-[calc(100vh-5rem)] overflow-y-auto [scrollbar-width:thin]">
             {/* 1. Dashboard (Direct Link) */}
             <Link
               href="/dedicated-admin"
@@ -369,8 +378,9 @@ export default function AdminSidebar() {
 
       {/* Desktop Sidebar (lg:block) */}
       <aside className="hidden w-72 shrink-0 border-r border-line bg-ink lg:block">
-        <div className="sticky top-0 flex h-screen flex-col justify-between px-5 py-6">
-          <div className="flex flex-col gap-5">
+        <div className="sticky top-0 flex h-screen flex-col px-5 py-6">
+          {/* Static Brand Header */}
+          <div className="shrink-0 pb-5">
             <Link
               href="/dedicated-admin"
               className="flex items-center gap-3 px-1"
@@ -387,91 +397,92 @@ export default function AdminSidebar() {
                 </span>
               </span>
             </Link>
-
-            <nav className="flex flex-col gap-1 overflow-y-auto pr-1">
-              <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-paper-muted">
-                Workspace
-              </p>
-
-              {/* 1. Dashboard (Direct Link) */}
-              <Link
-                href="/dedicated-admin"
-                className={`flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-semibold transition-colors ${
-                  isDashboardActive
-                    ? "bg-gold text-ink shadow-sm"
-                    : "text-paper hover:bg-ink-2"
-                }`}
-              >
-                <span className={`shrink-0 ${isDashboardActive ? "text-ink" : "text-paper-muted"}`}>
-                  <DashboardIcon />
-                </span>
-                <span className="whitespace-nowrap">Dashboard</span>
-              </Link>
-
-              {/* 2, 3, 4. Expandable Navigation Groups */}
-              {NAV_GROUPS.map((group) => {
-                const isOpen = isGroupOpen(group);
-                const isGroupActive = group.items.some(
-                  (item) => pathname === item.href || (pathname?.startsWith(item.href + "/") ?? false)
-                );
-
-                return (
-                  <div key={group.id} className="flex flex-col">
-                    <button
-                      type="button"
-                      onClick={() => toggleGroup(group.id)}
-                      className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-[13px] font-semibold transition-colors ${
-                        isGroupActive
-                          ? "bg-gold/10 text-gold"
-                          : "text-paper hover:bg-ink-2"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <span className={`shrink-0 ${isGroupActive ? "text-gold" : "text-paper-muted"}`}>
-                          {group.icon}
-                        </span>
-                        <span className="whitespace-nowrap truncate">{group.label}</span>
-                      </div>
-                      <ChevronDownIcon
-                        className={`shrink-0 transition-transform duration-200 ${
-                          isOpen ? "rotate-180 text-gold" : "text-paper-muted/60"
-                        }`}
-                      />
-                    </button>
-
-                    {/* Sub-menu Items */}
-                    {isOpen && (
-                      <div className="ml-5 flex flex-col gap-1 border-l-2 border-line/80 py-1.5 pl-3.5 transition-all">
-                        {group.items.map((subItem) => {
-                          const isSubActive =
-                            pathname === subItem.href || (pathname?.startsWith(subItem.href + "/") ?? false);
-                          return (
-                            <Link
-                              key={subItem.href}
-                              href={subItem.href}
-                              className={`flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[12.5px] font-medium transition-colors ${
-                                isSubActive
-                                  ? "bg-gold text-ink font-semibold shadow-sm"
-                                  : "text-paper-muted hover:bg-ink-2 hover:text-paper"
-                              }`}
-                            >
-                              <span className={`shrink-0 ${isSubActive ? "text-ink" : "text-paper-muted"}`}>
-                                {subItem.icon}
-                              </span>
-                              <span className="whitespace-nowrap">{subItem.label}</span>
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </nav>
           </div>
 
-          <div className="mt-auto pt-4 pb-1">
-            {/* Admin Logout Option - Bottom Left */}
+          {/* Scrollable Navigation Area (Takes available height and scrolls if accordions overflow) */}
+          <nav className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1.5 flex flex-col gap-1 [scrollbar-width:thin]">
+            <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-paper-muted">
+              Workspace
+            </p>
+
+            {/* 1. Dashboard (Direct Link) */}
+            <Link
+              href="/dedicated-admin"
+              className={`flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13px] font-semibold transition-colors ${
+                isDashboardActive
+                  ? "bg-gold text-ink shadow-sm"
+                  : "text-paper hover:bg-ink-2"
+              }`}
+            >
+              <span className={`shrink-0 ${isDashboardActive ? "text-ink" : "text-paper-muted"}`}>
+                <DashboardIcon />
+              </span>
+              <span className="whitespace-nowrap">Dashboard</span>
+            </Link>
+
+            {/* 2, 3, 4. Expandable Navigation Groups */}
+            {NAV_GROUPS.map((group) => {
+              const isOpen = isGroupOpen(group);
+              const isGroupActive = group.items.some(
+                (item) => pathname === item.href || (pathname?.startsWith(item.href + "/") ?? false)
+              );
+
+              return (
+                <div key={group.id} className="flex flex-col">
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(group.id)}
+                    className={`flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-[13px] font-semibold transition-colors ${
+                      isGroupActive
+                        ? "bg-gold/10 text-gold"
+                        : "text-paper hover:bg-ink-2"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span className={`shrink-0 ${isGroupActive ? "text-gold" : "text-paper-muted"}`}>
+                        {group.icon}
+                      </span>
+                      <span className="whitespace-nowrap truncate">{group.label}</span>
+                    </div>
+                    <ChevronDownIcon
+                      className={`shrink-0 transition-transform duration-200 ${
+                        isOpen ? "rotate-180 text-gold" : "text-paper-muted/60"
+                      }`}
+                    />
+                  </button>
+
+                  {/* Sub-menu Items */}
+                  {isOpen && (
+                    <div className="ml-5 flex flex-col gap-1 border-l-2 border-line/80 py-1.5 pl-3.5 transition-all">
+                      {group.items.map((subItem) => {
+                        const isSubActive =
+                          pathname === subItem.href || (pathname?.startsWith(subItem.href + "/") ?? false);
+                        return (
+                          <Link
+                            key={subItem.href}
+                            href={subItem.href}
+                            className={`flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[12.5px] font-medium transition-colors ${
+                              isSubActive
+                                ? "bg-gold text-ink font-semibold shadow-sm"
+                                : "text-paper-muted hover:bg-ink-2 hover:text-paper"
+                            }`}
+                          >
+                            <span className={`shrink-0 ${isSubActive ? "text-ink" : "text-paper-muted"}`}>
+                              {subItem.icon}
+                            </span>
+                            <span className="whitespace-nowrap">{subItem.label}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </nav>
+
+          {/* Static Bottom Logout Footer (Always pinned in place, never pushed off-screen) */}
+          <div className="shrink-0 pt-4 border-t border-line/60 mt-3">
             <button
               type="button"
               onClick={handleLogout}

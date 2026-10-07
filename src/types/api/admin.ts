@@ -11,6 +11,10 @@ export interface AdminStatsDto {
   totalProducts?: number;
   usersCount?: number;
   totalUsers?: number;
+  purchasedUsersCount?: number;
+  nonPurchasedUsersCount?: number;
+  usersWithOrdersCount?: number;
+  usersWithoutOrdersCount?: number;
   recentOrders?: Record<string, unknown>[];
   orderStatusCounts?: Record<string, number>;
 }

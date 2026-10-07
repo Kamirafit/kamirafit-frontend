@@ -57,36 +57,47 @@ export default function AttentionNeededSection({
           <button
             type="button"
             onClick={() => handleTabClick("runninglow", "outofstock")}
-            className="group text-left rounded-xl border border-rose-200 bg-rose-50/90 p-4 transition-all hover:bg-rose-100 hover:border-rose-300 hover:shadow-sm cursor-pointer"
+            className="group flex flex-col justify-between h-full text-left rounded-xl border border-rose-200 bg-rose-50/90 p-4 transition-all hover:bg-rose-100 hover:border-rose-300 hover:shadow-sm cursor-pointer"
           >
-            <div className="flex items-center justify-between">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-rose-200/80 text-sm">
-                🔴
-              </span>
-              <span className="text-[11px] font-bold text-rose-800 group-hover:underline inline-flex items-center gap-1">
-                View items ↓
-              </span>
-            </div>
-            <div className="mt-2.5">
-              <div className="text-lg font-bold text-rose-950">
-                {outOfStockCount} {outOfStockCount === 1 ? "product is" : "products are"} out of stock
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-rose-200/80 text-sm">
+                  🔴
+                </span>
+                <span className="text-[11px] font-bold text-rose-800 group-hover:underline inline-flex items-center gap-1">
+                  View items ↓
+                </span>
               </div>
-              <p className="mt-1 text-xs text-rose-800/90 leading-relaxed">
-                Customers cannot buy these right now. Restock to prevent lost sales.
-              </p>
+              <div className="mt-2.5">
+                <div className="text-base sm:text-lg font-bold text-rose-950 min-h-[3.25rem] line-clamp-2">
+                  {outOfStockCount} {outOfStockCount === 1 ? "product is" : "products are"} out of stock
+                </div>
+                <p className="mt-1 text-xs text-rose-800/90 leading-relaxed">
+                  Customers cannot buy these right now. Restock to prevent lost sales.
+                </p>
+              </div>
             </div>
           </button>
         ) : (
-          <div className="rounded-xl border border-line bg-white/70 p-4">
-            <div className="flex items-center gap-2 text-xs font-bold text-emerald-800">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-emerald-800">
-                ✓
-              </span>
-              <span>Zero Out of Stock</span>
+          <div className="flex flex-col justify-between h-full rounded-xl border border-line bg-white/70 p-4">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-sm">
+                  ✓
+                </span>
+                <span className="text-[11px] font-bold text-emerald-800">
+                  Optimal Stock
+                </span>
+              </div>
+              <div className="mt-2.5">
+                <div className="text-base sm:text-lg font-bold text-emerald-950 min-h-[3.25rem] line-clamp-2">
+                  Zero Out of Stock
+                </div>
+                <p className="mt-1 text-xs text-paper-muted leading-relaxed">
+                  All active products have stock units available.
+                </p>
+              </div>
             </div>
-            <p className="mt-2 text-xs text-paper-muted">
-              All active products have stock units available.
-            </p>
           </div>
         )}
 
@@ -95,36 +106,47 @@ export default function AttentionNeededSection({
           <button
             type="button"
             onClick={() => handleTabClick("runninglow", "runninglow")}
-            className="group text-left rounded-xl border border-amber-200 bg-amber-50/90 p-4 transition-all hover:bg-amber-100 hover:border-amber-300 hover:shadow-sm cursor-pointer"
+            className="group flex flex-col justify-between h-full text-left rounded-xl border border-amber-200 bg-amber-50/90 p-4 transition-all hover:bg-amber-100 hover:border-amber-300 hover:shadow-sm cursor-pointer"
           >
-            <div className="flex items-center justify-between">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-200/80 text-sm">
-                🟠
-              </span>
-              <span className="text-[11px] font-bold text-amber-900 group-hover:underline inline-flex items-center gap-1">
-                View items ↓
-              </span>
-            </div>
-            <div className="mt-2.5">
-              <div className="text-lg font-bold text-amber-950">
-                {runningLowCount} {runningLowCount === 1 ? "product is" : "products are"} running low
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-200/80 text-sm">
+                  🟠
+                </span>
+                <span className="text-[11px] font-bold text-amber-900 group-hover:underline inline-flex items-center gap-1">
+                  View items ↓
+                </span>
               </div>
-              <p className="mt-1 text-xs text-amber-900/90 leading-relaxed">
-                At recent sales rates, stock may run out soon. Click to review restock runway.
-              </p>
+              <div className="mt-2.5">
+                <div className="text-base sm:text-lg font-bold text-amber-950 min-h-[3.25rem] line-clamp-2">
+                  {runningLowCount} {runningLowCount === 1 ? "product is" : "products are"} running low
+                </div>
+                <p className="mt-1 text-xs text-amber-900/90 leading-relaxed">
+                  At recent sales rates, stock may run out soon. Click to review restock runway.
+                </p>
+              </div>
             </div>
           </button>
         ) : (
-          <div className="rounded-xl border border-line bg-white/70 p-4">
-            <div className="flex items-center gap-2 text-xs font-bold text-emerald-800">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-emerald-800">
-                ✓
-              </span>
-              <span>Healthy Stock Runway</span>
+          <div className="flex flex-col justify-between h-full rounded-xl border border-line bg-white/70 p-4">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-sm">
+                  ✓
+                </span>
+                <span className="text-[11px] font-bold text-emerald-800">
+                  Healthy Runway
+                </span>
+              </div>
+              <div className="mt-2.5">
+                <div className="text-base sm:text-lg font-bold text-emerald-950 min-h-[3.25rem] line-clamp-2">
+                  Healthy Stock Runway
+                </div>
+                <p className="mt-1 text-xs text-paper-muted leading-relaxed">
+                  Current products have sufficient stock runway.
+                </p>
+              </div>
             </div>
-            <p className="mt-2 text-xs text-paper-muted">
-              Current products have sufficient stock runway.
-            </p>
           </div>
         )}
 
@@ -133,40 +155,51 @@ export default function AttentionNeededSection({
           <button
             type="button"
             onClick={() => handleTabClick("notmoving")}
-            className="group text-left rounded-xl border border-line bg-white/90 p-4 transition-all hover:border-gold/60 hover:shadow-sm cursor-pointer"
+            className="group flex flex-col justify-between h-full text-left rounded-xl border border-line bg-white/90 p-4 transition-all hover:border-gold/60 hover:shadow-sm cursor-pointer"
           >
-            <div className="flex items-center justify-between">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-ink-3 text-sm">
-                ❄️
-              </span>
-              <span className="text-[11px] font-bold text-gold group-hover:underline inline-flex items-center gap-1">
-                View items ↓
-              </span>
-            </div>
-            <div className="mt-2.5">
-              <div className="text-lg font-bold text-paper">
-                ₹{Math.round(deadStockValue).toLocaleString("en-IN")} tied up
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-ink-3 text-sm">
+                  ❄️
+                </span>
+                <span className="text-[11px] font-bold text-gold group-hover:underline inline-flex items-center gap-1">
+                  View items ↓
+                </span>
               </div>
-              <p className="mt-1 text-xs text-paper-muted leading-relaxed">
-                {deadStockCount} {deadStockCount === 1 ? "product has" : "products have"} dormant stock with 60+ days of selling opportunity.
-              </p>
+              <div className="mt-2.5">
+                <div className="text-base sm:text-lg font-bold text-paper min-h-[3.25rem] line-clamp-2">
+                  ₹{Math.round(deadStockValue).toLocaleString("en-IN")} tied up
+                </div>
+                <p className="mt-1 text-xs text-paper-muted leading-relaxed">
+                  {deadStockCount} {deadStockCount === 1 ? "product has" : "products have"} dormant stock with 60+ days of selling opportunity.
+                </p>
+              </div>
             </div>
           </button>
         ) : (
-          <div className="rounded-xl border border-line bg-white/70 p-4">
-            <div className="flex items-center gap-2 text-xs font-bold text-emerald-800">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-emerald-800">
-                ✓
-              </span>
-              <span>Fast Product Turnover</span>
+          <div className="flex flex-col justify-between h-full rounded-xl border border-line bg-white/70 p-4">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-sm">
+                  ✓
+                </span>
+                <span className="text-[11px] font-bold text-emerald-800">
+                  Optimal Turnover
+                </span>
+              </div>
+              <div className="mt-2.5">
+                <div className="text-base sm:text-lg font-bold text-emerald-950 min-h-[3.25rem] line-clamp-2">
+                  Fast Product Turnover
+                </div>
+                <p className="mt-1 text-xs text-paper-muted leading-relaxed">
+                  No dormant inventory meeting dead-stock criteria (60+ days).
+                </p>
+              </div>
             </div>
-            <p className="mt-2 text-xs text-paper-muted">
-              No dormant inventory meeting dead-stock criteria (60+ days).
-            </p>
           </div>
         )}
 
-        {/* 4. Top selling highlight */}
+        {/* 4. Top selling highlight (Earthy Linen card - aligned with same min-h, line-clamp, and full card height) */}
         {topProduct ? (
           <button
             type="button"
@@ -177,28 +210,50 @@ export default function AttentionNeededSection({
                 handleTabClick("bestsellers");
               }
             }}
-            className="group text-left rounded-xl border border-emerald-200 bg-emerald-50/90 p-4 transition-all hover:bg-emerald-100 hover:border-emerald-300 hover:shadow-sm cursor-pointer"
+            className="group flex flex-col justify-between h-full text-left rounded-xl border border-emerald-200 bg-emerald-50/90 p-4 transition-all hover:bg-emerald-100 hover:border-emerald-300 hover:shadow-sm cursor-pointer"
           >
-            <div className="flex items-center justify-between">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-200/80 text-sm">
-                ⭐
-              </span>
-              <span className="text-[11px] font-bold text-emerald-800 group-hover:underline inline-flex items-center gap-1">
-                Inspect product ↗
-              </span>
-            </div>
-            <div className="mt-2.5">
-              <div className="text-lg font-bold text-emerald-950 truncate">
-                {topProduct.name}
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-200/80 text-sm">
+                  ⭐
+                </span>
+                <span className="text-[11px] font-bold text-emerald-800 group-hover:underline inline-flex items-center gap-1">
+                  Inspect product ↗
+                </span>
               </div>
-              <p className="mt-1 text-xs text-emerald-900/90 leading-relaxed">
-                Top seller with {topProduct.unitsSold} sold (₹{Math.round(topProduct.revenue).toLocaleString("en-IN")}). Click for full breakdown.
-              </p>
+              <div className="mt-2.5">
+                <div
+                  className="text-base sm:text-lg font-bold text-emerald-950 min-h-[3.25rem] line-clamp-2 leading-snug"
+                  title={topProduct.name}
+                >
+                  {topProduct.name}
+                </div>
+                <p className="mt-1 text-xs text-emerald-900/90 leading-relaxed">
+                  Top seller with {topProduct.unitsSold} sold (₹{Math.round(topProduct.revenue).toLocaleString("en-IN")}). Click for full breakdown.
+                </p>
+              </div>
             </div>
           </button>
         ) : (
-          <div className="rounded-xl border border-line bg-white/70 p-4">
-            <div className="text-xs text-paper-muted">No sales activity recorded yet.</div>
+          <div className="flex flex-col justify-between h-full rounded-xl border border-line bg-white/70 p-4">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-ink-3 text-sm">
+                  ⭐
+                </span>
+                <span className="text-[11px] font-bold text-paper-muted">
+                  Bestsellers
+                </span>
+              </div>
+              <div className="mt-2.5">
+                <div className="text-base sm:text-lg font-bold text-paper min-h-[3.25rem] line-clamp-2">
+                  No Sales Activity
+                </div>
+                <p className="mt-1 text-xs text-paper-muted leading-relaxed">
+                  Sales metrics will highlight top-performing products once orders are placed.
+                </p>
+              </div>
+            </div>
           </div>
         )}
       </div>

@@ -37,6 +37,11 @@ export const AdminUserSchema = z.object({
   firstName: z.string().optional(),
   lastName: z.string().optional(),
   phoneNumber: z.string().optional(),
+  ordersCount: z.number().optional(),
+  hasPurchased: z.boolean().optional(),
+  lastOrderAmount: z.number().nullable().optional(),
+  lastOrderDate: z.string().nullable().optional(),
+  lastOrderStatus: z.string().nullable().optional(),
 });
 
 export const AdminOrderItemSchema = z.object({
@@ -73,4 +78,32 @@ export const AdminOrderSchema = z.object({
   notes: z.string().optional(),
   cancelReason: z.string().optional(),
   returnReason: z.string().optional(),
+});
+
+export const AdminReviewStatusSchema = z.enum(["PENDING", "APPROVED", "REJECTED"]);
+
+export const AdminReviewCustomerSchema = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  email: z.string().optional(),
+  phone: z.string().optional(),
+});
+
+export const AdminReviewProductSchema = z.object({
+  id: z.string().optional(),
+  name: z.string(),
+  slug: z.string().optional(),
+  image: z.string().optional(),
+});
+
+export const AdminReviewSchema = z.object({
+  id: z.string(),
+  rating: z.number(),
+  comment: z.string().nullable().optional(),
+  status: AdminReviewStatusSchema,
+  createdAt: z.string(),
+  updatedAt: z.string().optional(),
+  images: z.array(z.string()).default([]),
+  customer: AdminReviewCustomerSchema,
+  product: AdminReviewProductSchema,
 });

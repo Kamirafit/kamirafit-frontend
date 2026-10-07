@@ -6,7 +6,7 @@ import { USERS } from "@/data/users";
 import { MOCK_ADDRESSES, MOCK_ORDERS, MOCK_PROFILE } from "@/features/account/data/mockAccount";
 import type {
   Address, AdminCategory, AdminOrder, AdminUser, Cart, CartItem, ContactQuery, CreateContactQueryInput, Order,
-  ProductEntity, Variant, Profile, Review, User, Wishlist,
+  ProductEntity, Variant, Profile, Review, User, Wishlist, AdminReview,
 } from "@/types/entities";
 import type { CheckoutRequestDto, CheckoutResponseDto, CreateOrderRequestDto } from "@/types/api/commerce";
 import type { LoginRequestDto, RegisterRequestDto } from "@/types/api/auth";
@@ -68,6 +68,88 @@ const adminUsers: AdminUser[] = [...USERS];
 let adminOrders: AdminOrder[] = [...ORDERS];
 let addresses: Address[] = [...MOCK_ADDRESSES];
 let customerOrders: Order[] = [...MOCK_ORDERS];
+let mockAdminReviews: AdminReview[] = [
+  {
+    id: "rev-01",
+    rating: 5,
+    comment: "The French Terry cotton on this oversized hoodie is exceptional. Heavyweight yet super breathable during warmups. Highly recommended!",
+    status: "PENDING",
+    createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+    images: ["https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=800&auto=format&fit=crop&q=80"],
+    customer: {
+      id: "u-01",
+      name: "Aditya Verma",
+      email: "aditya.verma@kamirafit.test",
+      phone: "+91 98102 11122",
+    },
+    product: {
+      id: "p-01",
+      name: "Heavyweight Boxy Tee",
+      slug: "heavyweight-boxy-tee",
+      image: "",
+    },
+  },
+  {
+    id: "rev-02",
+    rating: 4,
+    comment: "Solid fit and premium stitching. Sleeves have a modern drop-shoulder cut. Only wish there was an extra XXL option.",
+    status: "PENDING",
+    createdAt: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
+    images: [],
+    customer: {
+      id: "u-02",
+      name: "Riya Sharma",
+      email: "riya.s@kamirafit.test",
+      phone: "+91 99887 66554",
+    },
+    product: {
+      id: "p-02",
+      name: "Drop-Shoulder Oversized Hoodie",
+      slug: "drop-shoulder-oversized-hoodie",
+      image: "",
+    },
+  },
+  {
+    id: "rev-03",
+    rating: 5,
+    comment: "Best gym pump cover in my rotation. Retained structure and collar stiffness even after 5 machine washes.",
+    status: "APPROVED",
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+    images: ["https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=800&auto=format&fit=crop&q=80"],
+    customer: {
+      id: "u-03",
+      name: "Harsh Jain",
+      email: "harsh.j@kamirafit.test",
+      phone: "+91 97777 55441",
+    },
+    product: {
+      id: "p-01",
+      name: "Heavyweight Boxy Tee",
+      slug: "heavyweight-boxy-tee",
+      image: "",
+    },
+  },
+  {
+    id: "rev-04",
+    rating: 2,
+    comment: "Size ran significantly larger than expected. Arrived slightly crumpled.",
+    status: "REJECTED",
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
+    images: [],
+    customer: {
+      id: "u-05",
+      name: "Kabir Kapoor",
+      email: "kabir.k@kamirafit.test",
+      phone: "+91 98333 77881",
+    },
+    product: {
+      id: "p-03",
+      name: "Signature French Terry Joggers",
+      slug: "signature-french-terry-joggers",
+      image: "",
+    },
+  },
+];
 let mockQueries: ContactQuery[] = [
   {
     id: "query-1",
@@ -507,7 +589,25 @@ export const mockApi = {
     }),
   },
   admin: {
-    getStats: () => respond(() => ok({ salesTotal: adminOrders.filter((order) => order.paymentStatus === "Paid").reduce((sum, order) => sum + order.total, 0) || 125400, ordersCount: adminOrders.length, productsCount: products.length, usersCount: adminUsers.length })),
+    getStats: () => respond(() => {
+      const orderCustomerNames = new Set(adminOrders.map((o) => o.customer?.name).filter(Boolean));
+      const purchasedUsersCount = adminUsers.filter((u) => orderCustomerNames.has(u.name)).length;
+      const nonPurchasedUsersCount = Math.max(0, adminUsers.length - purchasedUsersCount);
+      return ok({
+        salesTotal: adminOrders.filter((order) => order.paymentStatus === "Paid").reduce((sum, order) => sum + order.total, 0) || 125400,
+        totalRevenue: adminOrders.filter((order) => order.paymentStatus === "Paid").reduce((sum, order) => sum + order.total, 0) || 125400,
+        ordersCount: adminOrders.length,
+        totalOrders: adminOrders.length,
+        productsCount: products.length,
+        totalProducts: products.length,
+        usersCount: adminUsers.length,
+        totalUsers: adminUsers.length,
+        purchasedUsersCount,
+        nonPurchasedUsersCount,
+        usersWithOrdersCount: purchasedUsersCount,
+        usersWithoutOrdersCount: nonPurchasedUsersCount,
+      });
+    }),
     categories: {
       getAll: () => respond(() => {
         const data = [...adminCategories];
@@ -541,7 +641,23 @@ export const mockApi = {
     },
     products: productApi,
     users: {
-      getAll: () => respond(() => ok([...adminUsers])),
+      getAll: () => respond(() => {
+        const enriched = adminUsers.map((u) => {
+          const userOrders = adminOrders.filter((o) => o.customer?.name?.trim().toLowerCase() === u.name.trim().toLowerCase());
+          const ordersCount = userOrders.length;
+          const hasPurchased = ordersCount > 0;
+          const lastOrder = userOrders[0] || null;
+          return {
+            ...u,
+            ordersCount,
+            hasPurchased,
+            lastOrderAmount: lastOrder ? lastOrder.total : null,
+            lastOrderDate: lastOrder ? lastOrder.createdAt : null,
+            lastOrderStatus: lastOrder ? lastOrder.orderStatus : null,
+          };
+        });
+        return ok(enriched);
+      }),
       update: (id: string, patch: Partial<Omit<AdminUser, "id">>) => respond(() => { const index = adminUsers.findIndex((item) => item.id === id); if (index < 0) return fail("USER_NOT_FOUND", "User not found"); adminUsers[index] = { ...adminUsers[index], ...patch }; return ok(adminUsers[index]); }),
     },
     orders: {
@@ -573,6 +689,50 @@ export const mockApi = {
       delete: (id: string) => respond(() => {
         if (!mockQueries.some((item) => item.id === id)) return fail("QUERY_NOT_FOUND", "Query not found");
         mockQueries = mockQueries.filter((item) => item.id !== id);
+        return ok(id);
+      }),
+    },
+    reviews: {
+      getAll: (params?: { status?: string; search?: string; page?: number; limit?: number }) => respond(() => {
+        let list = [...mockAdminReviews];
+        if (params?.status && params.status !== "ALL") {
+          list = list.filter((r) => r.status === params.status);
+        }
+        if (params?.search) {
+          const s = params.search.toLowerCase();
+          list = list.filter(
+            (r) =>
+              r.customer.name.toLowerCase().includes(s) ||
+              r.product.name.toLowerCase().includes(s) ||
+              (r.comment && r.comment.toLowerCase().includes(s)),
+          );
+        }
+        const total = list.length;
+        const pending = mockAdminReviews.filter((r) => r.status === "PENDING").length;
+        const approved = mockAdminReviews.filter((r) => r.status === "APPROVED").length;
+        const rejected = mockAdminReviews.filter((r) => r.status === "REJECTED").length;
+
+        return ok({
+          reviews: list,
+          total,
+          page: 1,
+          limit: 20,
+          stats: {
+            total: mockAdminReviews.length,
+            pending,
+            approved,
+            rejected,
+          },
+        });
+      }),
+      moderate: (id: string, status: "APPROVED" | "REJECTED") => respond(() => {
+        const idx = mockAdminReviews.findIndex((r) => r.id === id);
+        if (idx < 0) return fail("REVIEW_NOT_FOUND", "Review not found");
+        mockAdminReviews[idx] = { ...mockAdminReviews[idx], status, updatedAt: new Date().toISOString() };
+        return ok(mockAdminReviews[idx]);
+      }),
+      delete: (id: string) => respond(() => {
+        mockAdminReviews = mockAdminReviews.filter((r) => r.id !== id);
         return ok(id);
       }),
     },

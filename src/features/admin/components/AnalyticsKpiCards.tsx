@@ -127,8 +127,9 @@ export default function AnalyticsKpiCards({
             </div>
           </div>
           <div className="mt-3 flex items-center justify-between text-xs text-paper-muted border-t border-line/60 pt-2">
-            <span>Previous: {trends?.previousPeriodOrders ?? 0}</span>
-            <span className="font-semibold text-amber-700">★ {(summary.averageStoreRating || 5.0).toFixed(1)} rating</span>
+            <span className="font-semibold text-amber-700">
+              {summary.averageStoreRating ? `★ ${summary.averageStoreRating.toFixed(1)} rating` : "★ —"}
+            </span>
           </div>
         </div>
       </AdminCard>
