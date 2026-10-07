@@ -30,40 +30,46 @@ export default function CheckboxGroup<T extends string>({
   };
 
   return (
-    <fieldset>
+    <fieldset className="space-y-3">
       <div className="flex items-center justify-between">
-        <legend className="text-[13px] font-semibold text-paper">
+        <legend className="font-sans text-xs font-bold text-primary uppercase tracking-wider">
           {legend}
         </legend>
         {onReset && selected.length > 0 ? (
           <button
             type="button"
             onClick={onReset}
-            className="text-[11px] font-medium text-paper-muted underline-offset-2 transition-colors hover:text-gold hover:underline"
+            className="text-[11px] font-semibold text-surface-tint hover:underline uppercase tracking-wider cursor-pointer"
           >
             Reset
           </button>
         ) : null}
       </div>
-      <div className="mt-3 flex flex-col gap-2.5">
+      <div
+        className={`space-y-2 ${
+          options.length > 5
+            ? "max-h-48 overflow-y-auto pr-1.5 custom-filter-scrollbar"
+            : ""
+        }`}
+      >
         {options.map((opt) => {
           const checked = selected.includes(opt.value);
           return (
             <label
               key={opt.value}
-              className="flex cursor-pointer items-center justify-between gap-3 text-[13.5px] text-paper transition-colors hover:text-gold"
+              className="flex items-center justify-between text-xs text-secondary hover:text-primary cursor-pointer transition-colors"
             >
-              <span className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2.5">
                 <input
                   type="checkbox"
                   checked={checked}
                   onChange={() => toggle(opt.value)}
-                  className="h-4 w-4 rounded-[4px] border-line-strong bg-ink text-paper accent-paper focus:ring-gold/30"
+                  className="w-4 h-4 rounded border-outline-variant/60 bg-surface-container-low text-primary-container focus:ring-0 accent-primary-container cursor-pointer"
                 />
-                <span>{opt.label}</span>
-              </span>
+                <span className="font-sans text-xs font-medium">{opt.label}</span>
+              </div>
               {typeof opt.count === "number" ? (
-                <span className="text-[12px] tabular-nums text-paper-muted">
+                <span className="font-sans text-xs text-outline tabular-nums">
                   {opt.count}
                 </span>
               ) : null}

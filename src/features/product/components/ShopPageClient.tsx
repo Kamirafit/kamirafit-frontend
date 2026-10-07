@@ -287,55 +287,77 @@ export default function ShopPageClient({
     return { categories: cat, sizes: sz, colors: col };
   }, [activeProducts, productsForCategoryCounts, colorsQuery.data, filters.categories]);
 
-  return (
-    <Container className="py-8 lg:py-10">
-      <nav
-        aria-label="Breadcrumb"
-        className="text-[11px] uppercase tracking-[0.22em] text-paper-muted"
-      >
-        <ol className="flex flex-wrap items-center gap-2">
-          <li>
-            <Link href="/" scroll={true} className="transition-colors hover:text-gold">
-              Home
-            </Link>
-          </li>
-          <li aria-hidden="true" className="text-line-strong">
-            /
-          </li>
-          <li>
-            {!isViewingAllProducts ? (
-              <button
-                type="button"
-                onClick={handleViewAllProducts}
-                className="transition-colors hover:text-gold uppercase"
-              >
-                Shop
-              </button>
-            ) : (
-              <span className="text-gold">Shop</span>
-            )}
-          </li>
-          {!isViewingAllProducts && activeCategoryTitle && (
-            <>
-              <li aria-hidden="true" className="text-line-strong">
-                /
-              </li>
-              <li className="text-gold font-medium uppercase">
-                {activeCategoryTitle}
-              </li>
-            </>
-          )}
-        </ol>
-      </nav>
+  const activeFilterCount = useMemo(() => {
+    let count = filters.categories.length + filters.sizes.length + filters.colors.length;
+    if (filters.priceMin > PRICE_MIN || filters.priceMax < PRICE_MAX) {
+      count += 1;
+    }
+    return count;
+  }, [filters]);
 
-      <div className="mt-6 grid grid-cols-1 gap-10 lg:grid-cols-[260px_1fr] lg:gap-10">
-        <aside className="hidden lg:block">
-          <div className="sticky top-16 max-h-[calc(100vh-4rem)] overflow-y-auto py-6 pr-2 [scrollbar-width:thin]">
+  const removeSizeFilter = (s: Size) => {
+    setFilters((prev) => ({ ...prev, sizes: prev.sizes.filter((sz) => sz !== s) }));
+  };
+
+  const removeColorFilter = (c: Color) => {
+    setFilters((prev) => ({ ...prev, colors: prev.colors.filter((cl) => cl !== c) }));
+  };
+
+  const removePriceFilter = () => {
+    setFilters((prev) => ({ ...prev, priceMin: PRICE_MIN, priceMax: PRICE_MAX }));
+  };
+
+  return (
+    <div className="w-full bg-surface min-h-screen">
+      <Container className="py-8 lg:py-12 max-w-[1380px]">
+        {/* Editorial Breadcrumbs */}
+        <nav
+          aria-label="Breadcrumb"
+          className="text-[11px] uppercase tracking-[0.18em] font-sans text-secondary mb-6"
+        >
+          <ol className="flex flex-wrap items-center gap-2">
+            <li>
+              <Link href="/" scroll={true} className="transition-colors hover:text-primary">
+                Atelier
+              </Link>
+            </li>
+            <li aria-hidden="true" className="text-outline-variant/80">
+              /
+            </li>
+            <li>
+              {!isViewingAllProducts ? (
+                <button
+                  type="button"
+                  onClick={handleViewAllProducts}
+                  className="transition-colors hover:text-primary uppercase cursor-pointer"
+                >
+                  Collection
+                </button>
+              ) : (
+                <span className="text-primary font-semibold">Collection</span>
+              )}
+            </li>
+            {!isViewingAllProducts && activeCategoryTitle && (
+              <>
+                <li aria-hidden="true" className="text-outline-variant/80">
+                  /
+                </li>
+                <li className="text-primary font-semibold uppercase">
+                  {activeCategoryTitle}
+                </li>
+              </>
+            )}
+          </ol>
+        </nav>
+
+        {/* Main Layout: Sticky Sidebar (3 Cols) + Product Canvas (9 Cols) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Desktop Filter Sidebar */}
+          <aside className="hidden lg:block lg:col-span-3 sticky top-28 space-y-6">
             <FiltersSidebar
               filters={filters}
               counts={counts}
               onChange={(nextFilters) => {
-                // If user changed category in filters, update activeCategorySlug if cleared
                 if (nextFilters.categories.length === 0 && activeCategorySlug) {
                   setActiveCategorySlug(undefined);
                   if (typeof window !== "undefined") {
@@ -347,76 +369,151 @@ export default function ShopPageClient({
               onReset={handleResetFilters}
               showCategoryFilter={!isCategoryRoute}
             />
-          </div>
-        </aside>
+          </aside>
 
-        <section className="min-w-0">
-          <SortBar
-            sort={sort}
-            onSortChange={setSort}
-            totalCount={products.length}
-            onOpenMobileFilters={() => setMobileOpen(true)}
-          />
+          {/* Product Canvas */}
+          <main className="col-span-1 lg:col-span-9 w-full min-w-0">
+            {/* Catalog Top Toolbar */}
+            <SortBar
+              sort={sort}
+              onSortChange={setSort}
+              totalCount={products.length}
+              onOpenMobileFilters={() => setMobileOpen(true)}
+              activeFilterCount={activeFilterCount}
+              onResetFilters={handleResetFilters}
+            />
 
-          {!isViewingAllProducts && activeCategoryTitle && (
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              <span className="text-xs text-paper-muted">Category:</span>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-gold/10 px-3 py-1 text-xs font-medium text-gold">
-                {activeCategoryTitle}
+            {/* Active Filter Badges */}
+            {(activeFilterCount > 0 || (!isViewingAllProducts && activeCategoryTitle)) && (
+              <div className="mb-6 flex flex-wrap items-center gap-2">
+                <span className="text-xs text-secondary font-medium">Active:</span>
+
+                {!isViewingAllProducts && activeCategoryTitle && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-outline-variant/50 bg-surface-container-lowest px-3 py-1 text-xs font-medium text-primary shadow-sm">
+                    {activeCategoryTitle}
+                    <button
+                      type="button"
+                      onClick={handleViewAllProducts}
+                      className="hover:text-surface-tint transition-colors font-bold ml-0.5 cursor-pointer"
+                      aria-label={`Remove ${activeCategoryTitle} filter`}
+                    >
+                      ✕
+                    </button>
+                  </span>
+                )}
+
+                {filters.sizes.map((s) => (
+                  <span
+                    key={s}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-outline-variant/50 bg-surface-container-lowest px-3 py-1 text-xs font-medium text-primary shadow-sm"
+                  >
+                    Size: {s}
+                    <button
+                      type="button"
+                      onClick={() => removeSizeFilter(s)}
+                      className="hover:text-surface-tint transition-colors font-bold ml-0.5 cursor-pointer"
+                      aria-label={`Remove size ${s} filter`}
+                    >
+                      ✕
+                    </button>
+                  </span>
+                ))}
+
+                {filters.colors.map((c) => (
+                  <span
+                    key={c}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-outline-variant/50 bg-surface-container-lowest px-3 py-1 text-xs font-medium text-primary shadow-sm"
+                  >
+                    Color: {c}
+                    <button
+                      type="button"
+                      onClick={() => removeColorFilter(c)}
+                      className="hover:text-surface-tint transition-colors font-bold ml-0.5 cursor-pointer"
+                      aria-label={`Remove color ${c} filter`}
+                    >
+                      ✕
+                    </button>
+                  </span>
+                ))}
+
+                {(filters.priceMin > PRICE_MIN || filters.priceMax < PRICE_MAX) && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-outline-variant/50 bg-surface-container-lowest px-3 py-1 text-xs font-medium text-primary shadow-sm">
+                    ₹{filters.priceMin} – ₹{filters.priceMax}
+                    <button
+                      type="button"
+                      onClick={removePriceFilter}
+                      className="hover:text-surface-tint transition-colors font-bold ml-0.5 cursor-pointer"
+                      aria-label="Remove price filter"
+                    >
+                      ✕
+                    </button>
+                  </span>
+                )}
+
                 <button
                   type="button"
-                  onClick={handleViewAllProducts}
-                  className="hover:text-gold-bright transition-colors font-bold ml-0.5"
-                  aria-label={`Remove ${activeCategoryTitle} filter and view all products`}
+                  onClick={handleResetFilters}
+                  className="text-xs text-surface-tint hover:underline transition-colors font-semibold uppercase tracking-wider ml-1 cursor-pointer"
                 >
-                  ✕
+                  Reset all
                 </button>
-              </span>
-              <button
-                type="button"
-                onClick={handleViewAllProducts}
-                className="text-xs text-paper-muted underline underline-offset-2 transition-colors hover:text-gold ml-1"
-              >
-                View all products
-              </button>
-            </div>
-          )}
-
-          <div className="mt-6">
-            {!isOnline && activeProducts.length === 0 ? (
-              <OfflineState onRetry={() => void refetch()} />
-            ) : isUpdating && activeProducts.length === 0 ? (
-              <ProductGridSkeleton count={8} />
-            ) : (isError || (initialError && latestProducts.length === 0)) && activeProducts.length === 0 ? (
-              <ErrorState
-                title="Catalog Unavailable"
-                message="We couldn’t load the products right now. Please try again."
-                onRetry={() => void refetch()}
-              />
-            ) : (
-              <ProductGrid products={products} />
+              </div>
             )}
-          </div>
-        </section>
-      </div>
 
-      <MobileFiltersDrawer
-        open={mobileOpen}
-        onClose={() => setMobileOpen(false)}
-        filters={filters}
-        counts={counts}
-        onChange={(nextFilters) => {
-          if (nextFilters.categories.length === 0 && activeCategorySlug) {
-            setActiveCategorySlug(undefined);
-            if (typeof window !== "undefined") {
-              window.history.replaceState(null, "", "/shop");
+            {/* Products Grid / Skeletons / States */}
+            <div>
+              {!isOnline && activeProducts.length === 0 ? (
+                <OfflineState onRetry={() => void refetch()} />
+              ) : isUpdating && activeProducts.length === 0 ? (
+                <ProductGridSkeleton count={8} />
+              ) : (isError || (initialError && latestProducts.length === 0)) && activeProducts.length === 0 ? (
+                <ErrorState
+                  title="Catalog Unavailable"
+                  message="We couldn't load the garments right now. Please try again."
+                  onRetry={() => void refetch()}
+                />
+              ) : (
+                <ProductGrid products={products} onResetFilters={handleResetFilters} />
+              )}
+            </div>
+
+            {/* Minimalist Summary Footer */}
+            {products.length > 0 && (
+              <div className="mt-14 pt-8 border-t border-outline-variant/30 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <span className="font-sans text-xs text-secondary">
+                  Showing {products.length} {products.length === 1 ? "garment" : "garments"}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                  className="text-xs font-semibold uppercase tracking-wider text-surface-tint hover:underline flex items-center gap-1 cursor-pointer"
+                >
+                  Back to Top ↑
+                </button>
+              </div>
+            )}
+          </main>
+        </div>
+
+        {/* Mobile Filters Drawer */}
+        <MobileFiltersDrawer
+          open={mobileOpen}
+          onClose={() => setMobileOpen(false)}
+          filters={filters}
+          counts={counts}
+          onChange={(nextFilters) => {
+            if (nextFilters.categories.length === 0 && activeCategorySlug) {
+              setActiveCategorySlug(undefined);
+              if (typeof window !== "undefined") {
+                window.history.replaceState(null, "", "/shop");
+              }
             }
-          }
-          setFilters(nextFilters);
-        }}
-        onReset={handleResetFilters}
-        showCategoryFilter={!isCategoryRoute}
-      />
-    </Container>
+            setFilters(nextFilters);
+          }}
+          onReset={handleResetFilters}
+          showCategoryFilter={!isCategoryRoute}
+        />
+      </Container>
+    </div>
   );
 }

@@ -1,9 +1,8 @@
 import type { ComponentType, SVGProps } from "react";
-import Section from "@/components/ui/Section";
-import SectionHeader from "@/components/ui/SectionHeader";
 import { DeliveryIcon, QualityIcon, ReturnsIcon } from "./icons";
 
 type Feature = {
+  standard: string;
   title: string;
   description: string;
   Icon: ComponentType<SVGProps<SVGSVGElement>>;
@@ -11,51 +10,56 @@ type Feature = {
 
 const FEATURES: Feature[] = [
   {
-    title: "Premium Quality",
+    standard: "STANDARD 01",
+    title: "Artisanal Sourcing",
     description:
-      "Organic cotton and ethically sourced materials, built to last season after season.",
+      "Organic flax linen and ethically harvested cotton loomed to endure through seasonal rotations without fading.",
     Icon: QualityIcon,
   },
   {
-    title: "Fast Delivery",
+    standard: "STANDARD 02",
+    title: "Carbon-Neutral Courier",
     description:
-      "Free carbon-neutral shipping on orders over ₹999. Most orders arrive in 2–4 business days.",
+      "Complimentary speed transit on orders surpassing ₹999. Handled with verified real-time tracking across India.",
     Icon: DeliveryIcon,
   },
   {
-    title: "Easy Returns",
+    standard: "STANDARD 03",
+    title: "7-Day Courteous Exchanges",
     description:
-      "Changed your mind? Return anything within 7 days — no fuss.",
+      "Try silhouettes within the sanctity of home. Hassle-free doorstep pickup arranged via a single click.",
     Icon: ReturnsIcon,
   },
 ];
 
 export default function WhyChooseUs() {
   return (
-    <Section id="about">
-      <SectionHeader
-        eyebrow="Why KamiraFit"
-        title="Details that make the difference."
-      />
-
-      <div className="mt-14 grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
-        {FEATURES.map(({ title, description, Icon }) => (
-          <div
-            key={title}
-            className="group relative flex flex-col rounded-2xl border border-line bg-ink-2/60 p-8 transition-all duration-300 hover:-translate-y-1 hover:border-gold/50 hover:bg-ink-2 hover:shadow-[0_30px_60px_-30px_rgba(139,30,45,0.2)]"
-          >
-            <span className="inline-flex h-14 w-14 items-center justify-center rounded-full border border-gold/50 bg-ink text-gold shadow-[inset_0_0_0_1px_rgba(139,30,45,0.08)] transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:border-gold">
-              <Icon width={22} height={22} />
-            </span>
-            <h3 className="mt-6 font-display text-xl font-semibold text-paper">
-              {title}
-            </h3>
-            <p className="mt-3 text-sm leading-relaxed text-paper-muted">
-              {description}
-            </p>
-          </div>
-        ))}
+    <section id="about" className="w-full py-8 sm:py-10 border-b border-outline-variant/40 bg-surface">
+      <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-outline-variant/50">
+          {FEATURES.map(({ standard, title, description, Icon }) => (
+            <div
+              key={standard}
+              className="py-4 md:py-2 md:px-8 first:pl-0 last:pr-0 flex items-start gap-4 group"
+            >
+              <span className="w-12 h-12 rounded-2xl bg-surface-container flex items-center justify-center text-primary flex-shrink-0 transition-transform duration-300 group-hover:scale-105 group-hover:bg-primary-container group-hover:text-white">
+                <Icon width={22} height={22} />
+              </span>
+              <div>
+                <span className="text-[10px] uppercase font-mono tracking-widest text-outline">
+                  {standard}
+                </span>
+                <h3 className="font-serif text-xl font-medium text-primary mt-0.5 mb-1.5">
+                  {title}
+                </h3>
+                <p className="font-sans text-xs text-on-surface-variant font-light leading-relaxed">
+                  {description}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
-    </Section>
+    </section>
   );
 }

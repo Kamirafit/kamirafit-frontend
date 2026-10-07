@@ -30,8 +30,8 @@ export default function SectionHeader({
   const Heading = size === "lg" ? "h1" : "h2";
   const headingClass =
     size === "lg"
-      ? "font-display text-4xl font-semibold leading-[1.05] tracking-tight text-paper sm:text-5xl lg:text-[56px]"
-      : "font-display text-3xl font-semibold leading-[1.1] tracking-tight text-paper sm:text-4xl lg:text-[42px]";
+      ? "font-serif text-4xl font-normal leading-[1.05] tracking-tight text-primary sm:text-5xl lg:text-[56px]"
+      : "font-serif text-3xl font-normal leading-[1.1] tracking-tight text-primary sm:text-4xl lg:text-[42px]";
 
   return (
     <div
@@ -45,14 +45,14 @@ export default function SectionHeader({
         }`.trim()}
       >
         {eyebrow ? (
-          <p className="inline-flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.32em] text-gold">
-            <span aria-hidden className="h-px w-8 bg-gold/60" />
+          <p className="inline-flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.25em] text-surface-tint">
+            <span aria-hidden className="h-px w-8 bg-surface-tint" />
             {eyebrow}
           </p>
         ) : null}
         <Heading className={headingClass}>{title}</Heading>
         {description ? (
-          <p className="max-w-xl text-sm leading-relaxed text-paper-muted sm:text-base">
+          <p className="max-w-xl text-sm leading-relaxed text-on-surface-variant font-light sm:text-base">
             {description}
           </p>
         ) : null}

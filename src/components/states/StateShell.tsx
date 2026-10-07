@@ -14,14 +14,15 @@ export default function StateShell({ icon, title, description, action, role = "s
     <section
       role={role}
       aria-live={role === "alert" ? "assertive" : "polite"}
-      className={`flex min-h-48 w-full flex-col items-center justify-center rounded-2xl border border-line bg-ink-2/60 px-5 py-10 text-center sm:px-8 ${className}`}
+      className={`flex min-h-60 w-full flex-col items-center justify-center rounded-2xl border border-outline-variant/30 bg-surface-container-lowest px-6 py-12 text-center shadow-sm ${className}`}
     >
-      <span aria-hidden className="flex h-11 w-11 items-center justify-center rounded-full border border-line bg-ink text-xl text-gold">
+      <span aria-hidden className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-container-low text-xl text-primary">
         {icon}
       </span>
-      <h2 className="mt-4 font-display text-xl font-semibold text-paper">{title}</h2>
-      <p className="mt-2 max-w-md text-sm leading-relaxed text-paper-muted">{description}</p>
+      <h2 className="mt-4 font-serif text-xl font-medium text-primary">{title}</h2>
+      <p className="mt-2 max-w-md text-xs sm:text-sm leading-relaxed text-secondary font-light">{description}</p>
       {action ? <div className="mt-6">{action}</div> : null}
     </section>
   );
 }
+

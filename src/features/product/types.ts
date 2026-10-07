@@ -11,7 +11,7 @@ export type {
 
 export type Category = string;
 
-export type SortKey = "price-asc" | "price-desc" | "newest" | "popular";
+export type SortKey = "popular" | "relevance" | "newest" | "price-asc" | "price-desc";
 
 export interface Filters {
   sizes: Size[];

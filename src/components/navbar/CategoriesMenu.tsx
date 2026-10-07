@@ -124,7 +124,7 @@ export function DesktopCategoriesMenu() {
         aria-haspopup="true"
         aria-expanded={isOpen}
         onClick={() => setIsOpen((prev) => !prev)}
-        className="relative inline-flex items-center gap-1.5 text-[12px] font-medium uppercase tracking-[0.22em] text-paper transition-colors hover:text-gold group-hover/cats:text-gold"
+        className="relative inline-flex items-center gap-1.5 text-[12px] uppercase font-semibold tracking-[0.16em] text-on-surface-variant transition-colors hover:text-primary group-hover/cats:text-primary cursor-pointer"
       >
         Categories
         <span className={`transition-transform duration-300 group-hover/cats:rotate-180 ${isOpen ? "rotate-180" : ""}`}>
@@ -132,7 +132,7 @@ export function DesktopCategoriesMenu() {
         </span>
         <span
           aria-hidden
-          className={`pointer-events-none absolute -bottom-1 left-0 h-px bg-gold transition-all duration-300 group-hover/cats:w-full ${
+          className={`pointer-events-none absolute -bottom-1 left-0 h-px bg-primary transition-all duration-300 group-hover/cats:w-full ${
             isOpen ? "w-full" : "w-0"
           }`}
         />
@@ -147,13 +147,13 @@ export function DesktopCategoriesMenu() {
         }`}
       >
         <div
-          className={`relative overflow-hidden rounded-2xl border border-white/10 bg-ink/95 text-paper shadow-[0_16px_40px_-10px_rgba(0,0,0,0.6)] backdrop-blur-2xl transition-all duration-300 ease-in-out invisible opacity-0 translate-y-2 group-hover/cats:visible group-hover/cats:opacity-100 group-hover/cats:translate-y-0 ${
+          className={`relative overflow-hidden rounded-3xl border border-outline-variant/40 bg-surface/98 text-on-surface shadow-[0_24px_50px_-12px_rgba(47,2,11,0.2)] backdrop-blur-2xl transition-all duration-300 ease-in-out invisible opacity-0 translate-y-2 group-hover/cats:visible group-hover/cats:opacity-100 group-hover/cats:translate-y-0 ${
             isOpen ? "!visible !opacity-100 !translate-y-0" : ""
           }`}
         >
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-gold/50 to-transparent"
+            className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent"
           />
           <div className="grid grid-cols-1 gap-x-8 gap-y-7 p-8 sm:grid-cols-2 lg:grid-cols-4">
             {columns.map((col) => (
@@ -161,13 +161,13 @@ export function DesktopCategoriesMenu() {
                 <Link
                   href={`/shop?category=${encodeURIComponent(col.title.toLowerCase().replace(/[\s_]+/g, "-"))}`}
                   onClick={() => setIsOpen(false)}
-                  className="font-display text-[15px] font-bold tracking-tight text-paper transition-colors hover:text-gold"
+                  className="font-serif text-[15px] font-semibold tracking-tight text-primary transition-colors hover:text-surface-tint"
                 >
                   {col.title}
                 </Link>
                 <span
                   aria-hidden
-                  className="mt-2 h-px w-8 bg-gold/70"
+                  className="mt-2 h-px w-8 bg-surface-tint/60"
                 />
                 {col.items.length > 0 && (
                   <ul className="mt-3.5 flex flex-col gap-2">
@@ -176,11 +176,11 @@ export function DesktopCategoriesMenu() {
                         <Link
                           href={item.href}
                           onClick={() => setIsOpen(false)}
-                          className="group/it inline-flex items-center gap-2 text-[13.5px] text-paper-muted transition-all duration-200 hover:text-gold"
+                          className="group/it inline-flex items-center gap-2 text-[13px] text-on-surface-variant transition-all duration-200 hover:text-primary"
                         >
                           <span
                             aria-hidden
-                            className="h-px w-2.5 bg-white/25 transition-all duration-200 group-hover/it:w-4 group-hover/it:bg-gold"
+                            className="h-px w-2 bg-outline-variant transition-all duration-200 group-hover/it:w-3.5 group-hover/it:bg-primary"
                           />
                           {item.label}
                         </Link>
@@ -191,16 +191,16 @@ export function DesktopCategoriesMenu() {
               </div>
             ))}
           </div>
-          <div className="flex items-center justify-between border-t border-white/10 bg-white/5 px-8 py-4 backdrop-blur-xl">
-            <p className="text-[12px] text-paper-muted">
-              Free shipping on orders over ₹999
+          <div className="flex items-center justify-between border-t border-outline-variant/30 bg-surface-container-low/70 px-8 py-4 backdrop-blur-xl">
+            <p className="text-[12px] text-on-surface-variant font-light">
+              Complimentary carbon-neutral courier on orders surpassing ₹999
             </p>
             <Link
               href="/shop"
               onClick={() => setIsOpen(false)}
-              className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-gold transition-colors duration-300 hover:text-gold-bright"
+              className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-primary transition-colors duration-300 hover:text-surface-tint"
             >
-              Shop all
+              Shop All
               <span aria-hidden>→</span>
             </Link>
           </div>
@@ -231,7 +231,7 @@ export function MobileCategoriesMenu({
         type="button"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center justify-between rounded-md px-3 py-2.5 text-sm font-medium uppercase tracking-[0.2em] text-paper transition-colors hover:bg-ink-3 hover:text-gold"
+        className="flex items-center justify-between rounded-xl px-3 py-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-on-surface-variant transition-colors hover:bg-surface-container hover:text-primary cursor-pointer"
       >
         Categories
         <Chevron open={open} />
@@ -245,19 +245,19 @@ export function MobileCategoriesMenu({
         }`}
       >
         <div className="min-h-0">
-          <div className="mb-2 space-y-5 rounded-xl border border-white/10 bg-ink/60 px-4 py-4 backdrop-blur-xl supports-[backdrop-filter]:bg-ink/45">
+          <div className="mb-2 space-y-5 rounded-2xl border border-outline-variant/30 bg-surface-container-low/90 px-4 py-4 backdrop-blur-xl">
             {columns.map((col) => (
               <div key={col.title}>
                 <Link
                   href={`/shop?category=${encodeURIComponent(col.title.toLowerCase().replace(/[\s_]+/g, "-"))}`}
                   onClick={onItemClick}
-                  className="font-display text-[13px] font-bold tracking-tight text-paper block transition-colors hover:text-gold"
+                  className="font-serif text-[13px] font-bold tracking-tight text-primary block transition-colors hover:text-surface-tint"
                 >
                   {col.title}
                 </Link>
                 <span
                   aria-hidden
-                  className="mt-1.5 block h-px w-6 bg-gold/70"
+                  className="mt-1.5 block h-px w-6 bg-surface-tint/60"
                 />
                 {col.items.length > 0 && (
                   <ul className="mt-2.5 flex flex-col gap-1.5">
@@ -266,7 +266,7 @@ export function MobileCategoriesMenu({
                         <Link
                           href={item.href}
                           onClick={onItemClick}
-                          className="block py-1 text-[13.5px] text-paper-muted transition-colors duration-200 hover:text-gold"
+                          className="block py-1 text-[13px] text-on-surface-variant transition-colors duration-200 hover:text-primary"
                         >
                           {item.label}
                         </Link>

@@ -9,35 +9,12 @@ import { useAppDispatch, useAppSelector } from "../hooks/redux";
 import { addToCart } from "../store/cartSlice";
 import { useOptimisticWishlist } from "@/services/wishlist";
 import { useColorSwatchMap } from "@/services/product";
-import { COLOR_SWATCH, type Product } from "../types";
-import { HeartIcon } from "./icons";
+import { COLOR_SWATCH, type Product, type Size, type Color } from "../types";
+import { HeartIcon, ShoppingBagIcon } from "./icons";
 
 type Props = {
   product: Product;
 };
-
-function ProductCartIcon({ filled = false }: { filled?: boolean }) {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <circle cx="8" cy="21" r="1" />
-      <circle cx="19" cy="21" r="1" />
-      <path
-        d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"
-        fill={filled ? "currentColor" : "none"}
-      />
-    </svg>
-  );
-}
 
 export default function ProductCard({ product }: Props) {
   const swatchMap = useColorSwatchMap();
@@ -63,7 +40,6 @@ export default function ProductCard({ product }: Props) {
     }
     setImgSrc(getValidImageSrc(product.image, DEFAULT_PRODUCT_IMAGE));
   }, [selectedColor, product.image, product.imageColorMap, product.images]);
-
 
   const productHref = selectedColor
     ? `/product/${product.slug || product.id}?color=${encodeURIComponent(selectedColor)}`
@@ -93,148 +69,220 @@ export default function ProductCard({ product }: Props) {
   const hasDiscount = mrp > 0 && price > 0 && mrp > price;
   const discountPercent = hasDiscount ? Math.round(((mrp - price) / mrp) * 100) : 0;
 
+  const availableColors = useMemo(() => {
+    if (Array.isArray(product.color) && product.color.length > 0) {
+      return product.color;
+    }
+    const fromVariants = (product.variants || [])
+      .map((v) => v.color)
+      .filter((c): c is string => Boolean(c && c.trim()));
+    return Array.from(new Set(fromVariants));
+  }, [product.color, product.variants]);
+
+  const availableSizes = useMemo(() => {
+    if (Array.isArray(product.size) && product.size.length > 0) {
+      return product.size;
+    }
+    const fromVariants = (product.variants || [])
+      .map((v) => v.size)
+      .filter((s): s is string => Boolean(s && s.trim()));
+    return Array.from(new Set(fromVariants));
+  }, [product.size, product.variants]);
+
+  const hasMultipleColors = availableColors.length > 1;
+  const hasMultipleSizes = availableSizes.length > 1;
+  const requiresVariantPrompt = hasMultipleColors || hasMultipleSizes;
+
+  const executeAddToCart = (chosenSize: string, chosenColor?: string | null) => {
+    const matchingVariant =
+      product.variants?.find(
+        (v) =>
+          (!chosenColor || v.color?.toLowerCase() === chosenColor.toLowerCase()) &&
+          (!chosenSize || v.size?.toLowerCase() === chosenSize.toLowerCase())
+      ) ||
+      product.variants?.find(
+        (v) => !chosenSize || v.size?.toLowerCase() === chosenSize.toLowerCase()
+      ) ||
+      product.variants?.[0];
+
+    dispatch(
+      addToCart({
+        id: product.id,
+        variantId: matchingVariant?.id,
+        size: chosenSize as Size,
+        color: (chosenColor || matchingVariant?.color) as Color,
+        quantity: 1,
+      })
+    );
+  };
+
+  const handleQuickAddClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isCardOutOfStock) return;
+
+    if (requiresVariantPrompt) {
+      if (e.metaKey || e.ctrlKey) {
+        window.open(productHref, "_blank");
+      } else {
+        router.push(productHref);
+      }
+      return;
+    }
+
+    const defaultColor = selectedColor || availableColors[0];
+    const defaultSize = availableSizes[0] || "M";
+    executeAddToCart(defaultSize, defaultColor);
+  };
+
   return (
     <article
       onClick={handleCardClick}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-line bg-ink transition-all duration-300 hover:-translate-y-0.5 hover:border-gold/40 hover:shadow-[0_30px_60px_-30px_rgba(74,14,26,0.25)] cursor-pointer"
+      className="group rounded-2xl bg-surface-container-lowest overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between border border-outline-variant/30 hover:border-primary-container/30 cursor-pointer relative"
     >
-      <Link
-        href={productHref}
-        aria-label={`View ${product.name}`}
-        className="relative block aspect-[4/5] w-full overflow-hidden bg-ink-2"
-      >
-        <Image
-          src={imgSrc}
-          alt={product.name}
-          fill
-          unoptimized={imgSrc.startsWith("data:") || imgSrc.startsWith("blob:")}
-          onError={() => setImgSrc(DEFAULT_PRODUCT_IMAGE)}
-          sizes="(min-width: 1280px) 22vw, (min-width: 1024px) 30vw, (min-width: 640px) 45vw, 50vw"
-          className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
-        />
-        {isCardOutOfStock ? (
-          <div className="absolute top-3 left-3 rounded-full bg-red-600 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-md">
-            Out of Stock
-          </div>
-        ) : null}
-      </Link>
-
-      <div className="flex flex-1 flex-col gap-1.5 p-4 sm:p-5">
-        <Link
-          href={productHref}
-          className="font-display text-[17px] font-semibold leading-tight text-paper transition-colors hover:text-gold"
-        >
-          {product.name}
+      {/* Product Imagery & Floating Actions */}
+      <div className="relative w-full aspect-[4/5] overflow-hidden bg-surface-container">
+        <Link href={productHref} className="block h-full w-full">
+          <Image
+            src={imgSrc}
+            alt={product.name}
+            fill
+            unoptimized={imgSrc.startsWith("data:") || imgSrc.startsWith("blob:")}
+            onError={() => setImgSrc(DEFAULT_PRODUCT_IMAGE)}
+            sizes="(min-width: 1280px) 24vw, (min-width: 1024px) 30vw, (min-width: 640px) 45vw, 100vw"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+          />
         </Link>
-        <p className="line-clamp-2 text-[13px] leading-snug text-paper-muted">
-          {product.description}
-        </p>
 
-        {product.color && product.color.length > 1 ? (
-          <div className="flex items-center gap-1.5 pt-0.5">
-            {product.color.slice(0, 5).map((c) => {
-              const isSelected = selectedColor === c;
-              return (
-                <button
-                  key={c}
-                  type="button"
-                  aria-label={`Select ${c}`}
-                  title={c}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setSelectedColor(isSelected ? null : c);
-                  }}
-                  onMouseEnter={() => setSelectedColor(c)}
-                  className={`h-3 w-3 rounded-full border transition-all ${
-                    isSelected ? "ring-2 ring-gold scale-125" : "border-line/70 hover:scale-115"
-                  }`}
-                  style={{ backgroundColor: swatchMap[c] || COLOR_SWATCH[c] || "#888888" }}
-                />
-              );
-            })}
-            {product.color.length > 5 ? (
-              <span className="text-[9.5px] text-paper-muted">+{product.color.length - 5}</span>
-            ) : null}
-          </div>
-        ) : null}
+        {/* Badges */}
+        <div className="absolute top-3 left-3 flex flex-col gap-1.5 items-start pointer-events-none">
+          {isCardOutOfStock ? (
+            <span className="px-2 py-0.5 rounded bg-surface-dim text-on-surface-variant font-sans text-[10px] font-bold tracking-wider uppercase shadow-sm">
+              OUT OF STOCK
+            </span>
+          ) : hasDiscount ? (
+            <span className="px-2 py-0.5 rounded bg-secondary-container text-on-secondary-container font-sans text-[11px] font-bold shadow-sm">
+              {discountPercent}% OFF
+            </span>
+          ) : null}
+        </div>
 
-        <div className="mt-auto flex items-center justify-between gap-3 pt-3">
-          <div className="flex items-baseline gap-2 flex-wrap">
-            {hasDiscount ? (
-              <>
-                <span className="line-through text-paper-muted text-[13px] font-normal">
-                  {formatPrice(mrp)}
+        {/* Circular Wishlist Button */}
+        <button
+          type="button"
+          aria-label={saved ? "Remove from curated wishlist" : "Add to curated wishlist"}
+          aria-pressed={saved}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggle(product.id);
+          }}
+          className={`absolute top-3 right-3 w-9 h-9 rounded-full backdrop-blur flex items-center justify-center transition-colors shadow-sm z-10 cursor-pointer ${
+            saved
+              ? "bg-primary-container text-white"
+              : "bg-surface-container-lowest/90 text-primary hover:bg-primary-container hover:text-white"
+          }`}
+        >
+          <HeartIcon filled={saved} width={16} height={16} />
+        </button>
+      </div>
+
+      {/* Product Info Tray */}
+      <div className="p-4 sm:p-5 flex flex-col flex-1 justify-between gap-3 sm:gap-4">
+        <div className="space-y-1.5">
+          {/* Metadata / Hues Indicator */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {product.color && product.color.length > 0 ? (
+              <div className="flex items-center gap-1.5">
+                {product.color.slice(0, 3).map((c) => {
+                  const isSelected = selectedColor === c;
+                  return (
+                    <button
+                      key={c}
+                      type="button"
+                      aria-label={`Select ${c}`}
+                      title={c}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setSelectedColor(isSelected ? null : c);
+                      }}
+                      onMouseEnter={() => setSelectedColor(c)}
+                      className={`w-2.5 h-2.5 rounded-full transition-transform cursor-pointer ${
+                        isSelected
+                          ? "ring-2 ring-primary ring-offset-1 scale-125"
+                          : "hover:scale-125"
+                      }`}
+                      style={{ backgroundColor: swatchMap[c] || COLOR_SWATCH[c] || "#888888" }}
+                    />
+                  );
+                })}
+                <span className="font-sans text-[10px] text-outline uppercase ml-0.5 tracking-wider">
+                  {product.color.length > 1 ? `${product.color.length} Hues` : product.color[0]}
                 </span>
-                <span className="font-display text-[17px] font-semibold tracking-wide text-paper">
-                  {formatPrice(price)}
-                </span>
-                <span className="rounded bg-[#8B1E2D]/15 px-1.5 py-0.5 text-[11px] font-bold text-[#8B1E2D] dark:text-gold border border-[#8B1E2D]/25">
-                  {discountPercent}% OFF
-                </span>
-              </>
+              </div>
             ) : (
-              <span className="font-display text-[17px] font-semibold tracking-wide text-paper">
-                {formatPrice(price > 0 ? price : mrp)}
+              <span className="font-sans text-[10px] text-outline uppercase tracking-wider">
+                {product.category || "KamiraFit Edit"}
               </span>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              aria-label={saved ? "Remove from wishlist" : "Add to wishlist"}
-              aria-pressed={saved}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                toggle(product.id);
-              }}
-              className={`inline-flex h-9 w-9 items-center justify-center rounded-full border transition-all ${
-                saved
-                  ? "border-transparent bg-[#DC2626]/10 text-[#DC2626]"
-                  : "border-line text-paper-muted hover:border-[#DC2626]/40 hover:text-[#DC2626]"
-              }`}
-            >
-              <HeartIcon filled={saved} width={15} height={15} />
-            </button>
-            <button
-              type="button"
-              aria-label={isCardOutOfStock ? "Out of stock" : inCart ? "Added to cart" : "Add to cart"}
-              aria-pressed={inCart}
-              disabled={isCardOutOfStock}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (isCardOutOfStock) return;
 
-                const matchingVariant = product.variants?.find((v) =>
-                  (!selectedColor || v.color?.toLowerCase() === selectedColor.toLowerCase())
-                ) || product.variants?.[0];
+          <h3 className="font-serif text-base sm:text-lg text-primary group-hover:text-surface-tint transition-colors font-medium line-clamp-1">
+            {product.name}
+          </h3>
+          {product.description && (
+            <p className="font-sans text-xs text-secondary font-light line-clamp-2 leading-relaxed">
+              {product.description}
+            </p>
+          )}
+        </div>
 
-                const chosenSize = matchingVariant?.size || product.size?.[0] || "M";
-                const chosenColor = matchingVariant?.color || selectedColor || product.color?.[0];
-
-                dispatch(
-                  addToCart({
-                    id: product.id,
-                    variantId: matchingVariant?.id,
-                    size: chosenSize,
-                    color: chosenColor,
-                    quantity: 1,
-                  })
-                );
-              }}
-              className={`inline-flex h-9 w-9 items-center justify-center rounded-full border-2 transition-all duration-300 ease-in-out ${
-                isCardOutOfStock
-                  ? "border-line bg-ink-2 text-paper-muted/40 cursor-not-allowed"
-                  : inCart
-                  ? "border-gold bg-gold text-white shadow-[0_8px_20px_-8px_rgba(74,14,26,0.55)]"
-                  : "border-gold bg-transparent text-gold hover:bg-gold hover:text-white hover:shadow-[0_8px_20px_-8px_rgba(74,14,26,0.55)]"
-              }`}
-            >
-              <ProductCartIcon filled={inCart} />
-            </button>
+        {/* Pricing & Circular Quick Add */}
+        <div className="flex items-center justify-between pt-2 border-t border-outline-variant/20">
+          <div className="flex items-baseline gap-2">
+            <span className="font-serif text-base sm:text-lg text-primary font-semibold">
+              {formatPrice(price > 0 ? price : mrp)}
+            </span>
+            {hasDiscount && (
+              <span className="font-sans text-xs text-outline line-through">
+                {formatPrice(mrp)}
+              </span>
+            )}
           </div>
+
+          <button
+            type="button"
+            aria-label={
+              isCardOutOfStock
+                ? "Out of stock"
+                : inCart
+                ? "In shopping bag"
+                : requiresVariantPrompt
+                ? "Select options"
+                : "Quick add to shopping bag"
+            }
+            title={
+              isCardOutOfStock
+                ? "Out of stock"
+                : inCart
+                ? "In shopping bag"
+                : requiresVariantPrompt
+                ? "Select options"
+                : "Quick add to shopping bag"
+            }
+            disabled={isCardOutOfStock}
+            onClick={handleQuickAddClick}
+            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-sm cursor-pointer ${
+              isCardOutOfStock
+                ? "bg-surface-container text-outline cursor-not-allowed"
+                : inCart
+                ? "bg-primary text-white ring-2 ring-primary-container"
+                : "bg-primary-container text-white hover:bg-primary hover:scale-105"
+            }`}
+          >
+            <ShoppingBagIcon width={18} height={18} />
+          </button>
         </div>
       </div>
     </article>

@@ -131,4 +131,15 @@ export function useOrderTracking(id: string | null | undefined) {
   });
 }
 
+export function useOrder(id: string | null | undefined) {
+  return useQuery<Order>({
+    queryKey: ["orders", id],
+    queryFn: () => orderService.getOrder(id!),
+    enabled: Boolean(id),
+    staleTime: 60000,
+  });
+}
+
+
+
 

@@ -13,41 +13,42 @@ type Props = {
 export default function ColorSelector({ options, value, onChange }: Props) {
   const swatchMap = useColorSwatchMap();
 
+  if (!options || options.length === 0) return null;
+
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-paper-muted">
-          Color
-        </p>
-        <p className="text-xs text-paper-muted">
-          {value ? (
-            <span className="text-gold">Selected: {value}</span>
-          ) : (
-            "Choose a color"
-          )}
-        </p>
+        <span className="font-sans text-xs uppercase tracking-wider text-primary font-bold">
+          Palette
+        </span>
+        <span className="font-sans text-xs text-on-surface-variant font-medium">
+          {value || "Select Hue"}
+        </span>
       </div>
-      <div role="radiogroup" aria-label="Color" className="flex flex-wrap gap-3">
+
+      <div role="radiogroup" aria-label="Palette selection" className="flex items-center gap-3 flex-wrap">
         {options.map((c) => {
           const selected = c === value;
+          const bg = swatchMap[c] || COLOR_SWATCH[c] || "#888888";
+
           return (
             <button
               key={c}
               type="button"
               role="radio"
               aria-checked={selected}
-              aria-label={c}
+              aria-label={`Color option ${c}`}
               title={c}
               onClick={() => onChange(c)}
-              className={`relative inline-flex h-11 w-11 items-center justify-center rounded-full border transition-all duration-200 ${
+              className={`w-9 h-9 rounded-full ring-offset-2 ring-offset-surface transition-transform hover:scale-105 cursor-pointer flex items-center justify-center p-0.5 ${
                 selected
-                  ? "border-gold ring-2 ring-gold/70 ring-offset-2 ring-offset-ink"
-                  : "border-line hover:-translate-y-0.5 hover:border-gold/60"
+                  ? "ring-2 ring-primary-container scale-105 shadow-sm"
+                  : "ring-0 hover:ring-2 hover:ring-outline-variant"
               }`}
             >
               <span
-                className="block h-7 w-7 rounded-full border border-line"
-                style={{ backgroundColor: swatchMap[c] || COLOR_SWATCH[c] || "#888888" }}
+                className="w-full h-full rounded-full border border-black/10 shadow-inner"
+                style={{ backgroundColor: bg }}
               />
             </button>
           );

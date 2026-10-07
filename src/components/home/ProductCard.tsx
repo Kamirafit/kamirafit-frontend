@@ -55,9 +55,9 @@ export default function ProductCard({ product }: Props) {
   return (
     <article
       onClick={handleCardClick}
-      className="group flex flex-col cursor-pointer"
+      className="group flex flex-col bg-surface-container-lowest rounded-2xl overflow-hidden border border-outline-variant/30 hover:border-primary-container/40 transition-all duration-500 shadow-sm hover:shadow-2xl cursor-pointer"
     >
-      <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl border border-line bg-ink-2 transition-all duration-300 group-hover:-translate-y-1 group-hover:scale-[1.02] group-hover:border-gold/50 group-hover:shadow-lg group-hover:shadow-[0_30px_60px_-30px_rgba(139,30,45,0.35)]">
+      <div className="relative aspect-[4/5] w-full overflow-hidden bg-surface-container">
         <Link href={productHref} className="block h-full w-full">
           <Image
             src={imageSrc}
@@ -65,72 +65,73 @@ export default function ProductCard({ product }: Props) {
             fill
             unoptimized={imageSrc.startsWith("data:") || imageSrc.startsWith("blob:")}
             sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-            className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.05]"
+            className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
           />
         </Link>
         {product.tag ? (
           <span
-            className={`absolute left-3 top-3 inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white shadow-md ${badgeBg}`}
+            className={`absolute left-3.5 top-3.5 inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-white shadow-md ${badgeBg}`}
           >
             {product.tag}
           </span>
+        ) : hasDiscount ? (
+          <span className="absolute left-3.5 top-3.5 px-2.5 py-1 rounded-full bg-secondary-container text-on-secondary-container text-[10px] font-sans font-bold tracking-wider shadow-sm">
+            {discountPercent}% OFF
+          </span>
         ) : null}
 
-        {/* Soft bottom gradient so the outline button reads on any image */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/40 via-black/10 to-transparent"
-        />
-
-        {/* Add-to-Cart: adds directly without redirection */}
-        <button
-          type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            dispatch(
-              addToCart({
-                id: product.id,
-                quantity: 1,
-              })
-            );
-            setAdded(true);
-            window.setTimeout(() => setAdded(false), 1800);
-          }}
-          className={`absolute inset-x-3 bottom-3 inline-flex items-center justify-center gap-2 rounded-full border-2 border-gold px-4 py-2.5 text-[12px] font-semibold uppercase tracking-[0.18em] backdrop-blur-md transition-all duration-300 ease-in-out ${
-            added
-              ? "bg-gold text-white shadow-[0_12px_30px_-10px_rgba(74,14,26,0.55)]"
-              : "bg-white/90 text-gold hover:border-gold hover:bg-gold hover:text-white hover:shadow-[0_12px_30px_-10px_rgba(74,14,26,0.55)]"
-          }`}
-        >
-          {added ? "Added to cart" : "Add to cart"}
-        </button>
+        {/* Slide-Up Atelier Quick Buy Bar */}
+        <div className="absolute inset-x-3.5 bottom-3.5 translate-y-12 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              dispatch(
+                addToCart({
+                  id: product.id,
+                  quantity: 1,
+                })
+              );
+              setAdded(true);
+              window.setTimeout(() => setAdded(false), 1800);
+            }}
+            className={`flex-1 py-3 px-3.5 rounded-2xl backdrop-blur-md text-white text-xs font-sans font-bold uppercase tracking-wider shadow-lg flex items-center justify-center gap-2 transition-all cursor-pointer ${
+              added ? "bg-primary" : "bg-primary-container/95 hover:bg-primary"
+            }`}
+          >
+            <span>{added ? "Added to Bag" : `Quick Add • ${formatPrice(price > 0 ? price : mrp)}`}</span>
+          </button>
+        </div>
       </div>
-      <div className="mt-5 flex items-start justify-between gap-3">
-        <Link
-          href={productHref}
-          className="truncate font-display text-[15px] font-medium text-paper transition-colors hover:text-gold"
-        >
-          {product.name}
-        </Link>
-        <div className="shrink-0 flex items-baseline gap-1.5 font-display text-[15px] font-semibold tracking-wide">
-          {hasDiscount ? (
-            <>
-              <span className="line-through text-paper-muted text-[12px] font-normal">
-                {formatPrice(mrp)}
-              </span>
-              <span className="text-gold">
-                {formatPrice(price)}
-              </span>
-              <span className="rounded bg-[#8B1E2D]/15 px-1.5 py-0.5 text-[10.5px] font-bold text-[#8B1E2D] dark:text-gold border border-[#8B1E2D]/25">
-                {discountPercent}% OFF
-              </span>
-            </>
-          ) : (
-            <span className="text-gold">
+      <div className="p-5 sm:p-6 flex flex-col justify-between flex-grow">
+        <div>
+          <span className="text-[10px] uppercase font-bold tracking-widest text-surface-tint">
+            Signature Edit
+          </span>
+          <Link
+            href={productHref}
+            className="font-serif text-base sm:text-lg font-medium text-primary group-hover:text-surface-tint transition-colors line-clamp-1 block mt-1"
+          >
+            {product.name}
+          </Link>
+        </div>
+        <div className="mt-4 pt-3.5 border-t border-outline-variant/30 flex items-center justify-between">
+          <div className="flex items-baseline gap-2">
+            <span className="font-sans text-base font-bold text-primary">
               {formatPrice(price > 0 ? price : mrp)}
             </span>
-          )}
+            {hasDiscount ? (
+              <span className="font-sans text-xs text-outline line-through">
+                {formatPrice(mrp)}
+              </span>
+            ) : null}
+          </div>
+          {hasDiscount ? (
+            <span className="font-sans text-[10px] font-bold text-on-secondary-container bg-secondary-container px-2 py-0.5 rounded-full">
+              {discountPercent}% OFF
+            </span>
+          ) : null}
         </div>
       </div>
     </article>

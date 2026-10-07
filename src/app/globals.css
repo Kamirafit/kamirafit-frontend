@@ -1,35 +1,65 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f8f5f2;
-  --foreground: #1a1a1a;
+  --background: #fbf9f5;
+  --foreground: #1b1c1a;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 
-  /* KamiraFit — wine & cream palette.
-     Token names are kept (ink/paper/gold) for diff stability; semantics flipped:
-       ink*   → cream surfaces (light)
-       paper* → ink text (dark)
-       gold*  → wine accents (primary = #4A0E1A, accent = #8B1E2D) */
-  --color-ink: #f8f5f2;
-  --color-ink-2: #f1ece4;
-  --color-ink-3: #eae3d8;
-  --color-ink-4: #ded4c5;
-  --color-line: #e4dad0;
-  --color-line-strong: #c8bcaf;
-  --color-gold: #4a0e1a;
-  --color-gold-bright: #8b1e2d;
-  --color-gold-dim: #6b1723;
-  --color-paper: #1a1a1a;
-  --color-paper-muted: #6b6b6b;
+  /* KamiraFit Stitch visual system (Wine & Cream palette) */
+  --color-ink: #fbf9f5;
+  --color-ink-2: #f5f3ef;
+  --color-ink-3: #efeeea;
+  --color-ink-4: #eae8e4;
+  --color-line: #d7c1c2;
+  --color-line-strong: #857374;
+  --color-gold: #4a151e;
+  --color-gold-bright: #8d4a52;
+  --color-gold-dim: #2f020b;
+  --color-paper: #1b1c1a;
+  --color-paper-muted: #534344;
 
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
-    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-display: var(--font-playfair), "Playfair Display", "Cormorant Garamond",
-    Georgia, "Times New Roman", serif;
+  /* Explicit Stitch design tokens */
+  --color-primary: #2f020b;
+  --color-primary-container: #4a151e;
+  --color-on-primary-container: #c67981;
+  --color-primary-fixed: #ffdadc;
+  --color-primary-fixed-dim: #ffb2b9;
+  --color-on-primary-fixed: #3a0812;
+  --color-on-primary-fixed-variant: #71333c;
+
+  --color-secondary: #785559;
+  --color-secondary-container: #fdcfd3;
+  --color-on-secondary-container: #79565a;
+  --color-secondary-fixed: #ffd9dd;
+  --color-secondary-fixed-dim: #e8bbc0;
+  --color-on-secondary-fixed: #2d1418;
+
+  --color-surface: #fbf9f5;
+  --color-surface-bright: #fbf9f5;
+  --color-surface-dim: #dbdad6;
+  --color-surface-tint: #8d4a52;
+  --color-on-surface: #1b1c1a;
+  --color-on-surface-variant: #534344;
+
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f5f3ef;
+  --color-surface-container: #efeeea;
+  --color-surface-container-high: #eae8e4;
+  --color-surface-container-highest: #e4e2de;
+
+  --color-outline: #857374;
+  --color-outline-variant: #d7c1c2;
+  --color-footer-bg: #200207;
+  --color-footer-text: #eae2e3;
+
+  --font-sans: var(--font-jakarta), "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: var(--font-playfair), "Playfair Display", Georgia, "Times New Roman", serif;
+  --font-serif: var(--font-playfair), "Playfair Display", Georgia, "Times New Roman", serif;
 }
 
 html {
@@ -45,8 +75,22 @@ body {
 }
 
 ::selection {
-  background: #4a0e1a;
-  color: #f8f5f2;
+  background: #4a151e;
+  color: #ffffff;
+}
+
+.stroke-text {
+  -webkit-text-stroke: 1px rgba(74, 21, 30, 0.25);
+  color: transparent;
+}
+
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 0.85; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.04); }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 /* Hide the default up/down arrows on <input type="number"> so numeric fields
@@ -61,8 +105,8 @@ input[type="number"] {
   appearance: textfield;
 }
 
-/* Ensure all select elements have appearance:none and styled chevron positioned with breathing room */
-select,
+/* Ensure default select elements have appearance:none and styled chevron positioned with breathing room */
+select:not(.no-custom-chevron),
 .select-pill {
   appearance: none;
   -webkit-appearance: none;
@@ -72,6 +116,15 @@ select,
   background-position: right 1.1rem center;
   background-size: 14px 14px;
   padding-right: 2.75rem !important;
+  cursor: pointer;
+}
+
+select.no-custom-chevron {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: none !important;
+  background: transparent !important;
   cursor: pointer;
 }
 
@@ -191,3 +244,31 @@ dialog::-webkit-scrollbar,
     rgba(255, 255, 255, 0) 100%
   );
 }
+
+/* Editorial Filter Custom Scrollbar */
+.custom-filter-scrollbar {
+  scrollbar-width: thin !important;
+  scrollbar-color: #d7c1c2 #f5f3ef !important;
+  -ms-overflow-style: auto !important;
+}
+
+.custom-filter-scrollbar::-webkit-scrollbar {
+  width: 5px !important;
+  height: 5px !important;
+  display: block !important;
+}
+
+.custom-filter-scrollbar::-webkit-scrollbar-track {
+  background: #f5f3ef !important;
+  border-radius: 9999px !important;
+}
+
+.custom-filter-scrollbar::-webkit-scrollbar-thumb {
+  background: #d7c1c2 !important;
+  border-radius: 9999px !important;
+  transition: background 0.2s ease !important;
+}
+
+.custom-filter-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #8d4a52 !important;
+}

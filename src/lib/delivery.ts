@@ -152,3 +152,129 @@ export function calculateDeliveryDateRange(transitDays: number): {
     processingDays: "1–2 business days (24–48 hrs)",
   };
 }
+
+/**
+ * Validates postal code format based on selected destination country.
+ * Returns { isValid: true } or { isValid: false, error: string }.
+ */
+export function validatePostalCode(
+  postalCode: string,
+  country = "India"
+): { isValid: boolean; error?: string } {
+  const code = (postalCode || "").trim();
+  if (!code) {
+    return { isValid: false, error: "Please enter a postal or PIN code." };
+  }
+
+  const c = country.trim().toLowerCase();
+
+  // 1. India (Strictly 6 numeric digits, starting 1-9)
+  if (c === "india" || c === "in" || c === "bharat") {
+    if (!/^[1-9]\d{5}$/.test(code)) {
+      return {
+        isValid: false,
+        error: "Please enter a valid 6-digit Indian PIN code (e.g. 560038).",
+      };
+    }
+    return { isValid: true };
+  }
+
+  // 2. United States (5 numeric digits, optionally with +4 suffix)
+  if (c === "united states" || c === "us" || c === "usa") {
+    if (!/^\d{5}(-\d{4})?$/.test(code)) {
+      return {
+        isValid: false,
+        error: "Please enter a valid 5-digit US ZIP code (e.g. 90210).",
+      };
+    }
+    return { isValid: true };
+  }
+
+  // 3. United Kingdom (UK alphanumeric postcode, e.g. SW1A 1AA, EC1A 1BB, W1A 0AX)
+  if (c === "united kingdom" || c === "gb" || c === "uk") {
+    if (!/^[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}$/i.test(code)) {
+      return {
+        isValid: false,
+        error: "Please enter a valid UK postcode (e.g. SW1A 1AA).",
+      };
+    }
+    return { isValid: true };
+  }
+
+  // 4. Canada (A1A 1A1 format)
+  if (c === "canada" || c === "ca") {
+    if (!/^[A-CEGHJ-NPR-TV-Z]\d[A-CEGHJ-NPR-TV-Z]\s*\d[A-CEGHJ-NPR-TV-Z]\d$/i.test(code)) {
+      return {
+        isValid: false,
+        error: "Please enter a valid Canadian postal code (e.g. M5V 2T6).",
+      };
+    }
+    return { isValid: true };
+  }
+
+  // 5. Australia (4 digits)
+  if (c === "australia" || c === "au") {
+    if (!/^\d{4}$/.test(code)) {
+      return {
+        isValid: false,
+        error: "Please enter a valid 4-digit Australian postcode (e.g. 2000).",
+      };
+    }
+    return { isValid: true };
+  }
+
+  // 6. Germany (5 digits)
+  if (c === "germany" || c === "de") {
+    if (!/^\d{5}$/.test(code)) {
+      return {
+        isValid: false,
+        error: "Please enter a valid 5-digit German postal code (e.g. 10115).",
+      };
+    }
+    return { isValid: true };
+  }
+
+  // 7. France (5 digits)
+  if (c === "france" || c === "fr") {
+    if (!/^\d{5}$/.test(code)) {
+      return {
+        isValid: false,
+        error: "Please enter a valid 5-digit French postal code (e.g. 75001).",
+      };
+    }
+    return { isValid: true };
+  }
+
+  // 8. Singapore (6 digits)
+  if (c === "singapore" || c === "sg") {
+    if (!/^\d{6}$/.test(code)) {
+      return {
+        isValid: false,
+        error: "Please enter a valid 6-digit Singapore postal code (e.g. 018956).",
+      };
+    }
+    return { isValid: true };
+  }
+
+  // 9. United Arab Emirates (3 to 6 digits, 00000, or N/A)
+  if (c === "united arab emirates" || c === "ae" || c === "uae") {
+    if (!/^(\d{3,6}|00000|N\/?A)$/i.test(code)) {
+      return {
+        isValid: false,
+        error: "Please enter a valid UAE postal code or P.O. Box (e.g. 00000).",
+      };
+    }
+    return { isValid: true };
+  }
+
+  // 10. Other Country (General 3-10 characters alphanumeric)
+  if (!/^[A-Z0-9\s-]{3,10}$/i.test(code)) {
+    return {
+      isValid: false,
+      error: "Please enter a valid postal or ZIP code.",
+    };
+  }
+
+  return { isValid: true };
+}
+

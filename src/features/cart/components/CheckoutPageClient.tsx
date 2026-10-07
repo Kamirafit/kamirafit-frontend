@@ -1,7 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useRef, useEffect, useMemo } from "react";
+import OrderSuccessPage from "@/features/order/components/OrderSuccessPage";
+import type { Order } from "@/types/entities";
+
 import { calculateDeliveryCharge, calculateDeliveryDateRange } from "@/lib/delivery";
 import { buttonClasses } from "@/components/ui/Button";
 import Container from "@/components/ui/Container";
@@ -89,6 +93,8 @@ function mapCheckoutErrorMessage(err: unknown): string {
 }
 
 export default function CheckoutPageClient() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: products = [], isLoading, isError, refetch } = useProducts();
   const isOnline = useOnlineStatus();
   const items = useAppSelector((s) => s.cart.items);
@@ -135,6 +141,22 @@ export default function CheckoutPageClient() {
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
   const [couponError, setCouponError] = useState<string | null>(null);
 
+  // Load pre-applied coupon from cart session if available
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = sessionStorage.getItem("kamirafit_applied_coupon");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed.code === "string") {
+          setAppliedCoupon(parsed);
+        }
+      }
+    } catch {
+      // Ignore parse error
+    }
+  }, []);
+
   // User account profile state
   const authUser = useAppSelector((s) => s.auth.user);
   const { data: profile } = useProfile();
@@ -146,12 +168,15 @@ export default function CheckoutPageClient() {
   // Checkout submission state
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<"COD" | "ONLINE">("ONLINE");
+  const [placedOrderId, setPlacedOrderId] = useState<string | null>(null);
+  const [placedOrder, setPlacedOrder] = useState<Order | null>(null);
   const [placedOrderTotal, setPlacedOrderTotal] = useState<number | null>(null);
   const [placedRecipientName, setPlacedRecipientName] = useState<string>("");
   const [placedPaymentMethod, setPlacedPaymentMethod] = useState<"COD" | "ONLINE">("ONLINE");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const checkoutMutation = useCheckout();
   const verifyPaymentMutation = useVerifyPayment();
+
 
   const idempotencyKeyRef = useRef<string>(
     typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
@@ -191,6 +216,9 @@ export default function CheckoutPageClient() {
         })),
       });
       setAppliedCoupon(res);
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("kamirafit_applied_coupon", JSON.stringify(res));
+      }
     } catch (err: unknown) {
       const errorObj = err as { response?: { data?: { message?: string } }; message?: string };
       const msg = errorObj?.response?.data?.message || errorObj?.message || "Invalid or expired coupon code";
@@ -203,6 +231,9 @@ export default function CheckoutPageClient() {
   const handleRemoveCoupon = () => {
     setAppliedCoupon(null);
     setCouponError(null);
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("kamirafit_applied_coupon");
+    }
   };
 
   const handleSaveAddress = async (addr: Address) => {
@@ -305,11 +336,15 @@ export default function CheckoutPageClient() {
 
       // --- FLOW A: CASH ON DELIVERY (COD) ---
       if (paymentMethod === "COD") {
+        const orderId = result.order.id;
+        setPlacedOrderId(orderId);
+        setPlacedOrder(result.order);
         setPlacedOrderTotal(result.order.totalAmount);
         setPlacedRecipientName(accountUserName);
         setPlacedPaymentMethod("COD");
         dispatch(clearCart());
         setIsSubmitting(false);
+        router.push(`/checkout/success?orderId=${orderId}`);
         return;
       }
 
@@ -343,7 +378,7 @@ export default function CheckoutPageClient() {
           orderNumber: orderNumber,
         },
         theme: {
-          color: "#C9A24D",
+          color: "#4A151E",
         },
         modal: {
           ondismiss: function () {
@@ -357,16 +392,20 @@ export default function CheckoutPageClient() {
           razorpay_signature: string;
         }) {
           try {
-            await verifyPaymentMutation.mutateAsync({
+            const verifiedOrder = await verifyPaymentMutation.mutateAsync({
               orderId: result.order.id,
               razorpayOrderId: response.razorpay_order_id || paymentInfo?.orderId || "",
               razorpayPaymentId: response.razorpay_payment_id,
               razorpaySignature: response.razorpay_signature,
             });
+            const orderId = verifiedOrder?.id || result.order.id;
+            setPlacedOrderId(orderId);
+            setPlacedOrder(verifiedOrder || result.order);
             setPlacedOrderTotal(result.order.totalAmount);
             setPlacedRecipientName(accountUserName);
             setPlacedPaymentMethod("ONLINE");
             dispatch(clearCart());
+            router.push(`/checkout/success?orderId=${orderId}`);
           } catch {
             setCheckoutError(
               "Payment verification failed. If money was debited from your account, your order will be verified automatically, or please contact support."
@@ -410,39 +449,23 @@ export default function CheckoutPageClient() {
     }
   };
 
-  if (placedOrderTotal !== null) {
+  if (placedOrderTotal !== null || placedOrderId !== null) {
     return (
-      <Container width="narrow" className="py-20 text-center lg:py-28">
-        <div
-          aria-hidden
-          className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full border border-gold/50 bg-ink-2 text-3xl text-gold shadow-[0_20px_50px_-20px_rgba(139,30,45,0.5)]"
-        >
-          ✓
-        </div>
-        <h1 className="font-display text-4xl font-semibold tracking-tight text-paper sm:text-5xl">
-          Thank you, {placedRecipientName.split(" ")[0] || "friend"}.
-        </h1>
-        <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-paper-muted">
-          Your order of{" "}
-          <span className="font-semibold text-gold">
-            {formatPrice(placedOrderTotal)}
-          </span>{" "}
-          has been placed {placedPaymentMethod === "COD" ? "via COD" : "via UPI"}.
-        </p>
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-          <Link href="/account/orders" className={buttonClasses("primary", "md")}>
-            View My Orders
-          </Link>
-          <Link href="/shop" className={buttonClasses("secondary", "md")}>
-            Continue shopping
-          </Link>
-          <Link href="/" className={buttonClasses("secondary", "md")}>
-            Back to home
-          </Link>
-        </div>
-      </Container>
+      <OrderSuccessPage
+        orderId={placedOrderId}
+        initialOrder={placedOrder}
+        fallbackRecipientName={placedRecipientName}
+        fallbackTotal={placedOrderTotal || undefined}
+        fallbackPaymentMethod={placedPaymentMethod}
+      />
     );
   }
+
+  const queryOrderId = searchParams?.get("orderId") || searchParams?.get("id");
+  if (queryOrderId) {
+    return <OrderSuccessPage orderId={queryOrderId} />;
+  }
+
 
   if (!isOnline && items.length > 0) {
     return (

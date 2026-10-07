@@ -9,56 +9,100 @@ export type Category = {
   description: string;
   href: string;
   subcategoryPreview?: string;
+  subcategories?: string[];
+  index?: string;
 };
 
 type Props = {
   category: Category;
+  index?: number;
 };
 
-export default function CategoryCard({ category }: Props) {
+export default function CategoryCard({ category, index = 0 }: Props) {
   const imageSrc = getValidImageSrc(category.image, DEFAULT_CATEGORY_IMAGE);
+  const formattedIndex = category.index || (index + 1 < 10 ? `0${index + 1}` : String(index + 1));
+  const subcategoryPills = category.subcategories && category.subcategories.length > 0
+    ? category.subcategories.slice(0, 3)
+    : category.subcategoryPreview
+    ? category.subcategoryPreview.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 3)
+    : [];
 
   return (
     <Link
       href={category.href}
-      className="group relative block aspect-[4/5] overflow-hidden rounded-2xl border border-line bg-ink-2 shadow-[0_30px_60px_-30px_rgba(74,14,26,0.12)] transition-all duration-300 hover:-translate-y-1 hover:border-gold/60 hover:shadow-[0_40px_80px_-30px_rgba(139,30,45,0.22)]"
+      className="group relative isolate rounded-2xl overflow-hidden min-h-[380px] sm:min-h-[420px] p-5 sm:p-6 flex flex-col justify-between shadow-lg transition-all duration-700 hover:-translate-y-1.5 block cursor-pointer bg-primary"
     >
+      {/* Background Image with Dynamic Zoom */}
       <Image
         src={imageSrc}
         alt={category.title}
         fill
         unoptimized={imageSrc.startsWith("data:") || imageSrc.startsWith("blob:")}
-        sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-        className="object-cover opacity-90 transition-all duration-[1000ms] ease-out group-hover:scale-[1.05] group-hover:opacity-100"
+        sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+        className="object-cover transition-transform duration-1000 ease-out group-hover:scale-110 z-0"
       />
+
+      {/* High-Fashion Scrim Gradient */}
       <div
         aria-hidden
-        className="absolute inset-0 bg-gradient-to-t from-ink via-ink/40 to-transparent"
+        className="absolute inset-0 bg-gradient-to-t from-primary/95 via-primary/60 to-black/35 group-hover:via-primary/70 transition-colors z-[1]"
       />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-inset ring-gold/0 transition-[box-shadow,ring-color] duration-300 group-hover:ring-gold/40"
-      />
-      <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-5 sm:p-6">
-        <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.32em] text-gold">
-            Category
-          </p>
-          <h3 className="mt-2 font-display text-xl font-semibold tracking-tight text-paper sm:text-2xl">
-            {category.title}
-          </h3>
-          <p className="mt-2 max-w-xs text-xs text-paper-muted sm:text-sm">
-            {category.description}
-          </p>
-          {category.subcategoryPreview ? (
-            <p className="mt-3 text-[10px] font-medium uppercase tracking-[0.2em] text-gold/90 sm:text-[11px]">
-              {category.subcategoryPreview}
-            </p>
-          ) : null}
-        </div>
-        <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gold/60 text-sm text-gold transition-all duration-300 group-hover:-translate-y-0.5 group-hover:bg-gold group-hover:text-ink sm:h-11 sm:w-11">
-          →
+
+      {/* Top Index */}
+      <div className="relative z-10 flex items-center justify-between">
+        <span className="font-serif text-2xl font-light text-white/70">
+          {formattedIndex}
         </span>
+        <span className="px-2.5 py-0.5 rounded-full text-[9px] uppercase font-bold tracking-[0.2em] bg-white/15 text-white backdrop-blur-md border border-white/20">
+          Atelier Realm
+        </span>
+      </div>
+
+      {/* Bottom Content */}
+      <div className="relative z-10">
+        <h3 className="font-serif text-xl sm:text-2xl lg:text-3xl text-white font-normal mb-1.5">
+          {category.title}
+        </h3>
+        <p className="font-sans text-[11px] text-white/80 font-light mb-3.5 line-clamp-2 max-w-sm">
+          {category.description}
+        </p>
+
+        {/* Subcategory Pills */}
+        {subcategoryPills.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mb-4">
+            {subcategoryPills.map((sub) => (
+              <span
+                key={sub}
+                className="px-2 py-0.5 rounded-full text-[9px] uppercase font-semibold bg-white/15 text-white backdrop-blur-sm border border-white/10"
+              >
+                {sub}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Tailored Action Button */}
+        <div className="flex items-center justify-between pt-3 border-t border-white/20">
+          <span className="text-[11px] uppercase tracking-widest font-semibold text-white/90">
+            Browse Styles
+          </span>
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white text-primary flex items-center justify-center group-hover:bg-primary-container group-hover:text-white transition-all shadow-md group-hover:rotate-45">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <line x1="7" y1="17" x2="17" y2="7" />
+              <polyline points="7 7 17 7 17 17" />
+            </svg>
+          </div>
+        </div>
       </div>
     </Link>
   );

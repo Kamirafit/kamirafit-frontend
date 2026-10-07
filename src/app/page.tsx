@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Categories from "@/components/home/Categories";
+import CategoryHighlights from "@/components/home/CategoryHighlights";
 import FeaturedProducts from "@/components/home/FeaturedProducts";
 import Hero from "@/components/home/Hero";
 import Testimonials from "@/components/home/Testimonials";
@@ -33,14 +34,27 @@ export const metadata: Metadata = {
 
 export default async function Home() {
   let products: Product[] = [];
+  let catalogProducts: Product[] = [];
   let isError = false;
 
   try {
-    products = await productService.getFeaturedProducts();
+    const [featured, catalog] = await Promise.all([
+      productService.getFeaturedProducts().catch((e) => {
+        console.error("Home: Failed to fetch featured products:", e);
+        return [];
+      }),
+      productService.getProducts().catch((e) => {
+        console.error("Home: Failed to fetch catalog products:", e);
+        return [];
+      }),
+    ]);
+    products = featured;
+    catalogProducts = catalog.length > 0 ? catalog : featured;
   } catch (err) {
-    console.error("Home: Failed to fetch featured products from API:", err);
+    console.error("Home: Failed to fetch products from API:", err);
     isError = true;
     products = [];
+    catalogProducts = [];
   }
 
   // Google SERP Rich FAQ Schema
@@ -102,6 +116,7 @@ export default async function Home() {
       />
       <Hero />
       <FeaturedProducts products={products} isError={isError} />
+      <CategoryHighlights products={catalogProducts} />
       <Categories />
       <WhyChooseUs />
       <Testimonials />

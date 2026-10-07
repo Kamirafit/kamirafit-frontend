@@ -42,17 +42,19 @@ function matchesFilters(product: Product, filters: Filters): boolean {
 function sortProducts(products: Product[], sort: SortKey): Product[] {
   const copy = [...products];
   switch (sort) {
-    case "price-asc":
-      return copy.sort((a, b) => a.price - b.price);
-    case "price-desc":
-      return copy.sort((a, b) => b.price - a.price);
+    case "popular":
+      return copy.sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0));
+    case "relevance":
+      return copy;
     case "newest":
       return copy.sort(
         (a, b) =>
           (Date.parse(b.createdAt) || 0) - (Date.parse(a.createdAt) || 0),
       );
-    case "popular":
-      return copy.sort((a, b) => b.popularity - a.popularity);
+    case "price-asc":
+      return copy.sort((a, b) => a.price - b.price);
+    case "price-desc":
+      return copy.sort((a, b) => b.price - a.price);
     default:
       return copy;
   }
