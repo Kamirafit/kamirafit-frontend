@@ -10,7 +10,7 @@ import {
   useAdminOrders,
   useAdminUsers,
 } from "@/services/admin";
-import type { AdminCategory, AdminOrder as Order } from "@/types/entities";
+import type { AdminOrder as Order } from "@/types/entities";
 import AdminCard from "../components/AdminCard";
 import StatusPill from "../components/StatusPill";
 import StatusBadge from "@/components/admin/orders/StatusBadge";

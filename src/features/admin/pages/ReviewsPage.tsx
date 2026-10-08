@@ -3,7 +3,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import SectionHeader from "@/components/ui/SectionHeader";
-import type { AdminReview, AdminReviewStatus } from "@/types/entities";
+import type { AdminReview } from "@/types/entities";
 import {
   useAdminReviews,
   useModerateAdminReview,
@@ -159,7 +159,7 @@ export default function ReviewsPage() {
       if (activeReview?.id === review.id) {
         setActiveReview((prev) => (prev ? { ...prev, status } : null));
       }
-    } catch (err) {
+    } catch {
       showError("Could not update review status. Please try again.");
     }
   };
@@ -171,7 +171,7 @@ export default function ReviewsPage() {
       if (activeReview?.id === reviewId) {
         setActiveReview(null);
       }
-    } catch (err) {
+    } catch {
       showError("Failed to delete review.");
     }
   };

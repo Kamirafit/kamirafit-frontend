@@ -11,7 +11,6 @@ export interface ColorItem {
 }
 
 let productsPromise: Promise<Product[]> | null = null;
-let featuredProductsPromise: Promise<Product[]> | null = null;
 
 const list = (params?: Record<string, unknown>): Promise<Product[]> => {
   if (!params || Object.keys(params).length === 0) {

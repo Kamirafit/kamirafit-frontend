@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import type { AdminReview } from "@/types/entities";
 import Modal from "./Modal";
 import ActionButton from "./ActionButton";
