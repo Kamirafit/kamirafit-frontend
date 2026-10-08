@@ -29,11 +29,18 @@ function isErrorPayload(value: unknown): value is { message?: string; code?: str
 
 function getBaseUrl(): string {
   let url = process.env.NEXT_PUBLIC_API_URL || process.env.INTERNAL_API_URL || "";
-  if (!url && typeof window !== "undefined") {
-    url = "/api/v1";
-  }
   if (!url) {
-    url = "http://localhost:10000/api/v1";
+    if (typeof window !== "undefined") {
+      url =
+        window.location.hostname === "localhost"
+          ? "http://localhost:10000/api/v1"
+          : "https://kamirafit-backend.onrender.com/api/v1";
+    } else {
+      url =
+        process.env.NODE_ENV === "production"
+          ? "https://kamirafit-backend.onrender.com/api/v1"
+          : "http://localhost:10000/api/v1";
+    }
   }
   url = url.replace(/\/+$/, "");
   if (url.endsWith("/api")) {
@@ -150,7 +157,11 @@ apiClient.interceptors.response.use(
           }
         } else {
           AuthStorage.clearCustomerAuth();
-          if (!pathname.startsWith("/login")) {
+          const isProtectedCustomerRoute =
+            pathname.startsWith("/account") ||
+            pathname.startsWith("/checkout") ||
+            pathname.startsWith("/orders");
+          if (isProtectedCustomerRoute) {
             window.location.href = `/login?redirect=${encodeURIComponent(pathname)}`;
           }
         }

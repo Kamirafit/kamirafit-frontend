@@ -8,29 +8,7 @@ const productImageHosts = (
   .map((host) => host.trim().toLowerCase())
   .filter(Boolean);
 
-let apiConnectHost = "";
-if (process.env.NEXT_PUBLIC_API_URL) {
-  try {
-    apiConnectHost = new URL(process.env.NEXT_PUBLIC_API_URL).origin;
-  } catch {
-    apiConnectHost = "";
-  }
-}
 
-const connectSources = [
-  "'self'",
-  "http://localhost:10000",
-  "https://kamirafit-backend.onrender.com",
-  "https://www.google.com",
-  "https://api.razorpay.com",
-  "https://checkout.razorpay.com",
-  "https://lumberjack.razorpay.com",
-  "https://lumberjack-cx.razorpay.com",
-  "https://*.razorpay.com",
-  apiConnectHost,
-]
-  .filter(Boolean)
-  .join(" ");
 
 
 
