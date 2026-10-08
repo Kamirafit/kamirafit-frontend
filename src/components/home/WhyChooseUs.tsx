@@ -38,19 +38,19 @@ export default function WhyChooseUs() {
         title="Details that make the difference."
       />
 
-      <div className="mt-14 grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
+      <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:mt-10 lg:grid-cols-3 lg:gap-7">
         {FEATURES.map(({ title, description, Icon }) => (
           <div
             key={title}
-            className="group relative flex flex-col rounded-2xl border border-line bg-ink-2/60 p-8 transition-all duration-300 hover:-translate-y-1 hover:border-gold/50 hover:bg-ink-2 hover:shadow-[0_30px_60px_-30px_rgba(139,30,45,0.2)]"
+            className="group relative flex flex-col rounded-2xl border border-line bg-ink-2/60 p-7 transition-all duration-300 hover:-translate-y-1 hover:border-gold/50 hover:bg-ink-2 hover:shadow-[0_30px_60px_-30px_rgba(139,30,45,0.2)]"
           >
-            <span className="inline-flex h-14 w-14 items-center justify-center rounded-full border border-gold/50 bg-ink text-gold shadow-[inset_0_0_0_1px_rgba(139,30,45,0.08)] transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:border-gold">
-              <Icon width={22} height={22} />
+            <span className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-gold/50 bg-ink text-gold shadow-[inset_0_0_0_1px_rgba(139,30,45,0.08)] transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:border-gold">
+              <Icon width={20} height={20} />
             </span>
-            <h3 className="mt-6 font-display text-xl font-semibold text-paper">
+            <h3 className="mt-5 font-display text-lg sm:text-xl font-semibold text-paper">
               {title}
             </h3>
-            <p className="mt-3 text-sm leading-relaxed text-paper-muted">
+            <p className="mt-2.5 text-sm leading-relaxed text-paper-muted">
               {description}
             </p>
           </div>

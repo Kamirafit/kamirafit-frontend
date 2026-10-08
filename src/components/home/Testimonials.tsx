@@ -154,7 +154,7 @@ export default function Testimonials() {
       {/* Horizontal Scrollable Carousel Track */}
       <div
         ref={scrollRef}
-        className="mt-10 flex gap-6 overflow-x-auto scroll-smooth pb-4 pt-2 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mt-12 lg:gap-8"
+        className="mt-8 flex gap-5 overflow-x-auto scroll-smooth pb-4 pt-1.5 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mt-9 lg:mt-10 lg:gap-7"
         tabIndex={0}
         role="region"
         aria-label="Customer testimonials carousel"
@@ -162,7 +162,7 @@ export default function Testimonials() {
         {items.map((t) => (
           <figure
             key={t.id}
-            className="relative flex h-full min-w-[290px] max-w-[380px] flex-1 shrink-0 snap-start flex-col justify-between rounded-2xl border border-line bg-ink p-7 sm:min-w-[340px] sm:p-8 transition-all duration-300 hover:-translate-y-1 hover:border-gold/50 hover:shadow-[0_30px_60px_-30px_rgba(139,30,45,0.2)]"
+            className="relative flex h-full min-w-[280px] max-w-[360px] flex-1 shrink-0 snap-start flex-col justify-between rounded-2xl border border-line bg-ink p-7 sm:min-w-[330px] sm:p-8 transition-all duration-300 hover:-translate-y-1 hover:border-gold/50 hover:shadow-[0_30px_60px_-30px_rgba(139,30,45,0.2)]"
           >
             <div className="flex items-center justify-between gap-4">
               <span

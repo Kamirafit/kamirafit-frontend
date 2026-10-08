@@ -799,19 +799,17 @@ export default function CheckoutPageClient() {
               {/* UPI */}
               <div
                 onClick={() => setPaymentMethod("ONLINE")}
-                className={`relative flex items-center justify-between rounded-2xl border p-4 sm:p-5 cursor-pointer transition-all duration-200 ${
-                  paymentMethod === "ONLINE"
-                    ? "border-gold bg-gold/10 shadow-[0_0_20px_rgba(201,162,77,0.15)] ring-1 ring-gold"
-                    : "border-line bg-ink hover:border-gold/40 hover:bg-ink-2/60"
-                }`}
+                className={`relative flex items-center justify-between rounded-2xl border p-4 sm:p-5 cursor-pointer transition-all duration-200 ${paymentMethod === "ONLINE"
+                  ? "border-gold bg-gold/10 shadow-[0_0_20px_rgba(201,162,77,0.15)] ring-1 ring-gold"
+                  : "border-line bg-ink hover:border-gold/40 hover:bg-ink-2/60"
+                  }`}
               >
                 <div className="flex items-center gap-3">
                   <div
-                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-all ${
-                      paymentMethod === "ONLINE"
-                        ? "border-gold bg-gold text-ink"
-                        : "border-paper-muted/50 bg-transparent"
-                    }`}
+                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-all ${paymentMethod === "ONLINE"
+                      ? "border-gold bg-gold text-ink"
+                      : "border-paper-muted/50 bg-transparent"
+                      }`}
                   >
                     {paymentMethod === "ONLINE" && (
                       <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
@@ -821,36 +819,15 @@ export default function CheckoutPageClient() {
                   </div>
                   <div className="flex flex-col">
                     <span className="font-display text-base font-semibold text-paper tracking-wide">
-                      UPI / Online
-                    </span>
-                    <span className="text-[11px] text-paper-muted">
-                      Google Pay, PhonePe, Paytm, QR, Cards & NetBanking
+                      UPI
                     </span>
                   </div>
-                </div>
-                <div className="hidden sm:flex items-center gap-1.5 text-xs text-gold font-medium">
-                  <span>⚡ 1-Tap UPI</span>
                 </div>
               </div>
             </div>
 
             {/* UPI Seamless Info */}
-            {paymentMethod === "ONLINE" && (
-              <div className="mt-4 flex items-start gap-3 rounded-2xl border border-gold/25 bg-gold/5 p-4 text-xs text-paper-muted leading-relaxed">
-                <span className="text-xl shrink-0">📱</span>
-                <div className="space-y-1">
-                  <p className="font-semibold text-paper text-xs">
-                    Fast & Secure Payment via Razorpay
-                  </p>
-                  <p className="text-[11.5px]">
-                    <strong>On Mobile:</strong> Directly launches your installed UPI app (Google Pay, PhonePe, Paytm, CRED, etc.) with 1 tap — no typing or QR scanning required.
-                  </p>
-                  <p className="text-[11.5px]">
-                    <strong>On Desktop:</strong> Displays a dynamic QR code for quick scanning with your phone, or choose UPI ID, Card, or NetBanking.
-                  </p>
-                </div>
-              </div>
-            )}
+
           </div>
         </section>
 

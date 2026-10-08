@@ -73,7 +73,7 @@ export default function Footer() {
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/30 to-transparent"
       />
-      <div className="w-full px-6 py-14 sm:px-8 sm:py-16 lg:px-12">
+      <div className="w-full px-6 py-10 sm:px-8 sm:py-12 lg:px-12">
         <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-12 lg:gap-8">
           <div className="sm:col-span-2 lg:col-span-3">
             <Link
@@ -162,7 +162,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-16 flex flex-col items-start justify-between gap-4 border-t border-line pt-8 text-xs text-paper-muted sm:flex-row sm:items-center">
+        <div className="mt-10 sm:mt-12 flex flex-col items-start justify-between gap-4 border-t border-line pt-6 sm:pt-7 text-xs text-paper-muted sm:flex-row sm:items-center">
           <p>© {year} KamiraFit. All rights reserved.</p>
           <div className="flex items-center gap-5">
             <Link href="/privacy" className="transition-colors hover:text-gold">

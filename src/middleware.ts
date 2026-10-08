@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
-export function middleware(_request: NextRequest) {
+export function middleware() {
   const isDev = process.env.NODE_ENV !== "production";
 
   let apiConnectHost = "";

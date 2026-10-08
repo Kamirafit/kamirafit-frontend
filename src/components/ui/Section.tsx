@@ -22,9 +22,9 @@ type Props = {
 } & Omit<ComponentPropsWithoutRef<"section">, "className" | "children" | "id">;
 
 const PADDING_CLASS: Record<NonNullable<Props["padding"]>, string> = {
-  sm: "py-10 sm:py-12",
-  md: "py-14 sm:py-16",
-  lg: "py-16 sm:py-20",
+  sm: "py-7 sm:py-8 lg:py-9",
+  md: "py-10 sm:py-12 lg:py-13",
+  lg: "py-13 sm:py-15 lg:py-16",
 };
 
 /**

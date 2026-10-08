@@ -58,7 +58,7 @@ export default async function Categories() {
         description="Thoughtfully designed silhouettes cut in premium fabrics, curated across Indian, Indo-western, Western, and unisex essentials."
       />
 
-      {categories.length === 0 ? <div className="mt-12"><EmptyState title="No categories available" description="The collection is being organized. Please check back shortly." /></div> : <div className="mt-12 flex gap-6 overflow-x-auto pb-8 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] lg:mt-16 lg:gap-8">
+      {categories.length === 0 ? <div className="mt-8"><EmptyState title="No categories available" description="The collection is being organized. Please check back shortly." /></div> : <div className="mt-8 flex gap-5 overflow-x-auto pb-4 pt-1 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] lg:mt-10 lg:gap-6">
         {categories.map((category) => (
           <div key={category.id} className="w-[85%] shrink-0 snap-start sm:w-[45%] lg:w-[22%]">
             <CategoryCard category={category} />
