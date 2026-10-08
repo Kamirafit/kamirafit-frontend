@@ -44,7 +44,7 @@ export default function WishlistPageClient() {
       ) : isError ? (
         <ErrorState message="We couldn’t load your saved products." onRetry={() => void refetch()} />
       ) : savedProducts.length > 0 ? (
-        <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 lg:grid-cols-4 lg:gap-x-8">
+        <div className="grid grid-cols-2 gap-x-3.5 gap-y-7 sm:grid-cols-3 sm:gap-x-5 lg:grid-cols-4 xl:grid-cols-5 lg:gap-x-5">
           {savedProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}

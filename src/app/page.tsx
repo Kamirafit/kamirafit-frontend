@@ -36,9 +36,25 @@ export default async function Home() {
   let isError = false;
 
   try {
-    products = await productService.getFeaturedProducts();
-  } catch (err) {
-    console.error("Home: Failed to fetch featured products from API:", err);
+    products = await productService.getFeaturedProducts(5);
+    if (products.length < 5) {
+      const all = await productService.getProducts();
+      const existingIds = new Set(products.map((p) => p.id));
+      for (const p of all) {
+        if (!existingIds.has(p.id)) {
+          products.push(p);
+          if (products.length >= 5) break;
+        }
+      }
+    }
+  } catch (err: unknown) {
+    const errorMessage =
+      err instanceof Error
+        ? err.message
+        : typeof err === "object" && err !== null && "message" in err
+        ? String((err as { message: unknown }).message)
+        : String(err);
+    console.error(`Home: Failed to fetch featured products from API: ${errorMessage}`, err);
     isError = true;
     products = [];
   }

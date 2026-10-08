@@ -364,8 +364,8 @@ export default function ProductDetails({ product }: Props) {
   const discountPercent = hasDiscount ? Math.round(((activeMrp - activePrice) / activeMrp) * 100) : 0;
 
   return (
-    <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-16">
-      <div>
+    <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.12fr)] lg:gap-14 xl:gap-16">
+      <div className="lg:sticky lg:top-[4.5rem] lg:self-start">
         <ProductGallery images={colorImages} alt={product.name} />
       </div>
 

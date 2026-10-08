@@ -8,8 +8,16 @@ export async function unwrapApiResponse<T>(
   request: Promise<{ data: { success: boolean; data?: T; message?: string } & Record<string, unknown> }>
 ): Promise<T> {
   const response = await request;
-  if (!response.data.success) throw new Error(response.data.message || "API request failed");
-  if (response.data.data !== undefined) {
+  if (!response || response.data === undefined) {
+    throw new Error("Empty API response received");
+  }
+  if (Array.isArray(response.data)) {
+    return response.data as unknown as T;
+  }
+  if (typeof response.data === "object" && response.data !== null && "success" in response.data && !response.data.success) {
+    throw new Error(response.data.message || "API request failed");
+  }
+  if (typeof response.data === "object" && response.data !== null && response.data.data !== undefined) {
     return response.data.data as T;
   }
   return response.data as unknown as T;

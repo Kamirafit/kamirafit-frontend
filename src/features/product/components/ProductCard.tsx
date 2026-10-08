@@ -19,8 +19,8 @@ type Props = {
 function ProductCartIcon({ filled = false }: { filled?: boolean }) {
   return (
     <svg
-      width="16"
-      height="16"
+      width="14"
+      height="14"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -96,7 +96,7 @@ export default function ProductCard({ product }: Props) {
   return (
     <article
       onClick={handleCardClick}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-line bg-ink transition-all duration-300 hover:-translate-y-0.5 hover:border-gold/40 hover:shadow-[0_30px_60px_-30px_rgba(74,14,26,0.25)] cursor-pointer"
+      className="group flex flex-col overflow-hidden rounded-xl border border-line bg-ink transition-all duration-300 hover:-translate-y-0.5 hover:border-gold/40 hover:shadow-[0_20px_40px_-20px_rgba(74,14,26,0.25)] cursor-pointer"
     >
       <Link
         href={productHref}
@@ -109,24 +109,24 @@ export default function ProductCard({ product }: Props) {
           fill
           unoptimized={imgSrc.startsWith("data:") || imgSrc.startsWith("blob:")}
           onError={() => setImgSrc(DEFAULT_PRODUCT_IMAGE)}
-          sizes="(min-width: 1280px) 22vw, (min-width: 1024px) 30vw, (min-width: 640px) 45vw, 50vw"
+          sizes="(min-width: 1280px) 18vw, (min-width: 1024px) 24vw, (min-width: 640px) 32vw, 45vw"
           className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
         />
         {isCardOutOfStock ? (
-          <div className="absolute top-3 left-3 rounded-full bg-red-600 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-md">
+          <div className="absolute top-2.5 left-2.5 rounded-full bg-red-600 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white shadow-md">
             Out of Stock
           </div>
         ) : null}
       </Link>
 
-      <div className="flex flex-1 flex-col gap-1.5 p-4 sm:p-5">
+      <div className="flex flex-1 flex-col gap-1 p-3 sm:p-3.5">
         <Link
           href={productHref}
-          className="font-display text-[17px] font-semibold leading-tight text-paper transition-colors hover:text-gold"
+          className="font-display text-[14px] sm:text-[15px] font-semibold leading-tight text-paper transition-colors hover:text-gold"
         >
           {product.name}
         </Link>
-        <p className="line-clamp-2 text-[13px] leading-snug text-paper-muted">
+        <p className="line-clamp-2 text-[11.5px] leading-relaxed text-paper-muted">
           {product.description}
         </p>
 
@@ -146,7 +146,7 @@ export default function ProductCard({ product }: Props) {
                     setSelectedColor(isSelected ? null : c);
                   }}
                   onMouseEnter={() => setSelectedColor(c)}
-                  className={`h-3 w-3 rounded-full border transition-all ${
+                  className={`h-2.5 w-2.5 rounded-full border transition-all ${
                     isSelected ? "ring-2 ring-gold scale-125" : "border-line/70 hover:scale-115"
                   }`}
                   style={{ backgroundColor: swatchMap[c] || COLOR_SWATCH[c] || "#888888" }}
@@ -154,32 +154,32 @@ export default function ProductCard({ product }: Props) {
               );
             })}
             {product.color.length > 5 ? (
-              <span className="text-[9.5px] text-paper-muted">+{product.color.length - 5}</span>
+              <span className="text-[9px] text-paper-muted">+{product.color.length - 5}</span>
             ) : null}
           </div>
         ) : null}
 
-        <div className="mt-auto flex items-center justify-between gap-3 pt-3">
-          <div className="flex items-baseline gap-2 flex-wrap">
+        <div className="mt-auto flex items-center justify-between gap-2 pt-2">
+          <div className="flex items-baseline gap-1.5 flex-wrap">
             {hasDiscount ? (
               <>
-                <span className="line-through text-paper-muted text-[13px] font-normal">
+                <span className="line-through text-paper-muted text-[11px] sm:text-[11.5px] font-normal">
                   {formatPrice(mrp)}
                 </span>
-                <span className="font-display text-[17px] font-semibold tracking-wide text-paper">
+                <span className="font-display text-[14px] sm:text-[15px] font-semibold tracking-wide text-paper">
                   {formatPrice(price)}
                 </span>
-                <span className="rounded bg-[#8B1E2D]/15 px-1.5 py-0.5 text-[11px] font-bold text-[#8B1E2D] dark:text-gold border border-[#8B1E2D]/25">
+                <span className="rounded bg-[#8B1E2D]/15 px-1 py-0.5 text-[9.5px] font-bold text-[#8B1E2D] dark:text-gold border border-[#8B1E2D]/25">
                   {discountPercent}% OFF
                 </span>
               </>
             ) : (
-              <span className="font-display text-[17px] font-semibold tracking-wide text-paper">
+              <span className="font-display text-[14px] sm:text-[15px] font-semibold tracking-wide text-paper">
                 {formatPrice(price > 0 ? price : mrp)}
               </span>
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <button
               type="button"
               aria-label={saved ? "Remove from wishlist" : "Add to wishlist"}
@@ -189,13 +189,13 @@ export default function ProductCard({ product }: Props) {
                 e.stopPropagation();
                 toggle(product.id);
               }}
-              className={`inline-flex h-9 w-9 items-center justify-center rounded-full border transition-all ${
+              className={`inline-flex h-7.5 w-7.5 sm:h-8 sm:w-8 items-center justify-center rounded-full border transition-all ${
                 saved
                   ? "border-transparent bg-[#DC2626]/10 text-[#DC2626]"
                   : "border-line text-paper-muted hover:border-[#DC2626]/40 hover:text-[#DC2626]"
               }`}
             >
-              <HeartIcon filled={saved} width={15} height={15} />
+              <HeartIcon filled={saved} width={13} height={13} />
             </button>
             <button
               type="button"
@@ -224,12 +224,12 @@ export default function ProductCard({ product }: Props) {
                   })
                 );
               }}
-              className={`inline-flex h-9 w-9 items-center justify-center rounded-full border-2 transition-all duration-300 ease-in-out ${
+              className={`inline-flex h-7.5 w-7.5 sm:h-8 sm:w-8 items-center justify-center rounded-full border-2 transition-all duration-300 ease-in-out ${
                 isCardOutOfStock
                   ? "border-line bg-ink-2 text-paper-muted/40 cursor-not-allowed"
                   : inCart
-                  ? "border-gold bg-gold text-white shadow-[0_8px_20px_-8px_rgba(74,14,26,0.55)]"
-                  : "border-gold bg-transparent text-gold hover:bg-gold hover:text-white hover:shadow-[0_8px_20px_-8px_rgba(74,14,26,0.55)]"
+                  ? "border-gold bg-gold text-white shadow-[0_6px_16px_-6px_rgba(74,14,26,0.55)]"
+                  : "border-gold bg-transparent text-gold hover:bg-gold hover:text-white hover:shadow-[0_6px_16px_-6px_rgba(74,14,26,0.55)]"
               }`}
             >
               <ProductCartIcon filled={inCart} />

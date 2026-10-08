@@ -87,23 +87,12 @@ export const productService = {
       currentPage += 1;
     }
   },
-  getFeaturedProducts: () => {
-    if (featuredProductsPromise) return featuredProductsPromise;
-    featuredProductsPromise = unwrapApiResponse<unknown[]>(apiClient.get("/products/featured"))
+  getFeaturedProducts: (limit: number = 5) => {
+    return unwrapApiResponse<unknown[]>(apiClient.get("/products/featured", { params: { limit } }))
       .then((x) => {
         const items = Array.isArray(x) ? x : [];
         return items.map(adaptProduct);
-      })
-      .catch((err) => {
-        featuredProductsPromise = null;
-        throw err;
-      })
-      .finally(() => {
-        setTimeout(() => {
-          featuredProductsPromise = null;
-        }, 10000);
       });
-    return featuredProductsPromise;
   },
   getProduct: (id: string) =>
     unwrapApiResponse<unknown>(apiClient.get("/products/" + id))
